@@ -1,0 +1,59 @@
+body {
+	background-color: transparent;
+}
+
+.color-list {
+	list-style: none;
+	padding: 0;
+}
+
+.color-entry {
+	width: 100%;
+	display: flex;
+	margin-bottom: 0.4em;
+	border: 1px solid var(--vscode-input-border);
+}
+
+.color-preview {
+	width: 2em;
+	height: 2em;
+}
+
+.color-preview:hover {
+	outline: inset white;
+}
+
+.color-input {
+	display: block;
+	flex: 1;
+	width: 100%;
+	color: var(--vscode-input-foreground);
+	background-color: var(--vscode-input-background);
+	border: none;
+	padding: 0 0.6em;
+}
+
+.select-fw, .flash-fw {
+	display: block;
+	border: none;
+	margin: 0 auto;
+}
+
+.fw-value {
+	display: block;
+	margin-top: 20px;
+	margin-bottom: 20px;
+	max-width: 300px; 
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	hyphens: auto;
+	color: var(--vscode-input-foreground);
+	background-color: var(--vscode-input-background);
+}
+
+.fw-label {
+	display: block;
+	margin-top: 20px;
+	margin-bottom: 20px;
+	color: var(--vscode-input-foreground);
+}

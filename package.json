@@ -1,0 +1,202 @@
+{
+	"name": "qpy-ide",
+	"displayName": "qpy-ide",
+	"description": "QuecPython IDE extension",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.54.3"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"configuration": {
+			"title": "QuecPython",
+			"properties": {
+				"QuecPython.defaultLineTerminator": {
+					"description": "Text added to end of all sent lines. Will be appended to sent data but will not be rendered in terminal. Allows escape characters (\\r, \\n etc.), hex representation (\\x6F, \\xF8 etc.) and unicode representation (\\u006F, \\u00F8 etc.)",
+					"type": "string",
+					"default": "\\r\\n"
+				},
+				"QuecPython.translateHex": {
+					"description": "Set to true to translate incomming hex data. Set to false to output raw hex.",
+					"type": "boolean",
+					"default": true
+				}
+			}
+		},
+		"commands": [
+			{
+				"command": "qpy-ide.selectComPort",
+				"title": "Hello World",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.startSerialTerminal",
+				"title": "Hello World",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.refreshPorts",
+				"title": "Show COM Ports",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.refreshModuleFS",
+				"title": "Refresh",
+				"icon": {
+					"light": "resources/light/refresh.svg",
+					"dark": "resources/dark/refresh.svg"
+				}
+			},
+			{
+				"command": "qpy-ide.connectOrDisconnect",
+				"title": "Connect/Disconnect",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.setBaudRate",
+				"title": "Set Baud Rate",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.downloadFiles",
+				"title": "QPY: Download File(s)",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.selectFirmware",
+				"title": "Select Firmware",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.clearFw",
+				"category": "QuecPython",
+				"title": "Clear Firmware Path",
+				"icon": "$(clear-all)"
+			},
+			{
+				"command": "qpy-ide.openTerminal",
+				"title": "Open terminal",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.setLineEnd",
+				"title": "Set line terminator for active terminal",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.toggleHexTranslation",
+				"title": "Toggle hex translation for active terminal",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.clearTerminal",
+				"title": "Clear active terminal",
+				"category": "QuecPython"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "qpy-ide.downloadFiles",
+				"key": "ctrl+shift+u"
+			}
+		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "qpy",
+					"title": "QuecPython",
+					"icon": "media/dep.svg"
+				}
+			]
+		},
+		"views": {
+			"explorer": [
+				{
+					"id": "qpyModuleFS",
+					"name": "QuecPython: Module File System"
+				}
+			],
+			"qpy": [
+				{
+					"type": "webview",
+					"id": "qpyFirmware",
+					"name": "Firmware Manager"
+				}
+			]
+		},
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "qpy-ide.setLineEnd",
+					"when": "terminalIsOpen"
+				},
+				{
+					"command": "qpy-ide.toggleHexTranslation",
+					"when": "terminalIsOpen"
+				},
+				{
+					"command": "qpy-ide.clearTerminal",
+					"when": "terminalIsOpen"
+				}
+			],
+			"view/title": [
+				{
+					"command": "qpy-ide.refreshModuleFS",
+					"group": "navigation",
+					"when": "view == qpyModuleFS"
+				},
+				{
+					"command": "qpy-ide.clearFw",
+					"group": "navigation",
+					"when": "view == qpyFirmware"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "qpy-ide.downloadFiles",
+					"group": "QuecPython@1"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js",
+		"rebuild": "electron-rebuild -f -w serialport",
+		"dev:rebuild": "electron-rebuild --version 11.3.0 --force"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.3",
+		"@types/mocha": "^8.0.4",
+		"@types/node": "^12.11.7",
+		"@types/serialport": "^8.0.1",
+		"@types/vscode": "^1.54.0",
+		"@typescript-eslint/eslint-plugin": "^4.14.1",
+		"@typescript-eslint/parser": "^4.14.1",
+		"electron": "^12.0.1",
+		"electron-prebuilt": "^1.4.13",
+		"electron-rebuild": "^2.3.5",
+		"eslint": "^7.19.0",
+		"glob": "^7.1.6",
+		"mocha": "^8.2.1",
+		"typescript": "^4.1.3",
+		"vscode-test": "^1.5.0"
+	},
+	"dependencies": {
+		"serialport": "^9.0.7"
+	},
+	"build": {
+		"npmRebuild": false,
+		"buildDependenciesFromSource": true
+	}
+}
