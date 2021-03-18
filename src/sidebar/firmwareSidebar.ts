@@ -47,7 +47,6 @@ export default class FirmwareViewProvider implements vscode.WebviewViewProvider 
 					   
 					   vscode.window.showOpenDialog(options).then(fileUri => {
 						   if (fileUri && fileUri[0]) {
-								console.log(fwConfig);
 								const newFwPath = {
 									path: fileUri[0].fsPath
 								};

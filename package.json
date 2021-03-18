@@ -31,37 +31,12 @@
 		},
 		"commands": [
 			{
-				"command": "qpy-ide.selectComPort",
-				"title": "Hello World",
-				"category": "QuecPython"
-			},
-			{
-				"command": "qpy-ide.startSerialTerminal",
-				"title": "Hello World",
-				"category": "QuecPython"
-			},
-			{
-				"command": "qpy-ide.refreshPorts",
-				"title": "Show COM Ports",
-				"category": "QuecPython"
-			},
-			{
 				"command": "qpy-ide.refreshModuleFS",
 				"title": "Refresh",
 				"icon": {
 					"light": "resources/light/refresh.svg",
 					"dark": "resources/dark/refresh.svg"
 				}
-			},
-			{
-				"command": "qpy-ide.connectOrDisconnect",
-				"title": "Connect/Disconnect",
-				"category": "QuecPython"
-			},
-			{
-				"command": "qpy-ide.setBaudRate",
-				"title": "Set Baud Rate",
-				"category": "QuecPython"
 			},
 			{
 				"command": "qpy-ide.downloadFiles",
@@ -80,8 +55,8 @@
 				"icon": "$(clear-all)"
 			},
 			{
-				"command": "qpy-ide.openTerminal",
-				"title": "Open terminal",
+				"command": "qpy-ide.openConnection",
+				"title": "Connect to COM Port",
 				"category": "QuecPython"
 			},
 			{

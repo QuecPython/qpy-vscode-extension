@@ -1,9 +1,10 @@
 import SerialPort from 'SerialPort';
 import * as vscode from 'vscode';
-import { CommandLine } from './commandLine';
+import { CommandLineInterface } from './commandLine';
+import { serialEmitter } from './serialBridge';
 
-export class SerialTerminal extends CommandLine {
-    private serial: SerialPort;
+export default class SerialTerminal extends CommandLineInterface {
+    public serial: SerialPort;
 
     // Used to automatically attempt to reconnect when device is disconnected
     private reconnectInterval: NodeJS.Timeout | undefined;
@@ -18,25 +19,30 @@ export class SerialTerminal extends CommandLine {
             autoOpen: false,
             baudRate: baudRate,
         });
+
         super(serial, translateHex, lineEnd);
         this.serial = serial;
     }
 
     open(initialDimensions: vscode.TerminalDimensions | undefined): void {
         super.handleDataAsText(
-            `\rSerial terminal
+            `\rQuecPython Serial Terminal
             \rPort: ${this.serial.path}
             \rBaud rate: ${this.serial.baudRate}\r\n\n`
         );
+
         if (!this.serial.isOpen) {
             this.serial.open(this.writeError);
         }
+
         this.serial.on('close', (err) => {
+            serialEmitter.emit('statusDisc');
             if (!this.endsWithNewLine) {
                 this.handleDataAsText('\r\n');
             }
+
             this.handleDataAsText('Port closed.');
-            if (Object.keys(err).includes('disconnected') && err.disconnected) {
+            if (err?.disconnected) {
                 // Device was disconnected, attempt to reconnect
                 this.handleDataAsText(' Device disconnected.');
                 this.reconnectInterval = setInterval(async () => {
@@ -58,11 +64,14 @@ export class SerialTerminal extends CommandLine {
             }
             this.handleDataAsText('\r\n');
         });
+
         this.serial.on('open', () => {
+            serialEmitter.emit('statusConn');
             if (this.reconnectInterval) {
                 clearInterval(this.reconnectInterval);
             }
         });
+
         super.open(initialDimensions);
     }
 
@@ -74,9 +83,11 @@ export class SerialTerminal extends CommandLine {
                 }
             });
         }
+
         if (this.reconnectInterval) {
             clearInterval(this.reconnectInterval);
         }
+
         super.close();
     }
 }

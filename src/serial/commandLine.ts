@@ -2,7 +2,7 @@ import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
 import * as Stream from 'stream';
 
-import * as util from './util';
+import * as util from '../utils/util';
 
 // Text manipulation sequences
 const backspaceRegex = /^\177/;
@@ -15,7 +15,7 @@ const gotoEndRegex = /^\033\[([HF])/; //End and Home
 
 const cursorReportRegex = /^\033\[(\d+);(\d+)R/;
 
-export abstract class CommandLine implements vscode.Pseudoterminal {
+export abstract class CommandLineInterface implements vscode.Pseudoterminal {
     // Fire to write to terminal
     protected writeEmitter = new vscode.EventEmitter<string>();
     onDidWrite: vscode.Event<string> = this.writeEmitter.event;
@@ -57,7 +57,6 @@ export abstract class CommandLine implements vscode.Pseudoterminal {
     }
 
     protected handleData: (data: Buffer) => void = (data: Buffer) => {
-        // Can be used as callback
         this.loadCursor();
         this.clearScreen();
         let stringRepr = '';
@@ -285,7 +284,7 @@ export abstract class CommandLine implements vscode.Pseudoterminal {
     protected writeError = (err: Error | null | undefined): void => {
         if (err) {
             this.writeEmitter.fire(('An error occured: ' + err.message).replace('\n', '\r\n'));
-            console.log(err);
+            console.error(err);
         }
     };
 

@@ -1,28 +1,17 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import SerialPort from 'SerialPort';
 
 import FirmwareViewProvider from './sidebar/firmwareSidebar';
 import { supportedBaudRates } from './utils/constants';
-import { listComPorts } from './serial/serial';
-
-import { SerialTerminal } from './serialTerminal';
+import SerialTerminal from './serial/serialTerminal';
 import { api } from './api';
-import * as stringUtilities from './util';
+import * as stringUtilities from './utils/util';
+import { serialEmitter } from './serial/serialBridge';
 
 // Lookup table for linking vscode terminals to SerialTerminal instances
 export const terminalRegistry: { [key: string]: SerialTerminal } = {};
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	let connection = false;
-	let availablePorts: string[] = [];
-	let currentPort: string;
-	let currentBaudRate = '9600';
-	let port: SerialPort;
-
 	const provider = new FirmwareViewProvider(context.extensionUri);
 
 	context.subscriptions.push(
@@ -31,132 +20,42 @@ export function activate(context: vscode.ExtensionContext) {
 			provider
 	));
 
-	// Status Bar items defintions
-	const selectPort = vscode.window.createStatusBarItem(
+	const connStatus = vscode.window.createStatusBarItem(
 		vscode.StatusBarAlignment.Left
 	);
-	selectPort.text = 'No Port Selected';
-	selectPort.command = 'qpy-ide.selectComPort';
-	selectPort.tooltip = 'Current COM Port';
-	selectPort.show();
 
-	const baudRateItem = vscode.window.createStatusBarItem(
-		vscode.StatusBarAlignment.Left
-	);
-	baudRateItem.text = '9600';
-	baudRateItem.command = 'qpy-ide.setBaudRate';
-	baudRateItem.tooltip = 'Current Baud Rate';
-	baudRateItem.show();
-
-	const connSerialPort = vscode.window.createStatusBarItem(
-		vscode.StatusBarAlignment.Left
-	);
-	connSerialPort.text = `$(plug) Connect`;
-	connSerialPort.command = 'qpy-ide.connectOrDisconnect';
-
-	if (connection) {
-		connSerialPort.tooltip = 'Disconnect Serial Port';
-	} else {
-		connSerialPort.tooltip = 'Connect Serial Port';
-	}
-	connSerialPort.show();
-
-	const refreshComPorts = vscode.window.createStatusBarItem(
-		vscode.StatusBarAlignment.Left
-	);
-	refreshComPorts.text = `$(refresh)`;
-	refreshComPorts.command = 'qpy-ide.refreshPorts';
-	refreshComPorts.tooltip = 'Refresh Serial Ports';
-	refreshComPorts.show();
-
-	const replItem = vscode.window.createStatusBarItem(
-		vscode.StatusBarAlignment.Left
-	);
-	replItem.text = `$(repl)`;
-	replItem.command = 'qpy-ide.startSerialTerminal';
-	replItem.tooltip = 'Start Serial Terminal';
-	replItem.show();
+	connStatus.text = `$(plug) Disconnected`;
+    connStatus.tooltip = 'COM Port not Connected';
+	connStatus.show();
 
 	// Commands definition
-	context.subscriptions.push(vscode.commands.registerCommand('qpy-ide.startSerialTerminal', () => {
-		const terminal = vscode.window.createTerminal(`QuecPython Terminal`);
-		terminal.show();
-		terminal.sendText(`serialport-terminal -p ${currentPort} -b ${currentBaudRate} --no-echo`);
-	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('qpy-ide.refreshPorts', () => {
-		availablePorts = listComPorts();
-	}));
+	const refreshModuleFs = vscode.commands.registerCommand(
+        'qpy-ide.refreshModuleFS',
+        () => {
+            // const st = getActiveSerial();
+            // st.serial.write(Buffer.from(`[QCMD]uos.listdir('/usr')\r\n`));
+            // serialEmitter.emit('event');
+            console.log('TODO');
+	    }
+    );
 
-	context.subscriptions.push(vscode.commands.registerCommand('qpy-ide.refreshModuleFS', () => {
-		vscode.window.showInformationMessage('This should refresh module files!');
-	}));
+	const downloadFiles = vscode.commands.registerCommand(
+        'qpy-ide.downloadFiles',
+        () => {
+		    vscode.window.showInformationMessage('FILES TO DOWNLOAD!');
+	    }
+    );
 
-	context.subscriptions.push(vscode.commands.registerCommand('qpy-ide.setBaudRate', async () => {
-        const selectedBaudRate = await vscode.window.showQuickPick(
-            supportedBaudRates,
-            { placeHolder: 'Select Baud Rate' }
-		);
+	const clearFirmware = vscode.commands.registerCommand(
+        'qpy-ide.clearFw',
+        () => {
+		    provider.clearFw();
+	    }
+    );
 
-		if (selectedBaudRate) {
-			baudRateItem.text = selectedBaudRate;
-			currentBaudRate = selectedBaudRate;
-		}
-    }));
-
-	context.subscriptions.push(vscode.commands.registerCommand('qpy-ide.selectComPort', async () => {
-        const selectedComPort = await vscode.window.showQuickPick(
-			availablePorts,
-			{ placeHolder: 'Select COM Port' }
-		);
-
-		if (selectedComPort) {
-			selectPort.text = selectedComPort;
-			currentPort = selectedComPort;
-
-			port = new SerialPort(
-				currentPort, 
-				{ 
-					baudRate: parseInt(currentBaudRate, 10),
-					autoOpen: false
-			});
-		}
-    }));
-
-	context.subscriptions.push(vscode.commands.registerCommand('qpy-ide.connectOrDisconnect', async () => {
-		if (listComPorts().includes(currentPort)) {
-			if (port.isOpen) {
-				port.close(function() {
-					connSerialPort.tooltip = 'Disconnect Serial Port';
-					connSerialPort.text = `$(plug) Connect`;
-					connection = false;
-				});
-			} else {
-				port.open(function() {
-					connSerialPort.tooltip = 'Connect Serial Port';
-					connSerialPort.text = `$(plug) Disconnect`;
-					connection = true;
-				});
-			}
-		} else {
-			selectPort.text = 'No Port Selected';
-			availablePorts = [];
-		}
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('qpy-ide.downloadFiles', () => {
-		vscode.window.showInformationMessage('FILES TO DOWNLOAD!');
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('qpy-ide.clearFw', () => {
-		provider.clearFw();
-	}));
-
-	// inital serial port listing
-	availablePorts = listComPorts();
-
-	const openTerminalCommand = vscode.commands.registerCommand(
-        'qpy-ide.openTerminal',
+	const openConnection = vscode.commands.registerCommand(
+        'qpy-ide.openConnection',
         async (
             portPath?: string,
             baudRate?: number,
@@ -172,9 +71,11 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('No serial devices found');
                     return;
                 }
+
                 chosenPortPath = await vscode.window.showQuickPick(portPaths, {
-                    placeHolder: 'Select port',
+                    placeHolder: 'Select COM port',
                 });
+
                 if (!chosenPortPath) {
                     return;
                 }
@@ -187,26 +88,30 @@ export function activate(context: vscode.ExtensionContext) {
                     ['[Other]', ...supportedBaudRates],
                     { placeHolder: 'Choose baud rate' }
                 );
+
                 if (chosenBaudString === '[Other]') {
                     chosenBaudString = await vscode.window.showInputBox({
                         placeHolder: 'Enter baud rate',
                     });
                 }
+
                 if (!chosenBaudString) {
                     return;
                 }
+
                 try {
                     chosenBaud = Number.parseInt(chosenBaudString);
                 } catch {
                     vscode.window.showErrorMessage(
-                        `Invalid baud rate ${chosenBaudString}. Must be an integer > 0`
+                        `Invalid baud rate ${chosenBaudString}!`
                     );
                     return;
                 }
             }
+
             if (chosenBaud <= 0 || !Number.isInteger(chosenBaud)) {
                 vscode.window.showErrorMessage(
-                    `Invalid baud rate ${chosenBaud}. Must be an integer > 0`
+                    `Invalid baud rate ${chosenBaud}!`
                 );
                 return;
             }
@@ -219,9 +124,11 @@ export function activate(context: vscode.ExtensionContext) {
             const configDLT: string | undefined = wsConfig.get(
                 'QuecPython.defaultLineTerminator'
             );
+
             if (configDLT !== undefined && lineEnd === undefined) {
                 lineEnd = stringUtilities.unescape(configDLT);
             }
+
             lineEnd = lineEnd ?? '\r\n';
 
             const st = new SerialTerminal(
@@ -230,10 +137,12 @@ export function activate(context: vscode.ExtensionContext) {
                 translateHex,
                 lineEnd
             );
+
             const terminal = vscode.window.createTerminal({
-                name: `${chosenPortPath} (Baud: ${chosenBaud})`,
+                name: `QPY: ${chosenPortPath} (${chosenBaud} baud)`,
                 pty: st,
             });
+
             terminal.show();
             terminalRegistry[terminal.name] = st;
             return terminal;
@@ -277,30 +186,44 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
     context.subscriptions.push(
-        openTerminalCommand,
+        openConnection,
         setLineEndCommand,
         toggleHexTranslationCommand,
-        clearCommand
+        clearCommand,
+        clearFirmware,
+        downloadFiles,
+        refreshModuleFs
     );
 
-    //Export api defined in api.ts
+    // Serial Emitter events
+    serialEmitter.on('statusConn', () => {
+        connStatus.text = `$(plug) Connected`;
+        connStatus.tooltip = 'COM Port is Connected';
+    });
+
+    serialEmitter.on('statusDisc', () => {
+        connStatus.text = `$(plug) Disconnected`;
+        connStatus.tooltip = 'COM Port not Connected';
+    });
+
+    // Export api defined in api.ts
     return api;
 }
 
-// this method is called when your extension is deactivated
 export function deactivate() {}
 
 function getActiveSerial(): SerialTerminal | undefined {
 	const activeTerminal = vscode.window.activeTerminal;
 	if (activeTerminal === undefined) {
-		vscode.window.showErrorMessage('No active terminal');
+		vscode.window.showErrorMessage('No QPY device connected!');
 		return;
 	}
 	if (!Object.keys(terminalRegistry).includes(activeTerminal.name)) {
 		vscode.window.showErrorMessage(
-			'Active terminal is not a registered serial terminal'
+			'Active terminal is not a registered serial terminal!'
 		);
 		return;
 	}
 	return terminalRegistry[activeTerminal.name];
 }
+
