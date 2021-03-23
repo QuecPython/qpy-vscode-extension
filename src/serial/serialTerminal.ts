@@ -28,7 +28,7 @@ export default class SerialTerminal extends CommandLineInterface {
         super.handleDataAsText(
             `\rQuecPython Serial Terminal
             \rPort: ${this.serial.path}
-            \rBaud rate: ${this.serial.baudRate}\r\n\n`
+            \rBaud rate: ${this.serial.baudRate} baud\r\n\n`
         );
 
         if (!this.serial.isOpen) {
@@ -37,6 +37,7 @@ export default class SerialTerminal extends CommandLineInterface {
 
         this.serial.on('close', (err) => {
             serialEmitter.emit('statusDisc');
+            serialEmitter.emit('getFileStats', '');
             if (!this.endsWithNewLine) {
                 this.handleDataAsText('\r\n');
             }
@@ -44,7 +45,7 @@ export default class SerialTerminal extends CommandLineInterface {
             this.handleDataAsText('Port closed.');
             if (err?.disconnected) {
                 // Device was disconnected, attempt to reconnect
-                this.handleDataAsText(' Device disconnected.');
+                this.handleDataAsText('Device disconnected.');
                 this.reconnectInterval = setInterval(async () => {
                     // Attempt to reopen
                     const availablePorts = await SerialPort.list();
@@ -70,16 +71,26 @@ export default class SerialTerminal extends CommandLineInterface {
             if (this.reconnectInterval) {
                 clearInterval(this.reconnectInterval);
             }
+
+            this.onOpenRead();
         });
 
         super.open(initialDimensions);
+    }
+
+    private onOpenRead() {
+        this.handleInput(`[CMD]for elem in uos.ilistdir('/usr'):\r\n`);
+        this.handleInput(`[CMD]print(elem)\r\n`);
+        this.handleInput(`[CMD]\r\n`);
+        this.handleInput(`[CMD]\r\n`);
+        this.handleInput(`[CMD]\r\n`);
     }
 
     close(): void {
         if (this.serial.isOpen) {
             this.serial.close((err) => {
                 if (err) {
-                    throw new Error('Could not properly close serial terminal: ' + err.message);
+                    throw new Error(`Could not properly close serial terminal: ${err.message}`);
                 }
             });
         }

@@ -4,21 +4,18 @@ import SerialPort from 'SerialPort';
 import FirmwareViewProvider from './sidebar/firmwareSidebar';
 import { supportedBaudRates } from './utils/constants';
 import SerialTerminal from './serial/serialTerminal';
-import { api } from './api';
-import * as stringUtilities from './utils/util';
+import * as utils from './utils/utils';
 import { serialEmitter } from './serial/serialBridge';
+import { ModuleDocument, ModuleFileSystemProvider } from './deviceTree/moduleFileSystem';
 
 // Lookup table for linking vscode terminals to SerialTerminal instances
 export const terminalRegistry: { [key: string]: SerialTerminal } = {};
 
 export function activate(context: vscode.ExtensionContext) {
-	const provider = new FirmwareViewProvider(context.extensionUri);
+	const fwProvider = new FirmwareViewProvider(context.extensionUri);
 
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(
-			FirmwareViewProvider.viewType,
-			provider
-	));
+    const moduleFsTreeProvider = new ModuleFileSystemProvider();
+    vscode.window.registerTreeDataProvider('qpyModuleFS', moduleFsTreeProvider);
 
 	const connStatus = vscode.window.createStatusBarItem(
 		vscode.StatusBarAlignment.Left
@@ -32,12 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const refreshModuleFs = vscode.commands.registerCommand(
         'qpy-ide.refreshModuleFS',
-        () => {
-            // const st = getActiveSerial();
-            // st.serial.write(Buffer.from(`[QCMD]uos.listdir('/usr')\r\n`));
-            // serialEmitter.emit('event');
-            console.log('TODO');
-	    }
+        () => moduleFsTreeProvider.refresh()
     );
 
 	const downloadFiles = vscode.commands.registerCommand(
@@ -50,7 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const clearFirmware = vscode.commands.registerCommand(
         'qpy-ide.clearFw',
         () => {
-		    provider.clearFw();
+		    fwProvider.clearFw();
 	    }
     );
 
@@ -126,7 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
             );
 
             if (configDLT !== undefined && lineEnd === undefined) {
-                lineEnd = stringUtilities.unescape(configDLT);
+                lineEnd = utils.unescape(configDLT);
             }
 
             lineEnd = lineEnd ?? '\r\n';
@@ -158,7 +150,7 @@ export function activate(context: vscode.ExtensionContext) {
                     placeHolder: 'New line terminator',
                 });
                 if (newLineEnd !== undefined) {
-                    newLineEnd = stringUtilities.unescape(newLineEnd);
+                    newLineEnd = utils.unescape(newLineEnd);
                     st.setLineEnd(newLineEnd);
                 }
             }
@@ -185,6 +177,28 @@ export function activate(context: vscode.ExtensionContext) {
     	}
 	);
 
+    const runScript = vscode.commands.registerCommand(
+		'qpy-ide.runScript',
+		() => {
+		    vscode.window.showInformationMessage('Run Script!');
+	    }
+	);
+
+    const deleteFile = vscode.commands.registerCommand(
+		'qpy-ide.deleteFile',
+		() => {
+		    vscode.window.showInformationMessage('Delete File!');
+	    }
+	);
+
+    const deleteDir = vscode.commands.registerCommand(
+		'qpy-ide.deleteDir',
+		() => {
+		    vscode.window.showInformationMessage('Delete Directory!');
+	    }
+	);
+
+
     context.subscriptions.push(
         openConnection,
         setLineEndCommand,
@@ -192,7 +206,14 @@ export function activate(context: vscode.ExtensionContext) {
         clearCommand,
         clearFirmware,
         downloadFiles,
-        refreshModuleFs
+        refreshModuleFs,
+        runScript,
+        deleteFile,
+        deleteDir,
+        vscode.window.registerWebviewViewProvider(
+			FirmwareViewProvider.viewType,
+			fwProvider
+        )
     );
 
     // Serial Emitter events
@@ -206,24 +227,41 @@ export function activate(context: vscode.ExtensionContext) {
         connStatus.tooltip = 'COM Port not Connected';
     });
 
-    // Export api defined in api.ts
-    return api;
+    serialEmitter.on('getFileStats', (data: string) => {
+        if (data !== '') {
+            const splitData = data.split(/\r\n/);
+            splitData.slice(5, -1).forEach((block: string) => {
+                const splitBlock = block.slice(1, -1).replace(/\'/g, '').split(', ');
+                moduleFsTreeProvider.data.push(new ModuleDocument(
+                    splitBlock[0],
+                    `${splitBlock[3]} B`,
+                    vscode.TreeItemCollapsibleState.None
+                ));
+            });
+        } else {
+            moduleFsTreeProvider.data = [];
+        }
+
+        moduleFsTreeProvider.refresh();
+    });
 }
 
 export function deactivate() {}
 
 function getActiveSerial(): SerialTerminal | undefined {
 	const activeTerminal = vscode.window.activeTerminal;
+
 	if (activeTerminal === undefined) {
 		vscode.window.showErrorMessage('No QPY device connected!');
 		return;
 	}
+
 	if (!Object.keys(terminalRegistry).includes(activeTerminal.name)) {
 		vscode.window.showErrorMessage(
 			'Active terminal is not a registered serial terminal!'
 		);
 		return;
 	}
+
 	return terminalRegistry[activeTerminal.name];
 }
-

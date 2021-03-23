@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import getNonce from '../getNonce';
+import getNonce from '../utils/getNonce';
 
 const fwJsonPath: string = path.join(__dirname, '..', '..', 'config');
 const fwConfig: string = fwJsonPath + '\\qpy_fw.json';

@@ -73,6 +73,22 @@
 				"command": "qpy-ide.clearTerminal",
 				"title": "Clear active terminal",
 				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.runScript",
+				"title": "Run Script"
+			},
+			{
+				"command": "qpy-ide.deleteFile",
+				"title": "Delete File"
+			},
+			{
+				"command": "qpy-ide.deleteDir",
+				"title": "Delete Directory"
+			},
+			{
+				"command": "qpy-ide.createDir",
+				"title": "Create Directory"
 			}
 		],
 		"keybindings": [
@@ -94,7 +110,7 @@
 			"explorer": [
 				{
 					"id": "qpyModuleFS",
-					"name": "QuecPython: Module File System"
+					"name": "QPY: Module File System"
 				}
 			],
 			"qpy": [
@@ -130,6 +146,24 @@
 					"command": "qpy-ide.clearFw",
 					"group": "navigation",
 					"when": "view == qpyFirmware"
+				},
+				{
+					"command": "qpy-ide.createDir",
+					"when": "view == qpyModuleFS"
+				}
+			],
+			"view/item/context": [
+				{
+				  "command": "qpy-ide.runScript",
+				  "when": "view == qpyModuleFS && viewItem == moduleDocument"
+				},
+				{
+				  "command": "qpy-ide.deleteFile",
+				  "when": "view == qpyModuleFS && viewItem == moduleDocument"
+				},
+				{
+					"command": "qpy-ide.deleteDir",
+					"when": "view == qpyModuleFS && viewItem == moduleDocument"
 				}
 			],
 			"explorer/context": [

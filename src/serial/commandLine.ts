@@ -2,7 +2,8 @@ import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
 import * as Stream from 'stream';
 
-import * as util from '../utils/util';
+import * as util from '../utils/utils';
+import { serialEmitter } from './serialBridge';
 
 // Text manipulation sequences
 const backspaceRegex = /^\177/;
@@ -38,6 +39,9 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
     private prevCommands: string[] = [];
     private prevCommandsIndex = 0;
 
+    // Flag to distinct internal commands from user commands
+    private cmdFlag = false;
+
     constructor(
         private backendStream: Stream.Duplex,
         private translateHex: boolean = true,
@@ -60,9 +64,17 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
         this.loadCursor();
         this.clearScreen();
         let stringRepr = '';
+
+        if (this.cmdFlag) {
+            this.cmdFlag = false;
+                serialEmitter.emit('getFileStats', `${data.toString()}`);
+            return;
+        }
+
         if (this.translateHex) {
             stringRepr = new TextDecoder('utf-8').decode(data);
         } else {
+            // HEX format
             for (const byte of data) {
                 if (this.dimensions && stringRepr.length >= this.dimensions.columns - 3) {
                     this.writeEmitter.fire('\r\n');
@@ -77,6 +89,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
         } else {
             this.endsWithNewLine = false;
         }
+
         this.writeEmitter.fire(stringRepr);
         this.saveCursor();
         this.updateInputArea();
@@ -92,17 +105,27 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
     handleInput(data: string): void {
         let firstRun = true;
         let charsHandled = 0;
+
         while (data.length > 0) {
             // Remove handled data
             if (!firstRun && charsHandled === 0) {
                 break;
             } //No data was handled, break to prevent infinite loop
+
             firstRun = false;
             data = data.substr(charsHandled);
+
             if (data.length <= 0) {
                 break;
             }
+
             charsHandled = 0;
+
+            if (data.slice(0,5) === '[CMD]') {
+                this.cmdFlag = true;
+                this.backendStream.write(util.unescape(data.slice(5)));
+                return;
+            }
 
             //// Handle enter
             const enterMatch: RegExpMatchArray | null = enterRegex.exec(data);
@@ -120,8 +143,11 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                 if (!this.endsWithNewLine) {
                     this.handleDataAsText('\r\n');
                 }
-                this.handleDataAsText(this.currentInputLine + '\r\n');
 
+                // THIS SHOWS ECHO COMMAND
+                // this.handleDataAsText(this.currentInputLine + '\r\n');
+
+                // THIS SHOWS WHAT YOU'VE WRITTEN IN THE CURRENT LINE
                 this.backendStream.write(util.unescape(this.currentInputLine) + this.lineEnd);
 
                 this.prevCommandsIndex = this.prevCommands.length;
