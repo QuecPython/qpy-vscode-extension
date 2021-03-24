@@ -13,3 +13,12 @@ export const supportedBaudRates = [
     '460800',
     '921600'
 ];
+
+export const cmd = {
+    listdir: '[LST]',
+    ilistdir: '[IST]',
+    runScript: '[RUN]',
+    removeFile: '[RMF]',
+    removeDir: '[RMD]',
+    createDir: '[MKD]'
+};

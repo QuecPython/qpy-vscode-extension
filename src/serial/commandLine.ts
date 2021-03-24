@@ -4,6 +4,7 @@ import * as Stream from 'stream';
 
 import * as util from '../utils/utils';
 import { serialEmitter } from './serialBridge';
+import { cmd } from '../utils/constants';
 
 // Text manipulation sequences
 const backspaceRegex = /^\177/;
@@ -41,6 +42,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
     // Flag to distinct internal commands from user commands
     private cmdFlag = false;
+    private cmdFlagLabel = '';
 
     constructor(
         private backendStream: Stream.Duplex,
@@ -67,7 +69,8 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
         if (this.cmdFlag) {
             this.cmdFlag = false;
-                serialEmitter.emit('getFileStats', `${data.toString()}`);
+            serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
+            this.cmdFlagLabel = '';
             return;
         }
 
@@ -95,7 +98,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
         this.updateInputArea();
     };
 
-    protected handleDataAsText(data: string): void {
+    public handleDataAsText(data: string): void {
         const thOld = this.translateHex;
         this.translateHex = true;
         this.handleData(Buffer.from(data));
@@ -121,8 +124,9 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
             charsHandled = 0;
 
-            if (data.slice(0,5) === '[CMD]') {
+            if (Object.values(cmd).includes(`${data.slice(0,5)}`)) {
                 this.cmdFlag = true;
+                this.cmdFlagLabel = data.slice(0,5);
                 this.backendStream.write(util.unescape(data.slice(5)));
                 return;
             }

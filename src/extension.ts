@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import SerialPort from 'SerialPort';
 
 import FirmwareViewProvider from './sidebar/firmwareSidebar';
-import { supportedBaudRates } from './utils/constants';
+import { supportedBaudRates, cmd } from './utils/constants';
 import SerialTerminal from './serial/serialTerminal';
 import * as utils from './utils/utils';
 import { serialEmitter } from './serial/serialBridge';
@@ -179,25 +179,44 @@ export function activate(context: vscode.ExtensionContext) {
 
     const runScript = vscode.commands.registerCommand(
 		'qpy-ide.runScript',
-		() => {
-		    vscode.window.showInformationMessage('Run Script!');
+		(node: ModuleDocument) => {
+            const st = getActiveSerial();
+            st.handleInput(`${cmd.runScript}import example\r\n`);
+            st.handleInput(`${cmd.runScript}example.exec('usr/${node.label}')\r\n`);
 	    }
 	);
 
     const deleteFile = vscode.commands.registerCommand(
 		'qpy-ide.deleteFile',
-		() => {
-		    vscode.window.showInformationMessage('Delete File!');
+		(node: ModuleDocument) => {
+		    const st = getActiveSerial();
+            st.handleInput(`${cmd.removeDir}uos.rmdir('/usr/${node.label}')\r\n`);
 	    }
 	);
 
-    const deleteDir = vscode.commands.registerCommand(
-		'qpy-ide.deleteDir',
-		() => {
-		    vscode.window.showInformationMessage('Delete Directory!');
+    const removeDir = vscode.commands.registerCommand(
+		'qpy-ide.removeDir',
+		(node: ModuleDocument) => {
+		    const st = getActiveSerial();
+            st.handleInput(`${cmd.removeDir}uos.remove('/usr/${node.label}')\r\n`);
 	    }
 	);
 
+    const createDir = vscode.commands.registerCommand(
+		'qpy-ide.createDir',
+		async () => {
+            const fullFilePath = await vscode.window.showInputBox({
+                placeHolder: 'Enter full directory path... (e.g. /usr/test)',
+            });
+
+            if (!fullFilePath) {
+                return;
+            } else {
+                const st = getActiveSerial();
+                st.handleInput(`${cmd.createDir}uos.mkdir('${fullFilePath}')\r\n`);
+            }
+        }
+	);
 
     context.subscriptions.push(
         openConnection,
@@ -209,7 +228,8 @@ export function activate(context: vscode.ExtensionContext) {
         refreshModuleFs,
         runScript,
         deleteFile,
-        deleteDir,
+        removeDir,
+        createDir,
         vscode.window.registerWebviewViewProvider(
 			FirmwareViewProvider.viewType,
 			fwProvider
@@ -227,22 +247,56 @@ export function activate(context: vscode.ExtensionContext) {
         connStatus.tooltip = 'COM Port not Connected';
     });
 
-    serialEmitter.on('getFileStats', (data: string) => {
+    serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
         if (data !== '') {
+            const temp: ModuleDocument[] = [];
             const splitData = data.split(/\r\n/);
             splitData.slice(5, -1).forEach((block: string) => {
-                const splitBlock = block.slice(1, -1).replace(/\'/g, '').split(', ');
-                moduleFsTreeProvider.data.push(new ModuleDocument(
+                const splitBlock = block.slice(1, -1)
+                                        .replace(/\'/g, '')
+                                        .split(', ');
+                // Avoid displaying system files
+                if (splitBlock[0] === 'apn_cfg.json' ||
+                    splitBlock[0] === 'system_config.json') {
+                    return;
+                }
+
+                temp.push(new ModuleDocument(
                     splitBlock[0],
-                    `${splitBlock[3]} B`,
+                    splitBlock[3] === '0' ? '' : `${splitBlock[3]} B`,
                     vscode.TreeItemCollapsibleState.None
                 ));
             });
+            moduleFsTreeProvider.data = temp;
         } else {
             moduleFsTreeProvider.data = [];
         }
 
         moduleFsTreeProvider.refresh();
+    });
+
+    serialEmitter.on(`${cmd.runScript}`, (data: string) => {
+        const jointData = data.split(/\r\n/).slice(2).join('\r\n');
+        const st = getActiveSerial();
+        st.handleDataAsText(`${jointData}`);
+    });
+
+    serialEmitter.on(`${cmd.createDir}`, (_data: string) => {
+        const st = getActiveSerial();
+        setTimeout(() => st.readStatFiles(), 200);
+        st.handleInput('\r\n');
+    });
+
+    serialEmitter.on(`${cmd.removeDir}`, (_data: string) => {
+        const st = getActiveSerial();
+        setTimeout(() => st.readStatFiles(), 200);
+        st.handleInput('\r\n');
+    });
+
+    serialEmitter.on(`${cmd.removeDir}`, (_data: string) => {
+        const st = getActiveSerial();
+        setTimeout(() => st.readStatFiles(), 200);
+        st.handleInput('\r\n');
     });
 }
 

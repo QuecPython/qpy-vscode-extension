@@ -5,10 +5,18 @@ export class ModuleFileSystemProvider implements vscode.TreeDataProvider<ModuleD
 	private _onDidChangeTreeData: vscode.EventEmitter<ModuleDocument | undefined | void> = new vscode.EventEmitter<ModuleDocument | undefined | void>();
 	readonly onDidChangeTreeData: vscode.Event<ModuleDocument | undefined | void> = this._onDidChangeTreeData.event;
 
-	public data: ModuleDocument[];
+	private _data: ModuleDocument[];
 
 	constructor() {
-		this.data = [];
+		this._data = [];
+	}
+
+	public get data() {
+		return this._data;
+	}
+
+	public set data(newData: ModuleDocument[]) {
+		this._data = newData;
 	}
 
 	refresh(): void {
@@ -21,9 +29,9 @@ export class ModuleFileSystemProvider implements vscode.TreeDataProvider<ModuleD
 
 	getChildren(element?: ModuleDocument): Thenable<ModuleDocument[]> {
 		if (element) {
-			return Promise.resolve(this.data);
+			return Promise.resolve(this._data);
 		} else {
-			return Promise.resolve(this.data);
+			return Promise.resolve(this._data);
 		}
 	}
 }
@@ -36,7 +44,7 @@ export class ModuleDocument extends vscode.TreeItem {
 	) {
 		super(label, collapsibleState);
 
-		this.tooltip = `${this.label}-${this.size}`;
+		this.tooltip = `${this.label} ${this.size}`;
 		this.description = this.size;
 	}
 

@@ -1,10 +1,11 @@
 import SerialPort from 'SerialPort';
 import * as vscode from 'vscode';
+import { cmd } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
 
 export default class SerialTerminal extends CommandLineInterface {
-    public serial: SerialPort;
+    private serial: SerialPort;
 
     // Used to automatically attempt to reconnect when device is disconnected
     private reconnectInterval: NodeJS.Timeout | undefined;
@@ -37,7 +38,7 @@ export default class SerialTerminal extends CommandLineInterface {
 
         this.serial.on('close', (err) => {
             serialEmitter.emit('statusDisc');
-            serialEmitter.emit('getFileStats', '');
+            serialEmitter.emit(`${cmd.ilistdir}`, '');
             if (!this.endsWithNewLine) {
                 this.handleDataAsText('\r\n');
             }
@@ -71,19 +72,18 @@ export default class SerialTerminal extends CommandLineInterface {
             if (this.reconnectInterval) {
                 clearInterval(this.reconnectInterval);
             }
-
-            this.onOpenRead();
+            this.readStatFiles();
         });
 
         super.open(initialDimensions);
     }
 
-    private onOpenRead() {
-        this.handleInput(`[CMD]for elem in uos.ilistdir('/usr'):\r\n`);
-        this.handleInput(`[CMD]print(elem)\r\n`);
-        this.handleInput(`[CMD]\r\n`);
-        this.handleInput(`[CMD]\r\n`);
-        this.handleInput(`[CMD]\r\n`);
+    public readStatFiles() {
+        this.handleInput(`${cmd.ilistdir}for elem in uos.ilistdir('/usr'):\r\n`);
+        this.handleInput(`${cmd.ilistdir}print(elem)\r\n`);
+        this.handleInput(`${cmd.ilistdir}\r\n`);
+        this.handleInput(`${cmd.ilistdir}\r\n`);
+        this.handleInput(`${cmd.ilistdir}\r\n`);
     }
 
     close(): void {

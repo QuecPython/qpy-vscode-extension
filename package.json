@@ -83,7 +83,7 @@
 				"title": "Delete File"
 			},
 			{
-				"command": "qpy-ide.deleteDir",
+				"command": "qpy-ide.removeDir",
 				"title": "Delete Directory"
 			},
 			{
@@ -162,7 +162,7 @@
 				  "when": "view == qpyModuleFS && viewItem == moduleDocument"
 				},
 				{
-					"command": "qpy-ide.deleteDir",
+					"command": "qpy-ide.removeDir",
 					"when": "view == qpyModuleFS && viewItem == moduleDocument"
 				}
 			],
