@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import SerialPort from 'SerialPort';
 
 import FirmwareViewProvider from './sidebar/firmwareSidebar';
@@ -21,22 +22,13 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.StatusBarAlignment.Left
 	);
 
-	connStatus.text = `$(plug) Disconnected`;
-    connStatus.tooltip = 'COM Port not Connected';
+    setButtonStatus(connStatus, false);
 	connStatus.show();
 
-	// Commands definition
-
+	// Commands definitions
 	const refreshModuleFs = vscode.commands.registerCommand(
         'qpy-ide.refreshModuleFS',
         () => moduleFsTreeProvider.refresh()
-    );
-
-	const downloadFiles = vscode.commands.registerCommand(
-        'qpy-ide.downloadFiles',
-        () => {
-		    vscode.window.showInformationMessage('FILES TO DOWNLOAD!');
-	    }
     );
 
 	const clearFirmware = vscode.commands.registerCommand(
@@ -186,11 +178,11 @@ export function activate(context: vscode.ExtensionContext) {
 	    }
 	);
 
-    const deleteFile = vscode.commands.registerCommand(
-		'qpy-ide.deleteFile',
+    const removeFile = vscode.commands.registerCommand(
+		'qpy-ide.removeFile',
 		(node: ModuleDocument) => {
 		    const st = getActiveSerial();
-            st.handleInput(`${cmd.removeDir}uos.rmdir('/usr/${node.label}')\r\n`);
+            st.handleInput(`${cmd.removeFile}uos.remove('/usr/${node.label}')\r\n`);
 	    }
 	);
 
@@ -198,9 +190,51 @@ export function activate(context: vscode.ExtensionContext) {
 		'qpy-ide.removeDir',
 		(node: ModuleDocument) => {
 		    const st = getActiveSerial();
-            st.handleInput(`${cmd.removeDir}uos.remove('/usr/${node.label}')\r\n`);
+            st.handleInput(`${cmd.removeDir}uos.rmdir('/usr/${node.label}')\r\n`);
 	    }
 	);
+
+    const downloadFile = vscode.commands.registerCommand(
+        'qpy-ide.downloadFile',
+        (fileUri: vscode.Uri) => {
+            if (utils.isDir(fileUri.fsPath)) {
+                vscode.window.showErrorMessage('Specified target is not a valid file!');
+                return;
+            } else {
+                let data = '';
+                const readStream = fs.createReadStream(fileUri.fsPath, 'utf8');
+
+                readStream.on('data', (chunk) => {
+                    data += chunk;
+                }).on('end', () => {
+                    const filename = fileUri.fsPath.split('\\').pop();
+                    const splitData = data.split(/\r\n/);
+
+                    const stats = fs.statSync(fileUri.fsPath);
+                    const fileSizeInBytes = stats.size;
+
+                    const st = getActiveSerial();
+                    st.handleInput(`${cmd.downloadFile}f = open('/usr/${filename}', 'wb', encoding='utf-8')\r\n`);
+                    st.handleInput(`${cmd.downloadFile}w = f.write\r\n`);
+                    splitData.forEach((dataLine: string) => {
+                        st.handleInput(`${cmd.downloadFile}w(b"${dataLine}\\r\\n")\r\n`);
+                    });
+                    st.handleInput(`${cmd.downloadFile}f.close()\r\n`);
+
+                    removeExistingTreeElem(filename, moduleFsTreeProvider);
+
+                    moduleFsTreeProvider.data.push(
+                        new ModuleDocument(
+                            filename,
+                            `${fileSizeInBytes} B`,
+                            vscode.TreeItemCollapsibleState.None)
+                    );
+                    
+                    moduleFsTreeProvider.refresh();
+                });
+            }
+	    }
+    );
 
     const createDir = vscode.commands.registerCommand(
 		'qpy-ide.createDir',
@@ -224,10 +258,10 @@ export function activate(context: vscode.ExtensionContext) {
         toggleHexTranslationCommand,
         clearCommand,
         clearFirmware,
-        downloadFiles,
+        downloadFile,
         refreshModuleFs,
         runScript,
-        deleteFile,
+        removeFile,
         removeDir,
         createDir,
         vscode.window.registerWebviewViewProvider(
@@ -238,13 +272,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Serial Emitter events
     serialEmitter.on('statusConn', () => {
-        connStatus.text = `$(plug) Connected`;
-        connStatus.tooltip = 'COM Port is Connected';
+        setButtonStatus(connStatus, true);
     });
 
     serialEmitter.on('statusDisc', () => {
-        connStatus.text = `$(plug) Disconnected`;
-        connStatus.tooltip = 'COM Port not Connected';
+        setButtonStatus(connStatus, false);
     });
 
     serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
@@ -276,27 +308,35 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     serialEmitter.on(`${cmd.runScript}`, (data: string) => {
+        if (data.includes('Error')) {
+            vscode.window.showErrorMessage('Failed to execute script!');
+            return;
+        }
         const jointData = data.split(/\r\n/).slice(2).join('\r\n');
         const st = getActiveSerial();
         st.handleDataAsText(`${jointData}`);
     });
 
-    serialEmitter.on(`${cmd.createDir}`, (_data: string) => {
-        const st = getActiveSerial();
-        setTimeout(() => st.readStatFiles(), 200);
-        st.handleInput('\r\n');
+    serialEmitter.on(`${cmd.createDir}`, (data: string) => {
+        if (data.includes('Error')) {
+            vscode.window.showErrorMessage('Directory already exists on given path!');
+            return;
+        }
+        const parsedData = utils.extractFromParentheses(data);
+        moduleFsTreeProvider.data.push(new ModuleDocument(
+            parsedData, '', vscode.TreeItemCollapsibleState.None
+        ));
+        moduleFsTreeProvider.refresh();
     });
 
-    serialEmitter.on(`${cmd.removeDir}`, (_data: string) => {
-        const st = getActiveSerial();
-        setTimeout(() => st.readStatFiles(), 200);
-        st.handleInput('\r\n');
+    serialEmitter.on(`${cmd.removeDir}`, (data: string) => {
+        removeExistingTreeElem(utils.extractFromParentheses(data), moduleFsTreeProvider);
+        moduleFsTreeProvider.refresh();
     });
 
-    serialEmitter.on(`${cmd.removeDir}`, (_data: string) => {
-        const st = getActiveSerial();
-        setTimeout(() => st.readStatFiles(), 200);
-        st.handleInput('\r\n');
+    serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
+        removeExistingTreeElem(utils.extractFromParentheses(data), moduleFsTreeProvider);
+        moduleFsTreeProvider.refresh();
     });
 }
 
@@ -318,4 +358,21 @@ function getActiveSerial(): SerialTerminal | undefined {
 	}
 
 	return terminalRegistry[activeTerminal.name];
+}
+
+function removeExistingTreeElem(param: string, treeProvider: ModuleFileSystemProvider): void {
+    const index = treeProvider.data.findIndex(x => x.label === param);
+        if (index > -1) {
+            treeProvider.data.splice(index, 1);
+        }
+}
+
+function setButtonStatus(connStatus: vscode.StatusBarItem, status: boolean) {
+    if (status) {
+        connStatus.text = `$(plug) Connected`;
+        connStatus.tooltip = 'COM Port is Connected';
+    } else {
+        connStatus.text = `$(plug) Disconnected`;
+        connStatus.tooltip = 'COM Port not Connected';
+    }
 }

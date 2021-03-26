@@ -39,8 +39,8 @@
 				}
 			},
 			{
-				"command": "qpy-ide.downloadFiles",
-				"title": "QPY: Download File(s)",
+				"command": "qpy-ide.downloadFile",
+				"title": "QPY: Download File",
 				"category": "QuecPython"
 			},
 			{
@@ -79,7 +79,7 @@
 				"title": "Run Script"
 			},
 			{
-				"command": "qpy-ide.deleteFile",
+				"command": "qpy-ide.removeFile",
 				"title": "Delete File"
 			},
 			{
@@ -93,7 +93,7 @@
 		],
 		"keybindings": [
 			{
-				"command": "qpy-ide.downloadFiles",
+				"command": "qpy-ide.downloadFile",
 				"key": "ctrl+shift+u"
 			}
 		],
@@ -158,7 +158,7 @@
 				  "when": "view == qpyModuleFS && viewItem == moduleDocument"
 				},
 				{
-				  "command": "qpy-ide.deleteFile",
+				  "command": "qpy-ide.removeFile",
 				  "when": "view == qpyModuleFS && viewItem == moduleDocument"
 				},
 				{
@@ -168,7 +168,7 @@
 			],
 			"explorer/context": [
 				{
-					"command": "qpy-ide.downloadFiles",
+					"command": "qpy-ide.downloadFile",
 					"group": "QuecPython@1"
 				}
 			]

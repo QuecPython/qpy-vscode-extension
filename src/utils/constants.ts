@@ -20,5 +20,6 @@ export const cmd = {
     runScript: '[RUN]',
     removeFile: '[RMF]',
     removeDir: '[RMD]',
-    createDir: '[MKD]'
+    createDir: '[MKD]',
+    downloadFile: '[DWF]'
 };

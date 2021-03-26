@@ -5,7 +5,7 @@ import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
 
 export default class SerialTerminal extends CommandLineInterface {
-    private serial: SerialPort;
+    public serial: SerialPort;
 
     // Used to automatically attempt to reconnect when device is disconnected
     private reconnectInterval: NodeJS.Timeout | undefined;

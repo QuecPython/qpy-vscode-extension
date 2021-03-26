@@ -1,3 +1,6 @@
+
+import * as fs from 'fs';
+
 const escapeRe = /\\(.)/;
 const hexCharRe = /(?<!\\)\\x([a-fA-F0-9]{2})/;
 const uCharRe = /(?<!\\)\\u([a-fA-F0-9]{4})/;
@@ -26,4 +29,21 @@ export function unescape(original: string): string {
         original = original.replace(/\\(.?)/g, '$1');
     }
     return original;
+}
+
+export function extractFromParentheses(data: string): string {
+    return data.match(/\(([^)]+)\)/)[1]
+               .slice(1, -1)
+               .split('/')
+               .pop();
+}
+
+export function isDir(path: string): boolean {
+    try {
+        var stat = fs.lstatSync(path);
+        return stat.isDirectory();
+    } catch (e) {
+        // lstatSync throws an error if path doesn't exist
+        return false;
+    }
 }
