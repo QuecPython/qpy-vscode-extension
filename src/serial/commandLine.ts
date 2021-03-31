@@ -41,8 +41,8 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
     private prevCommandsIndex = 0;
 
     // Flag to distinct internal commands from user commands
-    private cmdFlag = false;
-    private cmdFlagLabel = '';
+    public cmdFlag = false;
+    public cmdFlagLabel = '';
 
     constructor(
         private backendStream: Stream.Duplex,
@@ -68,9 +68,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
         let stringRepr = '';
 
         if (this.cmdFlag) {
-            this.cmdFlag = false;
             serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
-            this.cmdFlagLabel = '';
             return;
         }
 
@@ -125,10 +123,8 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
             charsHandled = 0;
 
             if (Object.values(cmd).includes(`${data.slice(0,5)}`)) {
-                this.cmdFlag = true;
-                this.cmdFlagLabel = data.slice(0,5);
-                const writable = data.slice(0,5) === '[DWF]' ? data.slice(5) :
-                                                               util.unescape(data.slice(5));
+                const writable = data.slice(0,5) === '[IST]' || data.slice(0,5) === '[DWF]' ? data.slice(5) :
+                                                                                              util.unescape(data.slice(5));
                 this.backendStream.write(writable); 
                 return;
             }

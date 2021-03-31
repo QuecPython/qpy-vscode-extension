@@ -1,8 +1,13 @@
 import SerialPort from 'SerialPort';
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 import { cmd } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
+
+const pyFsScriptPath: string = path.join(__dirname, '..', '..', 'config');
+const pyFsScript: string = pyFsScriptPath + '\\q_init_fs.py';
 
 export default class SerialTerminal extends CommandLineInterface {
     public serial: SerialPort;
@@ -79,11 +84,29 @@ export default class SerialTerminal extends CommandLineInterface {
     }
 
     public readStatFiles() {
-        this.handleInput(`${cmd.ilistdir}for elem in uos.ilistdir('/usr'):\r\n`);
-        this.handleInput(`${cmd.ilistdir}print(elem)\r\n`);
-        this.handleInput(`${cmd.ilistdir}\r\n`);
-        this.handleInput(`${cmd.ilistdir}\r\n`);
-        this.handleInput(`${cmd.ilistdir}\r\n`);
+        let data = '';
+        const readStream = fs.createReadStream(pyFsScript, 'utf8');
+
+        readStream.on('data', (chunk) => {
+            data += chunk;
+        }).on('end', () => {
+            const splitData = data.split(/\r\n/);
+            
+            this.cmdFlag = true;
+            this.cmdFlagLabel = cmd.ilistdir;
+
+            this.handleInput(`${cmd.ilistdir}f = open('/usr/q_init_fs.py', 'wb', encoding='utf-8')\r\n`);
+            this.handleInput(`${cmd.ilistdir}w = f.write\r\n`);
+            splitData.forEach((dataLine: string) => {
+                this.handleInput(`${cmd.ilistdir}w(b"${dataLine}\\r\\n")\r\n`);
+            });
+            this.handleInput(`${cmd.ilistdir}f.close()\r\n`);
+
+            this.handleInput(`${cmd.ilistdir}import example\r\n`);
+            this.handleInput(`${cmd.ilistdir}example.exec('usr/q_init_fs.py')\r\n`);
+
+            this.handleInput(`${cmd.ilistdir}uos.remove('/usr/q_init_fs.py')\r\n`);
+        });
     }
 
     close(): void {

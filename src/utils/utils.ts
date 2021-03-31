@@ -31,11 +31,12 @@ export function unescape(original: string): string {
     return original;
 }
 
-export function extractFromParentheses(data: string): string {
-    return data.match(/\(([^)]+)\)/)[1]
-               .slice(1, -1)
-               .split('/')
-               .pop();
+export function extractFilePath(data: string): string {
+    return `/${data.match(/\(([^)]+)\)/)[1]
+                   .slice(1, -1)
+                   .split('/')
+                   .slice(1)
+                   .join('/')}`;
 }
 
 export function isDir(path: string): boolean {

@@ -110,7 +110,7 @@
 			"explorer": [
 				{
 					"id": "qpyModuleFS",
-					"name": "QPY: Module File System"
+					"name": "QPY: File System (usr)"
 				}
 			],
 			"qpy": [

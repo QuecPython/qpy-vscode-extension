@@ -173,8 +173,10 @@ export function activate(context: vscode.ExtensionContext) {
 		'qpy-ide.runScript',
 		(node: ModuleDocument) => {
             const st = getActiveSerial();
+            st.cmdFlag = true;
+            st.cmdFlagLabel = cmd.runScript;
             st.handleInput(`${cmd.runScript}import example\r\n`);
-            st.handleInput(`${cmd.runScript}example.exec('usr/${node.label}')\r\n`);
+            st.handleInput(`${cmd.runScript}example.exec('${node.filePath.slice(1)}')\r\n`);
 	    }
 	);
 
@@ -182,7 +184,9 @@ export function activate(context: vscode.ExtensionContext) {
 		'qpy-ide.removeFile',
 		(node: ModuleDocument) => {
 		    const st = getActiveSerial();
-            st.handleInput(`${cmd.removeFile}uos.remove('/usr/${node.label}')\r\n`);
+            st.cmdFlag = true;
+            st.cmdFlagLabel = cmd.removeFile;
+            st.handleInput(`${cmd.removeFile}uos.remove('${node.filePath}')\r\n`);
 	    }
 	);
 
@@ -190,7 +194,9 @@ export function activate(context: vscode.ExtensionContext) {
 		'qpy-ide.removeDir',
 		(node: ModuleDocument) => {
 		    const st = getActiveSerial();
-            st.handleInput(`${cmd.removeDir}uos.rmdir('/usr/${node.label}')\r\n`);
+            st.cmdFlag = true;
+            st.cmdFlagLabel = cmd.removeDir;
+            st.handleInput(`${cmd.removeDir}uos.rmdir('${node.filePath}')\r\n`);
 	    }
 	);
 
@@ -207,27 +213,33 @@ export function activate(context: vscode.ExtensionContext) {
                 readStream.on('data', (chunk) => {
                     data += chunk;
                 }).on('end', () => {
+                    const st = getActiveSerial();
+                    st.cmdFlag = true;
+                    st.cmdFlagLabel = cmd.downloadFile;
+
                     const filename = fileUri.fsPath.split('\\').pop();
                     const splitData = data.split(/\r\n/);
 
                     const stats = fs.statSync(fileUri.fsPath);
                     const fileSizeInBytes = stats.size;
 
-                    const st = getActiveSerial();
+                    
                     st.handleInput(`${cmd.downloadFile}f = open('/usr/${filename}', 'wb', encoding='utf-8')\r\n`);
                     st.handleInput(`${cmd.downloadFile}w = f.write\r\n`);
+
                     splitData.forEach((dataLine: string) => {
                         st.handleInput(`${cmd.downloadFile}w(b"${dataLine}\\r\\n")\r\n`);
                     });
                     st.handleInput(`${cmd.downloadFile}f.close()\r\n`);
 
-                    removeExistingTreeElem(filename, moduleFsTreeProvider);
+                    removeTreeNodeByName(filename, moduleFsTreeProvider.data);
 
                     moduleFsTreeProvider.data.push(
                         new ModuleDocument(
                             filename,
                             `${fileSizeInBytes} B`,
-                            vscode.TreeItemCollapsibleState.None)
+                            `/usr/${filename}`
+                        )
                     );
                     
                     moduleFsTreeProvider.refresh();
@@ -247,6 +259,8 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             } else {
                 const st = getActiveSerial();
+                st.cmdFlag = true;
+                st.cmdFlagLabel = cmd.createDir;
                 st.handleInput(`${cmd.createDir}uos.mkdir('${fullFilePath}')\r\n`);
             }
         }
@@ -277,66 +291,99 @@ export function activate(context: vscode.ExtensionContext) {
 
     serialEmitter.on('statusDisc', () => {
         setButtonStatus(connStatus, false);
-    });
-
-    serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
-        if (data !== '') {
-            const temp: ModuleDocument[] = [];
-            const splitData = data.split(/\r\n/);
-            splitData.slice(5, -1).forEach((block: string) => {
-                const splitBlock = block.slice(1, -1)
-                                        .replace(/\'/g, '')
-                                        .split(', ');
-                // Avoid displaying system files
-                if (splitBlock[0] === 'apn_cfg.json' ||
-                    splitBlock[0] === 'system_config.json') {
-                    return;
-                }
-
-                temp.push(new ModuleDocument(
-                    splitBlock[0],
-                    splitBlock[3] === '0' ? '' : `${splitBlock[3]} B`,
-                    vscode.TreeItemCollapsibleState.None
-                ));
-            });
-            moduleFsTreeProvider.data = temp;
-        } else {
-            moduleFsTreeProvider.data = [];
-        }
-
+        moduleFsTreeProvider.data = [];
         moduleFsTreeProvider.refresh();
     });
 
+    serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
+        let stringToParse: string;
+        if (data.includes(`uos.remove`)) {
+            const splitData = data.split(/\r\n/);
+            splitData.forEach((dataLine: string) => {
+                if (dataLine.includes('[{')) {
+                    stringToParse = dataLine;
+                }
+            });
+
+            stringToParse = stringToParse.replace(/'/g,'"');
+            const dataArr = JSON.parse(stringToParse);
+            
+            moduleFsTreeProvider.data = initTree(dataArr);
+            moduleFsTreeProvider.refresh();
+
+            const st = getActiveSerial();
+            st.cmdFlag = false;
+            st.cmdFlagLabel = '';
+        }
+    });
+
     serialEmitter.on(`${cmd.runScript}`, (data: string) => {
+        const st = getActiveSerial();
+        st.cmdFlag = false;
+        st.cmdFlagLabel = '';
+
         if (data.includes('Error')) {
             vscode.window.showErrorMessage('Failed to execute script!');
             return;
         }
+
         const jointData = data.split(/\r\n/).slice(2).join('\r\n');
-        const st = getActiveSerial();
-        st.handleDataAsText(`${jointData}`);
+        st.handleDataAsText(`${jointData}`);        
     });
 
     serialEmitter.on(`${cmd.createDir}`, (data: string) => {
         if (data.includes('Error')) {
-            vscode.window.showErrorMessage('Directory already exists on given path!');
+            vscode.window.showErrorMessage('Unable to create directory!');
             return;
         }
-        const parsedData = utils.extractFromParentheses(data);
-        moduleFsTreeProvider.data.push(new ModuleDocument(
-            parsedData, '', vscode.TreeItemCollapsibleState.None
-        ));
-        moduleFsTreeProvider.refresh();
+
+        const parsedData = data.match(/\(([^)]+)\)/)[1]
+                               .slice(1, -1)
+                               .split('/')
+                               .slice(1);
+
+        const parentPath = `/${parsedData.slice(0, -1).join('/')}`;
+        const newDirName = parsedData.pop();
+        const newDir = new ModuleDocument(newDirName, '', `${parentPath}/${newDirName}`, []);
+        const parentDir = findTreeNode(moduleFsTreeProvider.data, parentPath);
+
+        if (parentDir) {
+            parentDir.children.push(newDir);
+            moduleFsTreeProvider.refresh();
+        } else {
+            vscode.window.showErrorMessage('Unable to create directory!');
+            return;
+        }
+
+        const st = getActiveSerial();
+        st.cmdFlag = false;
+        st.cmdFlagLabel = '';
     });
 
     serialEmitter.on(`${cmd.removeDir}`, (data: string) => {
-        removeExistingTreeElem(utils.extractFromParentheses(data), moduleFsTreeProvider);
+        const parsedData = utils.extractFilePath(data);
+        removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
         moduleFsTreeProvider.refresh();
+        const st = getActiveSerial();
+        st.cmdFlag = false;
+        st.cmdFlagLabel = '';
     });
 
     serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
-        removeExistingTreeElem(utils.extractFromParentheses(data), moduleFsTreeProvider);
+        const parsedData = utils.extractFilePath(data);
+        removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
         moduleFsTreeProvider.refresh();
+        const st = getActiveSerial();
+        st.cmdFlag = false;
+        st.cmdFlagLabel = '';
+    });
+
+    serialEmitter.on(`${cmd.downloadFile}`, (data: string) => {
+        if (data.includes('close')) {
+            const st = getActiveSerial();
+            st.cmdFlag = false;
+            st.cmdFlagLabel = '';
+        }
     });
 }
 
@@ -360,10 +407,10 @@ function getActiveSerial(): SerialTerminal | undefined {
 	return terminalRegistry[activeTerminal.name];
 }
 
-function removeExistingTreeElem(param: string, treeProvider: ModuleFileSystemProvider): void {
-    const index = treeProvider.data.findIndex(x => x.label === param);
+function removeTreeNodeByName(param: string, documents: ModuleDocument[]): void {
+    const index = documents.findIndex((doc: ModuleDocument) => doc.label === param);
         if (index > -1) {
-            treeProvider.data.splice(index, 1);
+            documents.splice(index, 1);
         }
 }
 
@@ -375,4 +422,44 @@ function setButtonStatus(connStatus: vscode.StatusBarItem, status: boolean) {
         connStatus.text = `$(plug) Disconnected`;
         connStatus.tooltip = 'COM Port not Connected';
     }
+}
+
+function initTree(array: Object[]): ModuleDocument[] {
+    const initialTree: ModuleDocument[] = [];
+
+    array.forEach((doc: any) => {
+        if (!doc.sub) {
+            initialTree.push(new ModuleDocument(doc.name, doc.size, doc.path));
+        } else {
+            doc.sub = initTree(doc.sub);
+            initialTree.push(new ModuleDocument(doc.name, doc.size, doc.path, doc.sub));
+        }
+    });
+
+    return initialTree;
+}
+
+function removeTreeNodeByPath(documents: ModuleDocument[], path: string): void {
+    const index = documents.findIndex(doc => doc.filePath === path);
+    if (index === -1) {
+        documents.forEach(doc => doc.children && removeTreeNodeByPath(doc.children, path));
+    } else {
+        documents.splice(index, 1);
+    }
+}
+
+function findTreeNode(documents: ModuleDocument[], path: string): ModuleDocument | undefined {
+    let foundDir = documents.find((doc: ModuleDocument) => doc.filePath === path);
+    if (!foundDir) {
+        for(let i = 0; i < documents.length; i++) {
+            if (documents[i].children) {
+                foundDir = findTreeNode(documents[i].children, path);
+                if (foundDir) {
+                    return foundDir;
+                }
+            }
+        }
+    }
+
+    return foundDir;
 }

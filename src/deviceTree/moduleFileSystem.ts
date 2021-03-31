@@ -8,7 +8,7 @@ export class ModuleFileSystemProvider implements vscode.TreeDataProvider<ModuleD
 	private _data: ModuleDocument[];
 
 	constructor() {
-		this._data = [];
+        this._data = [];
 	}
 
 	public get data() {
@@ -27,30 +27,36 @@ export class ModuleFileSystemProvider implements vscode.TreeDataProvider<ModuleD
 		return element;
 	}
 
-	getChildren(element?: ModuleDocument): Thenable<ModuleDocument[]> {
-		if (element) {
-			return Promise.resolve(this._data);
-		} else {
-			return Promise.resolve(this._data);
-		}
-	}
+	getChildren(element?: ModuleDocument|undefined): vscode.ProviderResult<ModuleDocument[]> {
+        if (element === undefined) {
+            return this._data;
+        }
+
+        return element.children;
+    }
 }
 
 export class ModuleDocument extends vscode.TreeItem {
 	constructor(
 		public readonly label: string,
 		private readonly size: string,
-		public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly filePath: string,
+        public children?: ModuleDocument[]
 	) {
-		super(label, collapsibleState);
+		super(
+            label,
+            children === undefined ? vscode.TreeItemCollapsibleState.None :
+                                 vscode.TreeItemCollapsibleState.Expanded
+        );
 
-		this.tooltip = `${this.label} ${this.size}`;
+		this.tooltip = children === undefined ? this.label : `${this.label} ${this.size}`;
 		this.description = this.size;
+        this.children = children;
 	}
 
 	iconPath = {
-		light: path.join(__filename, '..', '..', '..', 'resources', 'light', 'document.svg'),
-		dark: path.join(__filename, '..', '..', '..', 'resources', 'dark', 'document.svg')
+		light: path.join(__filename, '..', '..', '..', 'resources', 'light', !this.children ? this.label.includes('.py')? 'python.svg' : 'document.svg' : 'folder.svg'),
+		dark: path.join(__filename, '..', '..', '..', 'resources', 'dark', !this.children ? this.label.includes('.py')? 'python.svg' : 'document.svg' : 'folder.svg')
 	};
 
 	contextValue = 'moduleDocument';
