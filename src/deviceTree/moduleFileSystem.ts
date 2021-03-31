@@ -46,7 +46,7 @@ export class ModuleDocument extends vscode.TreeItem {
 		super(
             label,
             children === undefined ? vscode.TreeItemCollapsibleState.None :
-                                 vscode.TreeItemCollapsibleState.Expanded
+                                 vscode.TreeItemCollapsibleState.Collapsed
         );
 
 		this.tooltip = children === undefined ? this.label : `${this.label} ${this.size}`;
