@@ -24,7 +24,7 @@ export default class FirmwareViewProvider implements vscode.WebviewViewProvider 
 		this._view = webviewView;
 
 		webviewView.webview.options = {
-			// Allow scripts in the webview
+			// allow scripts in the webview
 			enableScripts: true,
 
 			localResourceRoots: [
@@ -94,15 +94,15 @@ export default class FirmwareViewProvider implements vscode.WebviewViewProvider 
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview) {
-		// Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
+		// get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webviews', 'firmware', 'main.js'));
 
-		// Do the same for the stylesheet.
+		// do the same for the stylesheet.
 		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webviews', 'firmware', 'reset.css'));
 		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webviews', 'firmware', 'vscode.css'));
 		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webviews', 'firmware', 'main.css'));
 
-		// Use a nonce to only allow a specific script to be run.
+		// use a nonce to only allow a specific script to be run.
 		const nonce = getNonce();
 
 		return `<!DOCTYPE html>

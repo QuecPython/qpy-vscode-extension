@@ -12,7 +12,7 @@ const pyFsScript: string = pyFsScriptPath + '\\q_init_fs.py';
 export default class SerialTerminal extends CommandLineInterface {
     public serial: SerialPort;
 
-    // Used to automatically attempt to reconnect when device is disconnected
+    // used to automatically attempt to reconnect when device is disconnected
     private reconnectInterval: NodeJS.Timeout | undefined;
 
     constructor(
@@ -50,10 +50,10 @@ export default class SerialTerminal extends CommandLineInterface {
 
             this.handleDataAsText('Port closed.');
             if (err?.disconnected) {
-                // Device was disconnected, attempt to reconnect
+                // device was disconnected, attempt to reconnect
                 this.handleDataAsText('Device disconnected.');
                 this.reconnectInterval = setInterval(async () => {
-                    // Attempt to reopen
+                    // attempt to reopen
                     const availablePorts = await SerialPort.list();
                     for (const port of availablePorts) {
                         if (port.path === this.serial.path) {

@@ -9,7 +9,7 @@ import * as utils from './utils/utils';
 import { serialEmitter } from './serial/serialBridge';
 import { ModuleDocument, ModuleFileSystemProvider } from './deviceTree/moduleFileSystem';
 
-// Lookup table for linking vscode terminals to SerialTerminal instances
+// lookup table for linking vscode terminals to SerialTerminal instances
 export const terminalRegistry: { [key: string]: SerialTerminal } = {};
 
 export function activate(context: vscode.ExtensionContext) {
@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     setButtonStatus(connStatus, false);
 	connStatus.show();
 
-	// Commands definitions
+	// commands definitions
 	const refreshModuleFs = vscode.commands.registerCommand(
         'qpy-ide.refreshModuleFS',
         () => moduleFsTreeProvider.refresh()
@@ -46,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
             translateHex?: boolean,
             lineEnd?: string
         ) => {
-            // Resolve port path
+            // resolve port path
             let chosenPortPath: string | undefined = portPath;
             if (!chosenPortPath) {
                 const ports = await SerialPort.list();
@@ -65,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             }
 
-            // Resolve baud rate
+            // resolve baud rate
             let chosenBaud: number | undefined = baudRate;
             if (!chosenBaud) {
                 let chosenBaudString: string | undefined = await vscode.window.showQuickPick(
@@ -100,11 +100,11 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            // Figure out if hex from the com port should be converted to text
+            // figure out if hex from the com port should be converted to text
             const wsConfig = vscode.workspace.getConfiguration();
             translateHex = translateHex ?? wsConfig.get('QuecPython.translateHex') ?? true;
 
-            // Resolve line terminator
+            // resolve line terminator
             const configDLT: string | undefined = wsConfig.get(
                 'QuecPython.defaultLineTerminator'
             );
@@ -284,7 +284,7 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // Serial Emitter events
+    // serial emitter events
     serialEmitter.on('statusConn', () => {
         setButtonStatus(connStatus, true);
     });
@@ -389,6 +389,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {}
 
+// vscode component manipulation methods
 function getActiveSerial(): SerialTerminal | undefined {
 	const activeTerminal = vscode.window.activeTerminal;
 
@@ -407,13 +408,6 @@ function getActiveSerial(): SerialTerminal | undefined {
 	return terminalRegistry[activeTerminal.name];
 }
 
-function removeTreeNodeByName(param: string, documents: ModuleDocument[]): void {
-    const index = documents.findIndex((doc: ModuleDocument) => doc.label === param);
-        if (index > -1) {
-            documents.splice(index, 1);
-        }
-}
-
 function setButtonStatus(connStatus: vscode.StatusBarItem, status: boolean) {
     if (status) {
         connStatus.text = `$(plug) Connected`;
@@ -422,6 +416,14 @@ function setButtonStatus(connStatus: vscode.StatusBarItem, status: boolean) {
         connStatus.text = `$(plug) Disconnected`;
         connStatus.tooltip = 'COM Port not Connected';
     }
+}
+
+// tree manipulation methods
+function removeTreeNodeByName(param: string, documents: ModuleDocument[]): void {
+    const index = documents.findIndex((doc: ModuleDocument) => doc.label === param);
+        if (index > -1) {
+            documents.splice(index, 1);
+        }
 }
 
 function initTree(array: Object[]): ModuleDocument[] {

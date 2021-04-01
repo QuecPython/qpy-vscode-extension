@@ -6,41 +6,41 @@ import * as util from '../utils/utils';
 import { serialEmitter } from './serialBridge';
 import { cmd } from '../utils/constants';
 
-// Text manipulation sequences
+// text manipulation sequences
 const backspaceRegex = /^\177/;
 const enterRegex = /^\r/;
 const deleteRegex = /^\033\[3~/;
 
-// Navigation sequences
+// navigation sequences
 const arrowRegex = /^\033\[([ABCD])/;
 const gotoEndRegex = /^\033\[([HF])/; //End and Home
 
 const cursorReportRegex = /^\033\[(\d+);(\d+)R/;
 
 export abstract class CommandLineInterface implements vscode.Pseudoterminal {
-    // Fire to write to terminal
+    // fire to write to terminal
     protected writeEmitter = new vscode.EventEmitter<string>();
     onDidWrite: vscode.Event<string> = this.writeEmitter.event;
 
-    // Fire to close terminal
+    // fire to close terminal
     protected closeEmitter = new vscode.EventEmitter<void>();
     onDidClose?: vscode.Event<number | void> | undefined = this.closeEmitter.event;
 
-    // Properties used for tracking and rendering terminal input
+    // properties used for tracking and rendering terminal input
     private currentInputLine = '';
     private inputIndex = 0;
 
-    // Properties used for tracking data
+    // properties used for tracking data
     protected endsWithNewLine = false;
 
-    // Current size of terminal. Used for detecting line wraps to allow multi-line input
+    // current size of terminal. Used for detecting line wraps to allow multi-line input
     private dimensions: vscode.TerminalDimensions | undefined;
 
-    // Keeps track of already sent data to enable arrow up/down to scroll through it
+    // keeps track of already sent data to enable arrow up/down to scroll through it
     private prevCommands: string[] = [];
     private prevCommandsIndex = 0;
 
-    // Flag to distinct internal commands from user commands
+    // flag to distinct internal commands from user commands
     public cmdFlag = false;
     public cmdFlagLabel = '';
 
@@ -84,7 +84,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
             }
         }
 
-        // Checks if data ends on a clean line. Used for layout
+        // checks if data ends on a clean line (used for layout)
         if (/(?:\r+\n+[\n\r]*)|(?:\n+\r+[\n\r]*)$/.test(stringRepr)) {
             this.endsWithNewLine = true;
         } else {
@@ -108,10 +108,10 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
         let charsHandled = 0;
 
         while (data.length > 0) {
-            // Remove handled data
+            // remove handled data
             if (!firstRun && charsHandled === 0) {
                 break;
-            } //No data was handled, break to prevent infinite loop
+            } // no data was handled, break to prevent infinite loop
 
             firstRun = false;
             data = data.substr(charsHandled);
@@ -129,7 +129,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                 return;
             }
 
-            //// Handle enter
+            //// handle enter
             const enterMatch: RegExpMatchArray | null = enterRegex.exec(data);
             if (enterMatch) {
                 if (
@@ -146,10 +146,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                     this.handleDataAsText('\r\n');
                 }
 
-                // THIS SHOWS ECHO COMMAND
-                // this.handleDataAsText(this.currentInputLine + '\r\n');
-
-                // THIS SHOWS WHAT YOU'VE WRITTEN IN THE CURRENT LINE
+                // this shows whats written on the current line
                 this.backendStream.write(util.unescape(this.currentInputLine) + this.lineEnd);
 
                 this.prevCommandsIndex = this.prevCommands.length;
@@ -160,7 +157,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                 continue;
             }
 
-            //// Handle backspace
+            //// handle backspace
             const backspaceMatch: RegExpMatchArray = backspaceRegex.exec(data) ?? [];
             if (backspaceMatch.length > 0) {
                 if (this.inputIndex > 0) {
@@ -174,7 +171,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                 continue;
             }
 
-            //// Handle delete
+            //// handle delete
             const deleteMatch: RegExpMatchArray = deleteRegex.exec(data) ?? [];
             if (deleteMatch.length > 0) {
                 if (this.inputIndex <= this.currentInputLine.length) {
@@ -187,7 +184,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                 continue;
             }
 
-            //// Handle arrows
+            //// handle arrows
             const arrowMatches: RegExpMatchArray = arrowRegex.exec(data) ?? [];
             for (const arrow of arrowMatches) {
                 switch (arrow) {
@@ -241,7 +238,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                 continue;
             }
 
-            //// Handle home and end
+            //// handle home and end
             const gotoEndMatch = gotoEndRegex.exec(data);
             if (gotoEndMatch && gotoEndMatch.length > 1) {
                 switch (gotoEndMatch[1]) {
@@ -259,14 +256,14 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                 continue;
             }
 
-            //// Handle cursor position reports
+            //// handle cursor position reports
             const crMatch = cursorReportRegex.exec(data);
             if (crMatch && crMatch.length >= 3) {
                 charsHandled = crMatch[0].length;
                 continue;
             }
 
-            //// Handle all other characters
+            //// handle all other characters
             const char: string = data.charAt(0);
             this.inputIndex++;
             this.currentInputLine =
