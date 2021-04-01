@@ -182,7 +182,8 @@
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js",
 		"rebuild": "electron-rebuild -f -w serialport",
-		"dev:rebuild": "electron-rebuild --version 11.3.0 --force"
+		"dev:rebuild": "electron-rebuild --version 11.3.0 --force",
+		"postinstall": "electron-rebuild --version 11.3.0 --force"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.3",
