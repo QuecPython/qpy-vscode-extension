@@ -207,25 +207,24 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage('Specified target is not a valid file!');
                 return;
             } else {
+                const st = getActiveSerial();
+                st.cmdFlag = true;
+                st.cmdFlagLabel = cmd.downloadFile;
+                const filename = fileUri.fsPath.split('\\').pop();
+
+                const stats = fs.statSync(fileUri.fsPath);
+                const fileSizeInBytes = stats.size;
+
                 let data = '';
                 const readStream = fs.createReadStream(fileUri.fsPath, 'utf8');
+
+                st.handleInput(`${cmd.downloadFile}f = open('/usr/${filename}', 'wb')\r\n`);
+                st.handleInput(`${cmd.downloadFile}w = f.write\r\n`);
 
                 readStream.on('data', (chunk) => {
                     data += chunk;
                 }).on('end', () => {
-                    const st = getActiveSerial();
-                    st.cmdFlag = true;
-                    st.cmdFlagLabel = cmd.downloadFile;
-
-                    const filename = fileUri.fsPath.split('\\').pop();
                     const splitData = data.split(/\r\n/);
-
-                    const stats = fs.statSync(fileUri.fsPath);
-                    const fileSizeInBytes = stats.size;
-
-                    
-                    st.handleInput(`${cmd.downloadFile}f = open('/usr/${filename}', 'wb', encoding='utf-8')\r\n`);
-                    st.handleInput(`${cmd.downloadFile}w = f.write\r\n`);
 
                     splitData.forEach((dataLine: string) => {
                         st.handleInput(`${cmd.downloadFile}w(b"${dataLine}\\r\\n")\r\n`);
@@ -241,7 +240,7 @@ export function activate(context: vscode.ExtensionContext) {
                             `/usr/${filename}`
                         )
                     );
-                    
+
                     moduleFsTreeProvider.refresh();
                 });
             }
