@@ -227,7 +227,8 @@ export function activate(context: vscode.ExtensionContext) {
                     const splitData = data.split(/\r\n/);
 
                     splitData.forEach((dataLine: string) => {
-                        st.handleInput(`${cmd.downloadFile}w(b"${dataLine}\\r\\n")\r\n`);
+                        const rawData = String.raw`${dataLine + '\\r\\n'}`;
+                        st.handleInput(`${cmd.downloadFile}w(b'''${rawData}''')\r\n`);
                     });
                     st.handleInput(`${cmd.downloadFile}f.close()\r\n`);
 
@@ -378,6 +379,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     serialEmitter.on(`${cmd.downloadFile}`, (data: string) => {
+        console.log(data);
         if (data.includes('close')) {
             const st = getActiveSerial();
             st.cmdFlag = false;

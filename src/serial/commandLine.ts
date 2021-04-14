@@ -123,7 +123,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
             charsHandled = 0;
 
             if (Object.values(cmd).includes(`${data.slice(0,5)}`)) {
-                const writable = data.slice(0,5) === '[IST]' || data.slice(0,5) === '[DWF]' ? data.slice(5) :
+                const writable = data.slice(0,5) === cmd.ilistdir || data.slice(0,5) === cmd.downloadFile ? data.slice(5) :
                                                                                               util.unescape(data.slice(5));
                 this.backendStream.write(writable); 
                 return;
