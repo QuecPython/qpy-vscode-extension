@@ -172,7 +172,13 @@
 				  "group": "QuecPython@1"
 				}
 			]
-		}
+		},
+		"snippets": [
+            {
+                "language": "python",
+                "path": "./snippets/QuecPython.json"
+            }
+        ]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
