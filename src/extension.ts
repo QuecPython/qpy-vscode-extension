@@ -28,7 +28,11 @@ export function activate(context: vscode.ExtensionContext) {
 	// commands definitions
 	const refreshModuleFs = vscode.commands.registerCommand(
         'qpy-ide.refreshModuleFS',
-        () => moduleFsTreeProvider.refresh()
+        () => {
+            const st = getActiveSerial();
+            st.readStatFiles();
+            moduleFsTreeProvider.refresh();
+        }
     );
 
 	const clearFirmware = vscode.commands.registerCommand(
@@ -207,6 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage('Specified target is not a valid file!');
                 return;
             } else {
+                const data = fs.readFileSync(fileUri.fsPath);
                 const st = getActiveSerial();
                 st.cmdFlag = true;
                 st.cmdFlagLabel = cmd.downloadFile;
@@ -215,35 +220,28 @@ export function activate(context: vscode.ExtensionContext) {
                 const stats = fs.statSync(fileUri.fsPath);
                 const fileSizeInBytes = stats.size;
 
-                let data = '';
-                const readStream = fs.createReadStream(fileUri.fsPath, 'utf8');
+                st.serial.flush(() => st.serial.write(`f = open('/usr/${filename}', 'wb')\r\n`));
+                st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
 
-                st.handleInput(`${cmd.downloadFile}f = open('/usr/${filename}', 'wb')\r\n`);
-                st.handleInput(`${cmd.downloadFile}w = f.write\r\n`);
-
-                readStream.on('data', (chunk) => {
-                    data += chunk;
-                }).on('end', () => {
-                    const splitData = data.split(/\r\n/);
-
-                    splitData.forEach((dataLine: string) => {
-                        const rawData = String.raw`${dataLine + '\\r\\n'}`;
-                        st.handleInput(`${cmd.downloadFile}w(b'''${rawData}''')\r\n`);
-                    });
-                    st.handleInput(`${cmd.downloadFile}f.close()\r\n`);
-
-                    removeTreeNodeByName(filename, moduleFsTreeProvider.data);
-
-                    moduleFsTreeProvider.data.push(
-                        new ModuleDocument(
-                            filename,
-                            `${fileSizeInBytes} B`,
-                            `/usr/${filename}`
-                        )
-                    );
-
-                    moduleFsTreeProvider.refresh();
+                const splitData = data.toString().split(/\r\n/);
+                splitData.forEach((dataLine: string, index: number) => {
+                    const rawData = String.raw`${dataLine + '\\r\\n'}`;
+                    setTimeout(() => st.serial.flush(() => st.serial.write(`w(b'''${rawData}''')\r\n`)), 100 + index * 10);
                 });
+
+                setTimeout(() => st.serial.flush(() => st.serial.write(`f.close()\r\n`)), 100 + (splitData.length + 1) * 10);
+
+                removeTreeNodeByName(filename, moduleFsTreeProvider.data);
+
+                moduleFsTreeProvider.data.push(
+                    new ModuleDocument(
+                        filename,
+                        `${fileSizeInBytes} B`,
+                        `/usr/${filename}`
+                    )
+                );
+
+                moduleFsTreeProvider.refresh();
             }
 	    }
     );
@@ -379,7 +377,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     serialEmitter.on(`${cmd.downloadFile}`, (data: string) => {
-        console.log(data);
+        // console.log(data);
         if (data.includes('close')) {
             const st = getActiveSerial();
             st.cmdFlag = false;
