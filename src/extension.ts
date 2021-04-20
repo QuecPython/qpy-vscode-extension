@@ -208,7 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
         'qpy-ide.downloadFile',
         (fileUri: vscode.Uri) => {
             if (utils.isDir(fileUri.fsPath)) {
-                vscode.window.showErrorMessage('Specified target is not a valid file!');
+                vscode.window.showErrorMessage('Specified target is not a valid file.');
                 return;
             } else {
                 const data = fs.readFileSync(fileUri.fsPath);
@@ -255,11 +255,17 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (!fullFilePath) {
                 return;
-            } else {
+            }
+            
+            if (fullFilePath.startsWith('/usr/')) {
                 const st = getActiveSerial();
                 st.cmdFlag = true;
                 st.cmdFlagLabel = cmd.createDir;
                 st.handleInput(`${cmd.createDir}uos.mkdir('${fullFilePath}')\r\n`);
+            }
+            else {
+                vscode.window.showErrorMessage('Invalid directory path.');
+                return;
             }
         }
 	);
@@ -321,7 +327,7 @@ export function activate(context: vscode.ExtensionContext) {
         st.cmdFlagLabel = '';
 
         if (data.includes('Error')) {
-            vscode.window.showErrorMessage('Failed to execute script!');
+            vscode.window.showErrorMessage('Failed to execute script.');
             return;
         }
 
@@ -330,8 +336,8 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     serialEmitter.on(`${cmd.createDir}`, (data: string) => {
-        if (data.includes('Error')) {
-            vscode.window.showErrorMessage('Unable to create directory!');
+        if (data.includes('Traceback')) {
+            vscode.window.showErrorMessage('Unable to create directory.');
             return;
         }
 
@@ -349,7 +355,7 @@ export function activate(context: vscode.ExtensionContext) {
             parentDir.children.push(newDir);
             moduleFsTreeProvider.refresh();
         } else {
-            vscode.window.showErrorMessage('Unable to create directory!');
+            vscode.window.showErrorMessage('Unable to create directory.');
             return;
         }
 
@@ -393,13 +399,13 @@ function getActiveSerial(): SerialTerminal | undefined {
 	const activeTerminal = vscode.window.activeTerminal;
 
 	if (activeTerminal === undefined) {
-		vscode.window.showErrorMessage('No QPY device connected!');
+		vscode.window.showErrorMessage('No QPY device connected.');
 		return;
 	}
 
 	if (!Object.keys(terminalRegistry).includes(activeTerminal.name)) {
 		vscode.window.showErrorMessage(
-			'Active terminal is not a registered serial terminal!'
+			'Active terminal is not a registered serial terminal.'
 		);
 		return;
 	}
