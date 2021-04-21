@@ -400,14 +400,20 @@ export function activate(context: vscode.ExtensionContext) {
 			`${parentPath}/${newDirName}`,
 			[]
 		);
-		const parentDir = findTreeNode(moduleFsTreeProvider.data, parentPath);
 
-		if (parentDir) {
-			parentDir.children.push(newDir);
+		if (parentPath === '/usr') {
+			moduleFsTreeProvider.data.push(newDir);
 			moduleFsTreeProvider.refresh();
 		} else {
-			vscode.window.showErrorMessage('Unable to create directory.');
-			return;
+			const parentDir = findTreeNode(moduleFsTreeProvider.data, parentPath);
+
+			if (parentDir) {
+				parentDir.children.push(newDir);
+				moduleFsTreeProvider.refresh();
+			} else {
+				vscode.window.showErrorMessage('Unable to create directory.');
+				return;
+			}
 		}
 
 		const st = getActiveSerial();
