@@ -12,6 +12,7 @@ import {
 	ModuleFileSystemProvider,
 } from './deviceTree/moduleFileSystem';
 
+
 // lookup table for linking vscode terminals to SerialTerminal instances
 export const terminalRegistry: { [key: string]: SerialTerminal } = {};
 
@@ -232,19 +233,30 @@ export function activate(context: vscode.ExtensionContext) {
 				st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
 
 				const splitData = data.toString().split(/\r\n/);
+
+				serialEmitter.emit('startProgress');
 				splitData.forEach((dataLine: string, index: number) => {
 					const rawData = String.raw`${dataLine + '\\r\\n'}`;
 					setTimeout(
 						() =>
-							st.serial.flush(() =>
-								st.serial.write(`w(b'''${rawData}''')\r\n`)
-							),
+							st.serial.flush(() => {
+								st.serial.write(`w(b'''${rawData}''')\r\n`);
+                                const updatePaylod = {
+                                    index,
+                                    dataLen: splitData.length
+                                };
+								serialEmitter.emit('updatePercentage', updatePaylod);
+							}),
 						100 + index * 10
 					);
 				});
 
 				setTimeout(
-					() => st.serial.flush(() => st.serial.write(`f.close()\r\n`)),
+					() =>
+						st.serial.flush(() => {
+							st.serial.write(`f.close()\r\n`);
+							serialEmitter.emit('downloadFinished');
+						}),
 					100 + (splitData.length + 1) * 10
 				);
 
@@ -413,6 +425,10 @@ export function activate(context: vscode.ExtensionContext) {
 			st.cmdFlagLabel = '';
 		}
 	});
+
+	serialEmitter.on('startProgress', () => {
+		progressBar();
+	});
 }
 
 export function deactivate() {}
@@ -504,4 +520,56 @@ function findTreeNode(
 	}
 
 	return foundDir;
+}
+
+function updateProgressBar(
+	progress: vscode.Progress<{ message?: string; increment?: number }>,
+	token: vscode.CancellationToken
+): Promise<void> {
+	return new Promise<void>(resolve => {
+		if (token.isCancellationRequested) {
+			return;
+		}
+
+		let messageUpdate = 'Starting download.';
+		let timerUpdate = 500;
+		const interval = setInterval(
+			() => progress.report({ message: messageUpdate }),
+			timerUpdate
+		);
+
+		let childProcess = serialEmitter.on('downloadFinished', () => {
+			resolve();
+			clearInterval(interval);
+		});
+
+		childProcess.on('updatePercentage', data => {
+			const p = percentageParser(data.dataLen, data.index);
+			messageUpdate = p.toString() + '%';
+		});
+
+		token.onCancellationRequested(_ => resolve());
+	});
+}
+
+function progressBar() {
+	vscode.window.withProgress(
+		{
+			location: vscode.ProgressLocation.Notification,
+			title: 'Downloading file',
+			cancellable: false,
+		},
+		async (progress, token) => {
+			token.onCancellationRequested(() => {
+                vscode.window.showInformationMessage('User canceled file download.');
+			});
+			return updateProgressBar(progress, token);
+		}
+	);
+}
+
+function percentageParser(total: number, step: number): number {
+	const percentDecimal = (step * 100) / total;
+	const percent = Math.round(percentDecimal);
+	return percent;
 }
