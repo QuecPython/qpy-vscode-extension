@@ -407,7 +407,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	serialEmitter.on(`${cmd.downloadFile}`, (data: string) => {
-		// console.log(data);
 		if (data.includes('close')) {
 			const st = getActiveSerial();
 			st.cmdFlag = false;
