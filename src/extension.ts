@@ -12,7 +12,6 @@ import {
 	ModuleFileSystemProvider,
 } from './deviceTree/moduleFileSystem';
 
-
 // lookup table for linking vscode terminals to SerialTerminal instances
 export const terminalRegistry: { [key: string]: SerialTerminal } = {};
 
@@ -25,6 +24,14 @@ export function activate(context: vscode.ExtensionContext) {
 	const connStatus = vscode.window.createStatusBarItem(
 		vscode.StatusBarAlignment.Left
 	);
+
+	const downloadScript = vscode.window.createStatusBarItem(
+		vscode.StatusBarAlignment.Left
+	);
+
+	setButtonDownload(downloadScript);
+	downloadScript.show();
+	downloadScript.command = 'qpy-ide.downloadFile';
 
 	setButtonStatus(connStatus, false);
 	connStatus.show();
@@ -214,17 +221,25 @@ export function activate(context: vscode.ExtensionContext) {
 	const downloadFile = vscode.commands.registerCommand(
 		'qpy-ide.downloadFile',
 		(fileUri: vscode.Uri) => {
-			if (utils.isDir(fileUri.fsPath)) {
+			let downloadPath: vscode.Uri;
+
+			if (typeof fileUri === 'undefined') {
+				downloadPath = vscode.window.activeTextEditor.document.uri;
+			} else {
+				downloadPath = fileUri;
+			}
+
+			if (utils.isDir(downloadPath.fsPath)) {
 				vscode.window.showErrorMessage('Specified target is not a valid file.');
 				return;
 			} else {
-				const data = fs.readFileSync(fileUri.fsPath);
+				const data = fs.readFileSync(downloadPath.fsPath);
 				const st = getActiveSerial();
 				st.cmdFlag = true;
 				st.cmdFlagLabel = cmd.downloadFile;
-				const filename = fileUri.fsPath.split('\\').pop();
+				const filename = downloadPath.fsPath.split('\\').pop();
 
-				const stats = fs.statSync(fileUri.fsPath);
+				const stats = fs.statSync(downloadPath.fsPath);
 				const fileSizeInBytes = stats.size;
 
 				st.serial.flush(() =>
@@ -452,13 +467,18 @@ function getActiveSerial(): SerialTerminal | undefined {
 	return terminalRegistry[activeTerminal.name];
 }
 
+function setButtonDownload(downloadScript: vscode.StatusBarItem) {
+	downloadScript.text = `$(arrow-down) Download File`;
+	downloadScript.tooltip = `Download active file to module`;
+}
+
 function setButtonStatus(connStatus: vscode.StatusBarItem, status: boolean) {
 	if (status) {
 		connStatus.text = `$(plug) Connected`;
-		connStatus.tooltip = 'COM Port is Connected';
+		connStatus.tooltip = 'COM Port is connected';
 	} else {
 		connStatus.text = `$(plug) Disconnected`;
-		connStatus.tooltip = 'COM Port not Connected';
+		connStatus.tooltip = 'COM Port not connected';
 	}
 }
 
