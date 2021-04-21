@@ -221,6 +221,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                         if (this.inputIndex >= this.currentInputLine.length) {
                             this.inputIndex = this.currentInputLine.length;
                         }
+                        this.updateCursor(this.inputIndex);
                         break;
                     }
                     case 'D': {
@@ -229,6 +230,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                         if (this.inputIndex < 0) {
                             this.inputIndex = 0;
                         }
+                        this.updateCursor(this.inputIndex);
                         break;
                     }
                 }
@@ -245,11 +247,13 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
                     case 'H': {
                         //Home
                         this.inputIndex = 0;
+                        this.updateCursor(this.inputIndex);
                         break;
                     }
                     case 'F': {
                         //End
                         this.inputIndex = this.currentInputLine.length;
+                        this.updateCursor(this.inputIndex);
                         break;
                     }
                 }
@@ -275,6 +279,53 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
         }
     }
 
+    private updateCursor(index: number): void {
+        // carret length for repl is 4 since it's represented as '>>> '
+        index += 4;
+        this.loadCursor();
+        if (!this.endsWithNewLine) {
+            this.moveCursor('d', 1);
+        }
+        this.writeEmitter.fire('\r');
+        if (this.dimensions) {
+            const lineDelta: number = Math.trunc(index / this.dimensions.columns);
+            this.moveCursor('d', lineDelta);
+            this.moveCursor('r', index % this.dimensions.columns);
+        } else {
+            this.moveCursor('r', index);
+        }
+    }
+
+    private moveCursor(direction: 'u' | 'd' | 'l' | 'r', amount = 1): void {
+        if (amount < 0) {
+            throw new Error('Amount must be non-negative');
+        }
+        if (amount === 0) {
+            return;
+        }
+        switch (direction) {
+            case 'u': {
+                this.writeEmitter.fire(`\u001b[${amount}A`);
+                break;
+            }
+            case 'd': {
+                this.writeEmitter.fire(`\u001b[${amount}B`);
+                break;
+            }
+            case 'r': {
+                this.writeEmitter.fire(`\u001b[${amount}C`);
+                break;
+            }
+            case 'l': {
+                this.writeEmitter.fire(`\u001b[${amount}D`);
+                break;
+            }
+            default: {
+                throw new Error('Invalid direction ' + direction);
+            }
+        }
+    }
+
     private updateInputArea(): void {
         this.loadCursor();
         if (!this.endsWithNewLine) {
@@ -283,6 +334,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
         this.clearScreen();
         this.writeEmitter.fire(this.currentInputLine);
+        this.updateCursor(this.inputIndex);
     }
 
     private saveCursor(): void {
