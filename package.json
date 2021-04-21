@@ -148,12 +148,12 @@
 			],
 			"view/item/context": [
 				{
-				  "command": "qpy-ide.runScript",
-				  "when": "view == qpyModuleFS && viewItem == moduleDocument"
+					"command": "qpy-ide.runScript",
+					"when": "view == qpyModuleFS && viewItem == moduleDocument"
 				},
 				{
-				  "command": "qpy-ide.removeFile",
-				  "when": "view == qpyModuleFS && viewItem == moduleDocument"
+					"command": "qpy-ide.removeFile",
+					"when": "view == qpyModuleFS && viewItem == moduleDocument"
 				},
 				{
 					"command": "qpy-ide.removeDir",
@@ -168,8 +168,8 @@
 			],
 			"editor/context": [
 				{
-				  "command": "qpy-ide.downloadFile",
-				  "group": "QuecPython@1"
+					"command": "qpy-ide.downloadFile",
+					"group": "QuecPython@1"
 				}
 			]
 		}
