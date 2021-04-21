@@ -76,7 +76,11 @@
 			},
 			{
 				"command": "qpy-ide.runScript",
-				"title": "Run Script"
+				"title": "Run Script",
+				"icon": {
+					"light": "resources/light/play-circle.svg",
+					"dark": "resources/dark/play-circle.svg"
+				}
 			},
 			{
 				"command": "qpy-ide.removeFile",
@@ -150,6 +154,11 @@
 				{
 					"command": "qpy-ide.runScript",
 					"when": "view == qpyModuleFS && viewItem == moduleDocument"
+				},
+				{
+					"command": "qpy-ide.runScript",
+					"when": "view == qpyModuleFS && viewItem == moduleDocument",
+					"group": "inline"
 				},
 				{
 					"command": "qpy-ide.removeFile",
