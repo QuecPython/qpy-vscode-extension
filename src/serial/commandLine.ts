@@ -160,9 +160,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 				}
 
 				// this shows whats written on the current line
-				this.backendStream.write(
-					util.unescape(this.currentInputLine) + this.lineEnd
-				);
+				this.backendStream.write(this.currentInputLine + this.lineEnd);
 
 				this.prevCommandsIndex = this.prevCommands.length;
 				this.inputIndex = 0;
