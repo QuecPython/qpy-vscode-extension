@@ -299,13 +299,11 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	}
 
 	private updateCursor(index: number): void {
-		// carret length for repl is 4 since it's represented as '>>> '
-		index += 4;
 		this.loadCursor();
 		if (!this.endsWithNewLine) {
 			this.moveCursor('d', 1);
 		}
-		this.writeEmitter.fire('\r');
+	
 		if (this.dimensions) {
 			const lineDelta: number = Math.trunc(index / this.dimensions.columns);
 			this.moveCursor('d', lineDelta);
