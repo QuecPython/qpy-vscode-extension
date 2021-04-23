@@ -256,10 +256,10 @@ export function activate(context: vscode.ExtensionContext) {
 						() =>
 							st.serial.flush(() => {
 								st.serial.write(`w(b'''${rawData}''')\r\n`);
-                                const updatePaylod = {
-                                    index,
-                                    dataLen: splitData.length
-                                };
+								const updatePaylod = {
+									index,
+									dataLen: splitData.length,
+								};
 								serialEmitter.emit('updatePercentage', updatePaylod);
 							}),
 						100 + index * 10
@@ -569,6 +569,11 @@ function updateProgressBar(
 			clearInterval(interval);
 		});
 
+		childProcess.on('statusDisc', () => {
+			resolve();
+			clearInterval(interval);
+		});
+
 		childProcess.on('updatePercentage', data => {
 			const p = percentageParser(data.dataLen, data.index);
 			messageUpdate = p.toString() + '%';
@@ -587,7 +592,7 @@ function progressBar() {
 		},
 		async (progress, token) => {
 			token.onCancellationRequested(() => {
-                vscode.window.showInformationMessage('User canceled file download.');
+				vscode.window.showInformationMessage('User canceled file download.');
 			});
 			return updateProgressBar(progress, token);
 		}
