@@ -11,6 +11,7 @@ import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { serialEmitter } from '../serial/serialBridge';
 import { removeTreeNodeByName } from './treeView';
+import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
     'qpy-ide.refreshModuleFS',
@@ -287,3 +288,23 @@ export const createDir = vscode.commands.registerCommand(
         }
     }
 );
+
+export const registerCommands = (context: vscode.ExtensionContext): void => {
+    context.subscriptions.push(
+        openConnection,
+        setLineEndCommand,
+        toggleHexTranslationCommand,
+        clearCommand,
+        clearFirmware,
+        downloadFile,
+        refreshModuleFs,
+        runScript,
+        removeFile,
+        removeDir,
+        createDir,
+        vscode.window.registerWebviewViewProvider(
+            FirmwareViewProvider.viewType,
+            fwProvider
+        ),
+    );
+};
