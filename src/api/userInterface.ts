@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ModuleFileSystemProvider } from '../deviceTree/moduleFileSystem';
-import { contextUri } from '../extension';
 
 export const setButtonDownload = (downloadScript: vscode.StatusBarItem): void => {
 	downloadScript.text = `$(arrow-down) Download File`;
