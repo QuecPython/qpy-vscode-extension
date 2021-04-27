@@ -58,3 +58,36 @@ export const findTreeNode = (
 
 	return foundDir;
 };
+
+
+export const sortTreeNodes = (array: ModuleDocument[]): ModuleDocument[] => {
+	array.sort(function (x: ModuleDocument, y: ModuleDocument) {
+		const xLabel = x.label.toUpperCase();
+		const yLabel = y.label.toUpperCase();
+
+		if (x.size === '' || y.size === '') {
+			if (x.size < y.size) {
+				return -1;
+			}
+	
+			if (x.size > y.size) {
+				return 1;
+			}
+	
+			if (x.size === y.size) {
+				return xLabel === yLabel ? 0 : xLabel > yLabel ? 1 : -1;
+			}
+	
+		}
+		
+		return xLabel === yLabel ? 0 : xLabel > yLabel ? 1 : -1;
+	});
+
+	array.forEach(function (doc: ModuleDocument) {
+        if (doc.children) {
+            sortTreeNodes(doc.children);
+        }
+    });
+
+	return array;
+};

@@ -10,7 +10,7 @@ import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { serialEmitter } from '../serial/serialBridge';
-import { removeTreeNodeByName } from './treeView';
+import { removeTreeNodeByName, sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
@@ -18,6 +18,7 @@ export const refreshModuleFs = vscode.commands.registerCommand(
     () => {
         const st = getActiveSerial();
         st.readStatFiles();
+        moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
         moduleFsTreeProvider.refresh();
     }
 );
@@ -256,7 +257,8 @@ export const downloadFile = vscode.commands.registerCommand(
                     `/usr/${filename}`
                 )
             );
-
+            
+            moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
             moduleFsTreeProvider.refresh();
         }
     }

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { progressBar } from '../api/progressBar';
 
 import { getActiveSerial, setTerminalFlag } from '../api/terminal';
-import { findTreeNode, initTree, removeTreeNodeByPath } from '../api/treeView';
+import { findTreeNode, initTree, removeTreeNodeByPath, sortTreeNodes } from '../api/treeView';
 import { moduleFsTreeProvider, setButtonStatus, connStatus} from '../api/userInterface';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { cmd } from '../utils/constants';
@@ -39,6 +39,7 @@ serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
             const dataArr = JSON.parse(stringToParse);
 
             moduleFsTreeProvider.data = initTree(dataArr);
+            moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
             moduleFsTreeProvider.refresh();
         }
         setTerminalFlag();
@@ -94,6 +95,7 @@ serialEmitter.on(`${cmd.createDir}`, (data: string) => {
         }
     }
 
+    moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
     setTerminalFlag();
 });
 
@@ -113,6 +115,7 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
 
 serialEmitter.on(`${cmd.downloadFile}`, (data: string) => {
     if (data.includes('close')) {
+        moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
         setTerminalFlag();
     }
 });

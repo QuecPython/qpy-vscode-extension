@@ -39,7 +39,7 @@ export class ModuleFileSystemProvider implements vscode.TreeDataProvider<ModuleD
 export class ModuleDocument extends vscode.TreeItem {
 	constructor(
 		public readonly label: string,
-		private readonly size: string,
+		public readonly size: string,
         public readonly filePath: string,
         public children?: ModuleDocument[]
 	) {
