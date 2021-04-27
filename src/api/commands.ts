@@ -4,14 +4,13 @@ import SerialPort from 'SerialPort';
 
 import * as utils from '../utils/utils';
 import { getActiveSerial, setTerminalFlag } from './terminal';
-import { fwProvider, moduleFsTreeProvider } from './userInterface';
+import { moduleFsTreeProvider } from './userInterface';
 import { cmd, supportedBaudRates } from '../utils/constants';
 import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { serialEmitter } from '../serial/serialBridge';
 import { removeTreeNodeByName, sortTreeNodes } from './treeView';
-import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
     'qpy-ide.refreshModuleFS',
@@ -20,13 +19,6 @@ export const refreshModuleFs = vscode.commands.registerCommand(
         st.readStatFiles();
         moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
         moduleFsTreeProvider.refresh();
-    }
-);
-
-export const clearFirmware = vscode.commands.registerCommand(
-    'qpy-ide.clearFw',
-    () => {
-        fwProvider.clearFw();
     }
 );
 
@@ -297,16 +289,11 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
         setLineEndCommand,
         toggleHexTranslationCommand,
         clearCommand,
-        clearFirmware,
         downloadFile,
         refreshModuleFs,
         runScript,
         removeFile,
         removeDir,
         createDir,
-        vscode.window.registerWebviewViewProvider(
-            FirmwareViewProvider.viewType,
-            fwProvider
-        ),
     );
 };

@@ -44,17 +44,6 @@
 				"category": "QuecPython"
 			},
 			{
-				"command": "qpy-ide.selectFirmware",
-				"title": "Select Firmware",
-				"category": "QuecPython"
-			},
-			{
-				"command": "qpy-ide.clearFw",
-				"category": "QuecPython",
-				"title": "Clear Firmware Path",
-				"icon": "$(clear-all)"
-			},
-			{
 				"command": "qpy-ide.openConnection",
 				"title": "Connect to COM Port",
 				"category": "QuecPython"
@@ -95,27 +84,11 @@
 				"title": "Create Directory"
 			}
 		],
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id": "qpy",
-					"title": "QuecPython",
-					"icon": "media/dep.svg"
-				}
-			]
-		},
 		"views": {
 			"explorer": [
 				{
 					"id": "qpyModuleFS",
 					"name": "QPY: File System (usr)"
-				}
-			],
-			"qpy": [
-				{
-					"type": "webview",
-					"id": "qpyFirmware",
-					"name": "Firmware Manager"
 				}
 			]
 		},
@@ -139,11 +112,6 @@
 					"command": "qpy-ide.refreshModuleFS",
 					"group": "navigation",
 					"when": "view == qpyModuleFS"
-				},
-				{
-					"command": "qpy-ide.clearFw",
-					"group": "navigation",
-					"when": "view == qpyFirmware"
 				},
 				{
 					"command": "qpy-ide.createDir",

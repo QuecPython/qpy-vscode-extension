@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleFileSystemProvider } from '../deviceTree/moduleFileSystem';
 import { contextUri } from '../extension';
-import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 
 export const setButtonDownload = (downloadScript: vscode.StatusBarItem): void => {
 	downloadScript.text = `$(arrow-down) Download File`;
@@ -36,5 +35,3 @@ export const downloadScript = vscode.window.createStatusBarItem(
 );
 
 export const moduleFsTreeProvider = new ModuleFileSystemProvider();
-
-export const fwProvider = new FirmwareViewProvider(contextUri);
