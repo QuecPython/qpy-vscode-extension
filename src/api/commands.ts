@@ -15,10 +15,15 @@ import { removeTreeNodeByName, sortTreeNodes } from './treeView';
 export const refreshModuleFs = vscode.commands.registerCommand(
     'qpy-ide.refreshModuleFS',
     () => {
-        const st = getActiveSerial();
-        st.readStatFiles();
-        moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-        moduleFsTreeProvider.refresh();
+        try {
+            const st = getActiveSerial();
+            st.readStatFiles();
+            moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+            moduleFsTreeProvider.refresh();
+        } catch {
+            vscode.window.showErrorMessage('Something went wrong.');
+            setTerminalFlag();
+        }
     }
 );
 
@@ -147,9 +152,14 @@ export const toggleHexTranslationCommand = vscode.commands.registerCommand(
 export const clearCommand = vscode.commands.registerCommand(
     'qpy-ide.clearTerminal',
     () => {
-        const st = getActiveSerial();
-        if (st) {
-            st.clear();
+        try {
+            const st = getActiveSerial();
+            if (st) {
+                st.clear();
+            }
+        } catch {
+            vscode.window.showErrorMessage('Something went wrong.');
+            setTerminalFlag();
         }
     }
 );
@@ -157,101 +167,121 @@ export const clearCommand = vscode.commands.registerCommand(
 export const runScript = vscode.commands.registerCommand(
     'qpy-ide.runScript',
     (node: ModuleDocument) => {
-        setTerminalFlag(true, cmd.runScript);
-        const st = getActiveSerial();
-        st.handleInput(`${cmd.runScript}import example\r\n`);
-        st.handleInput(
-            `${cmd.runScript}example.exec('${node.filePath.slice(1)}')\r\n`
-        );
+        try {
+            setTerminalFlag(true, cmd.runScript);
+            const st = getActiveSerial();
+            st.handleInput(`${cmd.runScript}import example\r\n`);
+            st.handleInput(
+                `${cmd.runScript}example.exec('${node.filePath.slice(1)}')\r\n`
+            );
+        } catch {
+            vscode.window.showErrorMessage('Something went wrong.');
+            setTerminalFlag();
+        }
     }
 );
 
 export const removeFile = vscode.commands.registerCommand(
     'qpy-ide.removeFile',
     (node: ModuleDocument) => {
-        const st = getActiveSerial();
-        setTerminalFlag(true, cmd.removeFile);
-        st.handleInput(`${cmd.removeFile}uos.remove('${node.filePath}')\r\n`);
+        try {
+            const st = getActiveSerial();
+            setTerminalFlag(true, cmd.removeFile);
+            st.handleInput(`${cmd.removeFile}uos.remove('${node.filePath}')\r\n`);
+        } catch {
+            vscode.window.showErrorMessage('Something went wrong.');
+            setTerminalFlag();
+        }
     }
 );
 
 export const removeDir = vscode.commands.registerCommand(
     'qpy-ide.removeDir',
     (node: ModuleDocument) => {
-        const st = getActiveSerial();
-        setTerminalFlag(true, cmd.removeDir);
-        st.handleInput(`${cmd.removeDir}uos.rmdir('${node.filePath}')\r\n`);
+        try {
+            const st = getActiveSerial();
+            setTerminalFlag(true, cmd.removeDir);
+            st.handleInput(`${cmd.removeDir}uos.rmdir('${node.filePath}')\r\n`);
+        } catch {
+            vscode.window.showErrorMessage('Something went wrong.');
+            setTerminalFlag();
+        }
     }
 );
 
 export const downloadFile = vscode.commands.registerCommand(
     'qpy-ide.downloadFile',
     (fileUri: vscode.Uri) => {
-        let downloadPath: vscode.Uri;
+        try {
+            let downloadPath: vscode.Uri;
 
-        if (typeof fileUri === 'undefined') {
-            downloadPath = vscode.window.activeTextEditor.document.uri;
-        } else {
-            downloadPath = fileUri;
-        }
+            if (typeof fileUri === 'undefined') {
+                downloadPath = vscode.window.activeTextEditor.document.uri;
+            } else {
+                downloadPath = fileUri;
+            }
 
-        if (utils.isDir(downloadPath.fsPath)) {
-            vscode.window.showErrorMessage('Specified target is not a valid file.');
-            return;
-        } else {
-            const data = fs.readFileSync(downloadPath.fsPath);
-            const st = getActiveSerial();
-            setTerminalFlag(true, cmd.downloadFile);
-            const filename = downloadPath.fsPath.split('\\').pop();
+            if (utils.isDir(downloadPath.fsPath)) {
+                vscode.window.showErrorMessage('Specified target is not a valid file.');
+                return;
+            } else {
+                const data = fs.readFileSync(downloadPath.fsPath);
+                const st = getActiveSerial();
+                setTerminalFlag(true, cmd.downloadFile);
+                const filename = downloadPath.fsPath.split('\\').pop();
 
-            const stats = fs.statSync(downloadPath.fsPath);
-            const fileSizeInBytes = stats.size;
+                const stats = fs.statSync(downloadPath.fsPath);
+                const fileSizeInBytes = stats.size;
 
-            st.serial.flush(() =>
-                st.serial.write(`f = open('/usr/${filename}', 'wb')\r\n`)
-            );
-            st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
+                st.serial.flush(() =>
+                    st.serial.write(`f = open('/usr/${filename}', 'wb')\r\n`)
+                );
+                st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
 
-            const splitData = data.toString().split(/\r\n/);
+                const splitData = data.toString().split(/\r\n/);
 
-            serialEmitter.emit('startProgress');
-            splitData.forEach((dataLine: string, index: number) => {
-                const rawData = String.raw`${dataLine + '\\r\\n'}`;
+                serialEmitter.emit('startProgress');
+                splitData.forEach((dataLine: string, index: number) => {
+                    const rawData = String.raw`${dataLine + '\\r\\n'}`;
+                    setTimeout(
+                        () =>
+                            st.serial.flush(() => {
+                                st.serial.write(`w(b'''${rawData}''')\r\n`);
+                                const updatePaylod = {
+                                    index,
+                                    dataLen: splitData.length,
+                                };
+                                serialEmitter.emit('updatePercentage', updatePaylod);
+                            }),
+                        100 + index * 10
+                    );
+                });
+
                 setTimeout(
                     () =>
                         st.serial.flush(() => {
-                            st.serial.write(`w(b'''${rawData}''')\r\n`);
-                            const updatePaylod = {
-                                index,
-                                dataLen: splitData.length,
-                            };
-                            serialEmitter.emit('updatePercentage', updatePaylod);
+                            st.serial.write(`f.close()\r\n`);
+                            serialEmitter.emit('downloadFinished');
                         }),
-                    100 + index * 10
+                    100 + (splitData.length + 1) * 10
                 );
-            });
 
-            setTimeout(
-                () =>
-                    st.serial.flush(() => {
-                        st.serial.write(`f.close()\r\n`);
-                        serialEmitter.emit('downloadFinished');
-                    }),
-                100 + (splitData.length + 1) * 10
-            );
+                removeTreeNodeByName(filename, moduleFsTreeProvider.data);
 
-            removeTreeNodeByName(filename, moduleFsTreeProvider.data);
-
-            moduleFsTreeProvider.data.push(
-                new ModuleDocument(
-                    filename,
-                    `${fileSizeInBytes} B`,
-                    `/usr/${filename}`
-                )
-            );
-            
-            moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-            moduleFsTreeProvider.refresh();
+                moduleFsTreeProvider.data.push(
+                    new ModuleDocument(
+                        filename,
+                        `${fileSizeInBytes} B`,
+                        `/usr/${filename}`
+                    )
+                );
+                
+                moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+                moduleFsTreeProvider.refresh();
+            }
+        } catch {
+            vscode.window.showErrorMessage('Something went wrong.');
+            setTerminalFlag();
         }
     }
 );
