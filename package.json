@@ -39,13 +39,13 @@
 				}
 			},
 			{
-				"command": "qpy-ide.downloadFile",
-				"title": "QPY: Download File",
+				"command": "qpy-ide.openConnection",
+				"title": "Connect to COM Port",
 				"category": "QuecPython"
 			},
 			{
-				"command": "qpy-ide.openConnection",
-				"title": "Connect to COM Port",
+				"command": "qpy-ide.downloadFile",
+				"title": "QPY: Download File",
 				"category": "QuecPython"
 			},
 			{
@@ -104,6 +104,10 @@
 				},
 				{
 					"command": "qpy-ide.clearTerminal",
+					"when": "terminalIsOpen"
+				},
+				{
+					"command": "qpy-ide.downloadFile",
 					"when": "terminalIsOpen"
 				}
 			],

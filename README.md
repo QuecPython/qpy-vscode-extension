@@ -1,14 +1,38 @@
-## QuecPython
+# QuecPython
 
-Extension for handling interaction with QuecPython native modules.
+Extension for handling interaction with QuecPython based modules. Communicate with Python based Quectel modules using the built-in REPL or AT CLI. Besides serial communication, extension provides out-of-the box module file system preview in a tree view. Users are free to opt using commands from the extension UI or execute raw commands via REPL.
 
-### Supported Modules
+- Works with Windows only at the moment.
 
-| Platform | Module model      | Download command                                             | Description                                                  |
-| -------- | ----------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ASR      | EC100Y<br/>EC600S | adownload.exe [OPTION]... [FILE]<br/>e.g. download.exe -p COM1 -a -s 115200 aboot.zip | -h, --help            Display this help and exit  <br/> -p, --port=port       Use named serial ports separate with comma  <br/> -a, --auto-enable     Or auto enable arom usb ports device  <br/> -u, --usb-only        Use arom usb ports only  <br/> -d, --dump-enable     Enable dump download protocol packet  <br/> -s, --speed=speed     Use given speed for serial communication      <br/> --baud=speed          Supported baud rates:<br/>						(115200, 230400, 460800, 921600, 1842000, 3686400)  <br/> -g, --upgrade         Running in upgrade mode, default is production mode  <br/> -r, --reboot          Reboot device after finished  <br/> -q, --quit            Quit application after any port finished |
-| RDA      | EC200U<br/>EC600U | CmdDloader.exe  <-pac PacFile>  [-port ComPort] [-c] <br/>e.g. CmdDloader.exe -pac D:\SC7702_sc7701.pac -port 195 | -pac PacFile: Enter the pac file. <br/>-port ComPort: Enter the port number of the download device. <br/>-c: This command is optional. When you enter this parameter, the CMDDLoader application will clear the download process before executing the download. |
+## Requirements
+- **NodeJS installed on your system (12 or higher)** https://nodejs.org
+
+## Supported Modules
+
+| Platform | Module model      |
+| -------- | ----------------- | 
+| ASR      | EC100Y<br/>EC600S | 
+| RDA      | EC200U<br/>EC600U | 
 
 
-### Notes
-- README-orig.md contains original readme provided by Yeoman Generator, use it when publishing the extension (and remove this one!).
+## Usage
+
+Open the serial connection by opening the commands palette the `CTRL+SHIFT+P` and running the command `QuecPython: Connect to COM Port`.
+
+Upon successful connection, the terminal with open with either REPL or AT CLI depending on the chosen port. The board can be disconnected from the VSC by killing the active serial connection terminal. When manually closing the terminal (`x` on the right top of the terminal) the connection stays active.
+
+## Extension Settings
+This extension contributes the following settings for configuring it's usage:
+
+* `QuecPython.defaultLineTerminator`: Text added to end of all sent lines. Will be appended to sent data but will not be rendered in terminal. Allows escape characters (\\r, \\n etc.), hex    representation (\\x6F, \\xF8 etc.) and unicode representation (\\u006F, \\u00F8 etc.)
+* `QuecPython.translateHex`: Set to true to translate incomming hex data. Set to false to output raw hex.
+
+
+## Known Issues
+
+Nothing reported so far.
+
+## Release Notes
+### 1.0.0
+
+Initial release of QuecPython VSCode Extension
