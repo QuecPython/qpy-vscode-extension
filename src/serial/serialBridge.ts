@@ -47,6 +47,7 @@ serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
         }
     } catch {
         setTerminalFlag();
+        vscode.window.showErrorMessage('Failed to list files.');
     }
 });
 
@@ -64,6 +65,7 @@ serialEmitter.on(`${cmd.runScript}`, (data: string) => {
         st.handleDataAsText(`${jointData}`);
     } catch {
         setTerminalFlag();
+        vscode.window.showErrorMessage('Failed to execute script.');
     }
 });
 
@@ -108,6 +110,7 @@ serialEmitter.on(`${cmd.createDir}`, (data: string) => {
         setTerminalFlag();
     } catch {
         setTerminalFlag();
+        vscode.window.showErrorMessage('Failed to create the specified directory.');
     }
 });
 
@@ -123,6 +126,7 @@ serialEmitter.on(`${cmd.removeDir}`, (data: string) => {
         setTerminalFlag();
     } catch {
         setTerminalFlag();
+        vscode.window.showErrorMessage('Failed to remove the specified directory.');
     }
 });
 
@@ -138,6 +142,7 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
         setTerminalFlag();
     } catch {
         setTerminalFlag();
+        vscode.window.showErrorMessage('Failed to remove the specified file.');
     }
 });
 
@@ -149,6 +154,7 @@ serialEmitter.on(`${cmd.downloadFile}`, (data: string) => {
         }
     } catch {
         setTerminalFlag();
+        vscode.window.showErrorMessage('Failed to download the file.');
     }
 });
 
