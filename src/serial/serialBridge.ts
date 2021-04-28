@@ -25,97 +25,129 @@ serialEmitter.on('statusDisc', () => {
 });
 
 serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
-    let stringToParse: string;
-    if (data.includes(`uos.remove`)) {
-        const splitData = data.split(/\r\n/);
-        splitData.forEach((dataLine: string) => {
-            if (dataLine.includes('[{')) {
-                stringToParse = dataLine;
+    try {
+        let stringToParse: string;
+        if (data.includes(`uos.remove`)) {
+            const splitData = data.split(/\r\n/);
+            splitData.forEach((dataLine: string) => {
+                if (dataLine.includes('[{')) {
+                    stringToParse = dataLine;
+                }
+            });
+
+            if (typeof stringToParse !== 'undefined') {
+                stringToParse = stringToParse.replace(/'/g, '"');
+                const dataArr = JSON.parse(stringToParse);
+
+                moduleFsTreeProvider.data = initTree(dataArr);
+                moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+                moduleFsTreeProvider.refresh();
             }
-        });
-
-        if (typeof stringToParse !== 'undefined') {
-            stringToParse = stringToParse.replace(/'/g, '"');
-            const dataArr = JSON.parse(stringToParse);
-
-            moduleFsTreeProvider.data = initTree(dataArr);
-            moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-            moduleFsTreeProvider.refresh();
+            setTerminalFlag();
         }
+    } catch {
         setTerminalFlag();
     }
 });
 
 serialEmitter.on(`${cmd.runScript}`, (data: string) => {
-    setTerminalFlag();
+    try {
+        setTerminalFlag();
 
-    if (data.includes('Error')) {
-        vscode.window.showErrorMessage('Failed to execute script.');
-        return;
+        if (data.includes('Error')) {
+            vscode.window.showErrorMessage('Failed to execute script.');
+            return;
+        }
+
+        const jointData = data.split(/\r\n/).slice(2).join('\r\n');
+        const st = getActiveSerial();
+        st.handleDataAsText(`${jointData}`);
+    } catch {
+        setTerminalFlag();
     }
-
-    const jointData = data.split(/\r\n/).slice(2).join('\r\n');
-    const st = getActiveSerial();
-    st.handleDataAsText(`${jointData}`);
 });
 
 serialEmitter.on(`${cmd.createDir}`, (data: string) => {
-    if (data.includes('Traceback')) {
-        vscode.window.showErrorMessage('Unable to create directory.');
-        return;
-    }
-
-    const parsedData = data
-        .match(/\(([^)]+)\)/)[1]
-        .slice(1, -1)
-        .split('/')
-        .slice(1);
-
-    const parentPath = `/${parsedData.slice(0, -1).join('/')}`;
-    const newDirName = parsedData.pop();
-    const newDir = new ModuleDocument(
-        newDirName,
-        '',
-        `${parentPath}/${newDirName}`,
-        []
-    );
-
-    if (parentPath === '/usr') {
-        moduleFsTreeProvider.data.push(newDir);
-        moduleFsTreeProvider.refresh();
-    } else {
-        const parentDir = findTreeNode(moduleFsTreeProvider.data, parentPath);
-
-        if (parentDir) {
-            parentDir.children.push(newDir);
-            moduleFsTreeProvider.refresh();
-        } else {
+    try {
+        if (data.includes('Traceback')) {
             vscode.window.showErrorMessage('Unable to create directory.');
             return;
         }
+    
+        const parsedData = data
+            .match(/\(([^)]+)\)/)[1]
+            .slice(1, -1)
+            .split('/')
+            .slice(1);
+    
+        const parentPath = `/${parsedData.slice(0, -1).join('/')}`;
+        const newDirName = parsedData.pop();
+        const newDir = new ModuleDocument(
+            newDirName,
+            '',
+            `${parentPath}/${newDirName}`,
+            []
+        );
+    
+        if (parentPath === '/usr') {
+            moduleFsTreeProvider.data.push(newDir);
+            moduleFsTreeProvider.refresh();
+        } else {
+            const parentDir = findTreeNode(moduleFsTreeProvider.data, parentPath);
+    
+            if (parentDir) {
+                parentDir.children.push(newDir);
+                moduleFsTreeProvider.refresh();
+            } else {
+                vscode.window.showErrorMessage('Unable to create directory.');
+                return;
+            }
+        }
+    
+        moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+        setTerminalFlag();
+    } catch {
+        setTerminalFlag();
     }
-
-    moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-    setTerminalFlag();
 });
 
 serialEmitter.on(`${cmd.removeDir}`, (data: string) => {
-    const parsedData = utils.extractFilePath(data);
-    removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
-    moduleFsTreeProvider.refresh();
-    setTerminalFlag();
+    try {
+        if (data.includes('Traceback')) {
+            vscode.window.showErrorMessage('Unable to remove directory.');
+            return;
+        }
+        const parsedData = utils.extractFilePath(data);
+        removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
+        moduleFsTreeProvider.refresh();
+        setTerminalFlag();
+    } catch {
+        setTerminalFlag();
+    }
 });
 
 serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
-    const parsedData = utils.extractFilePath(data);
-    removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
-    moduleFsTreeProvider.refresh();
-    setTerminalFlag();
+    try {
+        if (data.includes('Traceback')) {
+            vscode.window.showErrorMessage('Unable to remove file.');
+            return;
+        }
+        const parsedData = utils.extractFilePath(data);
+        removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
+        moduleFsTreeProvider.refresh();
+        setTerminalFlag();
+    } catch {
+        setTerminalFlag();
+    }
 });
 
 serialEmitter.on(`${cmd.downloadFile}`, (data: string) => {
-    if (data.includes('close')) {
-        moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+    try {
+        if (data.includes('close')) {
+            moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+            setTerminalFlag();
+        }
+    } catch {
         setTerminalFlag();
     }
 });
