@@ -21,5 +21,6 @@ export const cmd = {
     removeFile: '[RMF]',
     removeDir: '[RMD]',
     createDir: '[MKD]',
-    downloadFile: '[DWF]'
+    downloadFile: '[DWF]',
+    disconnect: 'SIG_TERM_9'
 };

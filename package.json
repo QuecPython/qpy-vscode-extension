@@ -44,6 +44,11 @@
 				"category": "QuecPython"
 			},
 			{
+				"command": "qpy-ide.closeConnection",
+				"title": "Disconnect COM Port",
+				"category": "QuecPython"
+			},
+			{
 				"command": "qpy-ide.downloadFile",
 				"title": "QPY: Download File",
 				"category": "QuecPython"
@@ -108,6 +113,10 @@
 				},
 				{
 					"command": "qpy-ide.downloadFile",
+					"when": "terminalIsOpen"
+				},
+				{
+					"command": "qpy-ide.closeConnection",
 					"when": "terminalIsOpen"
 				}
 			],

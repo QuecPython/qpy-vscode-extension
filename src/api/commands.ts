@@ -123,6 +123,21 @@ export const openConnection = vscode.commands.registerCommand(
     }
 );
 
+export const closeConnection = vscode.commands.registerCommand(
+    'qpy-ide.closeConnection',
+    async () => {
+        try {
+            const st = getActiveSerial();
+            st.serial.close();
+            st.handleDataAsText('SIG_TERM_9');
+            
+        } catch {
+            vscode.window.showErrorMessage('Something went wrong.');
+            setTerminalFlag();
+        }
+    }
+);
+
 export const setLineEndCommand = vscode.commands.registerCommand(
     'qpy-ide.setLineEnd',
     async () => {
@@ -316,6 +331,7 @@ export const createDir = vscode.commands.registerCommand(
 export const registerCommands = (context: vscode.ExtensionContext): void => {
     context.subscriptions.push(
         openConnection,
+        closeConnection,
         setLineEndCommand,
         toggleHexTranslationCommand,
         clearCommand,
