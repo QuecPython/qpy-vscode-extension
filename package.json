@@ -164,11 +164,11 @@
 			]
 		},
 		"snippets": [
-            {
-                "language": "python",
-                "path": "./snippets/QuecPython.json"
-            }
-        ]
+			{
+				"language": "python",
+				"path": "./snippets/QuecPython.json"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -179,7 +179,7 @@
 		"test": "node ./out/test/runTest.js",
 		"rebuild": "electron-rebuild -f -w serialport",
 		"dev:rebuild": "electron-rebuild --version 11.3.0 --force",
-		"postinstall": "electron-rebuild --version 11.2.1 --force",
+		"postinstall": "electron-rebuild --version 12.0.0 --force",
 		"ext:prepublish": "npm ci && npm prune"
 	},
 	"devDependencies": {
