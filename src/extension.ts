@@ -7,14 +7,12 @@ import FirmwareViewProvider from './sidebar/firmwareSidebar';
 
 // lookup table for linking vscode terminals to SerialTerminal instances
 export const terminalRegistry: { [key: string]: SerialTerminal } = {};
-// exported firmware webview component
+// exported context
 export let fwProvider: FirmwareViewProvider;
 
 export function activate(context: vscode.ExtensionContext) {
-
-	fwProvider = new FirmwareViewProvider(context.extensionUri);
-
 	vscode.window.registerTreeDataProvider('qpyModuleFS', moduleFsTreeProvider);
+	fwProvider = new FirmwareViewProvider(context.extensionUri);
 
 	initStatusButtons();
 	registerCommands(context);
