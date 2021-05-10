@@ -5,6 +5,7 @@ import SerialPort from 'SerialPort';
 import * as utils from '../utils/utils';
 import { getActiveSerial, setTerminalFlag } from './terminal';
 import { moduleFsTreeProvider } from './userInterface';
+import { fwProvider } from '../extension';
 import { cmd, supportedBaudRates } from '../utils/constants';
 import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
@@ -24,6 +25,13 @@ export const refreshModuleFs = vscode.commands.registerCommand(
             vscode.window.showErrorMessage('Something went wrong.');
             setTerminalFlag();
         }
+    }
+);
+
+export const clearFirmware = vscode.commands.registerCommand(
+    'qpy-ide.clearFw',
+    () => {
+        fwProvider.clearFw();
     }
 );
 
@@ -336,6 +344,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
         toggleHexTranslationCommand,
         clearCommand,
         downloadFile,
+        clearFirmware,
         refreshModuleFs,
         runScript,
         removeFile,
