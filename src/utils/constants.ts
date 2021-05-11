@@ -24,3 +24,10 @@ export const cmd = {
     downloadFile: '[DWF]',
     disconnect: 'SIG_TERM_9'
 };
+
+export const fwConfig = {
+    baud: '115200',
+    deviceAtPort: 'MI_03',
+    deviceDownloadPort: 'VID_2ECC&PID_3017',
+    atQdownload: 'at+qdownload=1\r\n'
+};
