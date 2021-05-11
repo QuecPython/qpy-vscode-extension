@@ -1,8 +1,9 @@
 import SerialPort from 'SerialPort';
 import { spawn } from 'child_process';
+import * as path from 'path';
 
-const exePath =
-	'D:\\01_Quectel\\03_Tasks\\Task_8_VSC_plugin\\F3\\qpy-vscode-extension\\src\\sidebar\\adownload.exe';
+const fwDirPath: string = path.join(__dirname, '..', '..', 'fw');
+const exePath: string = fwDirPath + '\\adownload.exe';
 const baud = '115200';
 const deviceAtPort = 'MI_03';
 const deviceDownloadPort = 'VID_2ECC&PID_3017';
@@ -39,13 +40,7 @@ async function setDownloadPort(): Promise<void> {
 	});
 	port.on('open', () => {
 		port.write(atQdownload);
-	});
-	// port.write(atQdownload);
-}
-
-async function delay(): Promise<void> {
-	return new Promise(resolve => {
-		setTimeout(() => resolve(), 10000);
+		port.close();
 	});
 }
 
@@ -53,19 +48,19 @@ export default async function firmwareDownload(
 	filePath: string
 ): Promise<void> {
 	console.log('ker0');
-	await setDownloadPort();
-	console.log('ker1');
-	await delay();
+	try {
+		await setDownloadPort();
+	} catch (error) {
+		console.log(`Cannot write to the AT port. Please restart the module!`);
+	}
 
 	let downloadPort = await getPorts(deviceDownloadPort);
-	console.log('ker2', typeof downloadPort);
-	while (typeof downloadPort === undefined) {
-		console.log('ker3');
+
+	while (downloadPort === undefined) {
 		downloadPort = await getPorts(deviceDownloadPort);
-		console.log('ker4');
 		// set timer to 30sec and break the loop (if port doesn't appear)
 	}
-	console.log('ker5', downloadPort);
+
 	const adownload = spawn(exePath, [
 		'-p',
 		downloadPort,
@@ -76,15 +71,12 @@ export default async function firmwareDownload(
 		baud,
 		filePath,
 	]);
-	console.log('ker6', adownload);
+
 	adownload.stdout.on('data', data => {
-		console.log('7');
 		console.log(`stdout: ${data}`);
 	});
-	console.log('ker8');
+
 	adownload.on('close', code => {
-		console.log('ker9');
 		console.log(`child process exited with code ${code}`);
 	});
 }
-console.log('ker10');
