@@ -23,7 +23,7 @@ const getPorts = async (portId: string): Promise<string | undefined> => {
 	if (response[0] === undefined) {
 		return undefined;
 	} else {
-		return response[0].path; 
+		return response[0].path;
 		/* takes the first AT port from the list of multiple BearPi AT ports.
         Logic should be change if one wants to use multiple ports or multiple devices to be flashed */
 	}
@@ -34,8 +34,8 @@ async function setDownloadPort(): Promise<void> {
 	let port: SerialPort = new SerialPort(atPort, {
 		baudRate: 115200,
 	});
-	port.on('open', () => {
-		port.write(fwConfig.atQdownload);
+	port.on('open', async () => {
+		await port.write(fwConfig.atQdownload);
 		port.close();
 	});
 }
@@ -75,7 +75,7 @@ export default async function firmwareDownload(
 		console.log(`child process exited with code ${code}`);
 	});
 
-	adownload.stderr.on('error', (error) => {
+	adownload.stderr.on('error', error => {
 		console.log(`stderr: ${error.message}`);
 	});
 }
