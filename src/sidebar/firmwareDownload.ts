@@ -1,15 +1,11 @@
 import SerialPort from 'SerialPort';
 import { spawn } from 'child_process';
 import * as path from 'path';
+import { fwConfig } from '../utils/constants';
 
 const fwDirPath: string = path.join(__dirname, '..', '..', 'fw');
 const exePath: string = fwDirPath + '\\adownload.exe';
-const baud = '115200';
-const deviceAtPort = 'MI_03';
-const deviceDownloadPort = 'VID_2ECC&PID_3017';
-const atQdownload = 'at+qdownload=1\r\n';
-
-interface portResponse {
+interface PortResponse {
 	path: string;
 	manufacturer: string;
 	serialNumber: string;
@@ -20,26 +16,26 @@ interface portResponse {
 }
 
 const getPorts = async (portId: string): Promise<string | undefined> => {
-	let response: portResponse[];
-	await SerialPort.list().then((ports: portResponse[]) => {
+	let response: PortResponse[];
+	await SerialPort.list().then((ports: PortResponse[]) => {
 		response = ports.filter(port => port.pnpId.includes(portId));
 	});
 	if (response[0] === undefined) {
 		return undefined;
 	} else {
-		return response[0]
-			.path; /* takes the first AT port from the list of multiple BearPi AT ports.
+		return response[0].path; 
+		/* takes the first AT port from the list of multiple BearPi AT ports.
         Logic should be change if one wants to use multiple ports or multiple devices to be flashed */
 	}
 };
 
 async function setDownloadPort(): Promise<void> {
-	const atPort = await getPorts(deviceAtPort);
+	const atPort = await getPorts(fwConfig.deviceAtPort);
 	let port: SerialPort = new SerialPort(atPort, {
 		baudRate: 115200,
 	});
 	port.on('open', () => {
-		port.write(atQdownload);
+		port.write(fwConfig.atQdownload);
 		port.close();
 	});
 }
@@ -47,17 +43,16 @@ async function setDownloadPort(): Promise<void> {
 export default async function firmwareDownload(
 	filePath: string
 ): Promise<void> {
-	console.log('ker0');
 	try {
 		await setDownloadPort();
 	} catch (error) {
 		console.log(`Cannot write to the AT port. Please restart the module!`);
 	}
 
-	let downloadPort = await getPorts(deviceDownloadPort);
+	let downloadPort = await getPorts(fwConfig.deviceDownloadPort);
 
 	while (downloadPort === undefined) {
-		downloadPort = await getPorts(deviceDownloadPort);
+		downloadPort = await getPorts(fwConfig.deviceDownloadPort);
 		// set timer to 30sec and break the loop (if port doesn't appear)
 	}
 
@@ -68,7 +63,7 @@ export default async function firmwareDownload(
 		'-q',
 		'-r',
 		'-s',
-		baud,
+		fwConfig.baud,
 		filePath,
 	]);
 
@@ -78,5 +73,9 @@ export default async function firmwareDownload(
 
 	adownload.on('close', code => {
 		console.log(`child process exited with code ${code}`);
+	});
+
+	adownload.stderr.on('error', (error) => {
+		console.log(`stderr: ${error.message}`);
 	});
 }
