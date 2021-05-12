@@ -1,6 +1,7 @@
 {
 	"name": "qpy-ide",
 	"displayName": "QuecPython",
+	"publisher": "Quectel",
 	"description": "QuecPython interaction extension. It includes REPL console, AT CLI, preview of the module file system. Flash firmware, download files, run files and interact with the module file system from the VSCode.",
 	"version": "0.0.1",
 	"engines": {
