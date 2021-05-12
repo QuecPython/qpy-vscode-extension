@@ -55,11 +55,6 @@ serialEmitter.on(`${cmd.runScript}`, (data: string) => {
     try {
         setTerminalFlag();
 
-        if (data.includes('Error')) {
-            vscode.window.showErrorMessage('Failed to execute script.');
-            return;
-        }
-
         const jointData = data.split(/\r\n/).slice(2).join('\r\n');
         const st = getActiveSerial();
         st.handleDataAsText(`${jointData}`);
