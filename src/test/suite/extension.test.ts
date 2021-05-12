@@ -27,6 +27,7 @@ suite("QuecPython: Extension Tests", () => {
                 'qpy-ide.openConnection',
                 'qpy-ide.closeConnection',
                 'qpy-ide.downloadFile',
+                'qpy-ide.selectiveDownloadFile',
                 'qpy-ide.setLineEnd',
                 'qpy-ide.toggleHexTranslation',
                 'qpy-ide.clearTerminal',
