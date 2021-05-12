@@ -10,7 +10,7 @@ import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { serialEmitter } from '../serial/serialBridge';
-import { removeTreeNodeByName, sortTreeNodes } from './treeView';
+import { insertTreeNodeChild, removeTreeNodeByName, sortTreeNodes } from './treeView';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
     'qpy-ide.refreshModuleFS',
@@ -301,6 +301,84 @@ export const downloadFile = vscode.commands.registerCommand(
     }
 );
 
+export const selectiveDownloadFile = vscode.commands.registerCommand(
+    'qpy-ide.selectiveDownloadFile',
+    async (fileUri: vscode.Uri) => {
+        try {
+            if (utils.isDir(fileUri.fsPath)) {
+                vscode.window.showErrorMessage('Specified target is not a valid file.');
+                return;
+            } else {
+                const fullFilePath = await vscode.window.showInputBox({
+                    placeHolder: 'Enter full directory path... (e.g. /usr/temp)',
+                });
+    
+                if (!fullFilePath) {
+                    return;
+                }
+    
+                if (fullFilePath.startsWith('/usr/')) {
+                    const data = fs.readFileSync(fileUri.fsPath);
+                    const st = getActiveSerial();
+                    setTerminalFlag(true, cmd.downloadFile);
+                    const filename = fileUri.fsPath.split('\\').pop();
+
+                    const stats = fs.statSync(fileUri.fsPath);
+                    const fileSizeInBytes = stats.size;
+
+                    st.serial.flush(() =>
+                        st.serial.write(`f = open('${fullFilePath}/${filename}', 'wb')\r\n`)
+                    );
+                    st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
+
+                    const splitData = data.toString().split(/\r\n/);
+
+                    serialEmitter.emit('startProgress');
+                    splitData.forEach((dataLine: string, index: number) => {
+                        const rawData = String.raw`${dataLine + '\\r\\n'}`;
+                        setTimeout(
+                            () =>
+                                st.serial.flush(() => {
+                                    st.serial.write(`w(b'''${rawData}''')\r\n`);
+                                    const updatePaylod = {
+                                        index,
+                                        dataLen: splitData.length,
+                                    };
+                                    serialEmitter.emit('updatePercentage', updatePaylod);
+                                }),
+                            100 + index * 10
+                        );
+                    });
+
+                    setTimeout(
+                        () =>
+                            st.serial.flush(() => {
+                                st.serial.write(`f.close()\r\n`);
+                                serialEmitter.emit('downloadFinished');
+                            }),
+                        100 + (splitData.length + 1) * 10
+                    );
+
+                    removeTreeNodeByName(filename, moduleFsTreeProvider.data);
+
+                    const newNode = new ModuleDocument(
+                        filename,
+                        `${fileSizeInBytes} B`,
+                        `${fullFilePath}/${filename}`
+                    );
+                    
+                    insertTreeNodeChild(moduleFsTreeProvider.data, fullFilePath, newNode);
+                    moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+                    moduleFsTreeProvider.refresh();
+                }
+            }
+        } catch {
+            vscode.window.showErrorMessage('Something went wrong.');
+            setTerminalFlag();
+        }
+    }
+);
+
 export const createDir = vscode.commands.registerCommand(
     'qpy-ide.createDir',
     async () => {
@@ -336,6 +414,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
         toggleHexTranslationCommand,
         clearCommand,
         downloadFile,
+        selectiveDownloadFile,
         refreshModuleFs,
         runScript,
         removeFile,

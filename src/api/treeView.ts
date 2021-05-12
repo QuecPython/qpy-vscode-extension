@@ -91,3 +91,18 @@ export const sortTreeNodes = (array: ModuleDocument[]): ModuleDocument[] => {
 
 	return array;
 };
+
+export const insertTreeNodeChild = (
+	documents: ModuleDocument[],
+	path: string,
+	newNode: ModuleDocument
+): void => {
+	const index = documents.findIndex(doc => doc.filePath === path);
+	if (index === -1) {
+		documents.forEach(
+			doc => doc.children && insertTreeNodeChild(doc.children, path, newNode)
+		);
+	} else {
+		documents[index].children.push(newNode);
+	}
+};

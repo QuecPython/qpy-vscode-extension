@@ -55,6 +55,11 @@
 				"category": "QuecPython"
 			},
 			{
+				"command": "qpy-ide.selectiveDownloadFile",
+				"title": "QPY: Selective Download File",
+				"category": "QuecPython"
+			},
+			{
 				"command": "qpy-ide.setLineEnd",
 				"title": "Set line terminator for active terminal",
 				"category": "QuecPython"
@@ -113,10 +118,6 @@
 					"when": "terminalIsOpen"
 				},
 				{
-					"command": "qpy-ide.downloadFile",
-					"when": "terminalIsOpen"
-				},
-				{
 					"command": "qpy-ide.closeConnection",
 					"when": "terminalIsOpen"
 				}
@@ -155,11 +156,19 @@
 				{
 					"command": "qpy-ide.downloadFile",
 					"group": "QuecPython@1"
+				},
+				{
+					"command": "qpy-ide.selectiveDownloadFile",
+					"group": "QuecPython@1"
 				}
 			],
 			"editor/context": [
 				{
 					"command": "qpy-ide.downloadFile",
+					"group": "QuecPython@1"
+				},
+				{
+					"command": "qpy-ide.selectiveDownloadFile",
 					"group": "QuecPython@1"
 				}
 			]
