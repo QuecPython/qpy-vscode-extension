@@ -131,10 +131,12 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
             vscode.window.showErrorMessage('Unable to remove file.');
             return;
         }
-        const parsedData = utils.extractFilePath(data);
-        removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
-        moduleFsTreeProvider.refresh();
-        setTerminalFlag();
+        if (data.includes('uos.remove')) {
+            const parsedData = utils.extractFilePath(data);
+            removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
+            moduleFsTreeProvider.refresh();
+            setTerminalFlag();
+        }
     } catch {
         setTerminalFlag();
         vscode.window.showErrorMessage('Failed to remove the specified file.');
