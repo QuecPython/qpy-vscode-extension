@@ -2,6 +2,7 @@ import SerialPort from 'SerialPort';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import { fwConfig } from '../utils/constants';
+import { progressBar, updateProgressBar } from '../api/progressBar';
 
 const fwDirPath: string = path.join(__dirname, '..', '..', 'fw');
 const exePath: string = fwDirPath + '\\adownload.exe';
@@ -68,7 +69,14 @@ export default async function firmwareDownload(
 	]);
 
 	adownload.stdout.on('data', data => {
-		console.log(`stdout: ${data}`);
+		if (data.includes('"progress" :')) {
+			const result: string = data.toString();
+			const progressArray: string[] = result.match(/"progress" : \d{1,3}/g);
+			const percentage: string = progressArray[progressArray.length - 1].slice(
+				13
+			);
+			console.log('PERCENTAGE: ', percentage);
+		}
 	});
 
 	adownload.on('close', code => {
