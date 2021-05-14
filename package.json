@@ -27,12 +27,6 @@
 					"description": "Set to true to translate incomming hex data. Set to false to output raw hex.",
 					"type": "boolean",
 					"default": true
-				},
-				"qpy-ide.showRunCommandInEditorContextMenu": {
-					"type": "boolean",
-					"default": true,
-					"description": "Whether to show 'Run Code' command in editor context menu.",
-					"scope": "resource"
 				}
 			}
 		},
@@ -171,12 +165,10 @@
 			"editor/context": [
 				{
 					"command": "qpy-ide.downloadFile",
-					"when": "!inOutput && config.qpy-ide.showRunCommandInEditorContextMenu",
 					"group": "QuecPython@1"
 				},
 				{
 					"command": "qpy-ide.selectiveDownloadFile",
-					"when": "!inOutput && config.qpy-ide.showRunCommandInEditorContextMenu",
 					"group": "QuecPython@1"
 				}
 			]

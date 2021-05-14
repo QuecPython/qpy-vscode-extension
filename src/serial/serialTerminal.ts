@@ -6,6 +6,8 @@ import { cmd } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
 
+export let portStatus: boolean;
+
 const pyFsScriptPath: string = path.join(__dirname, '..', '..', 'config');
 const pyFsScript: string = pyFsScriptPath + '\\q_init_fs.py';
 
@@ -44,6 +46,7 @@ export default class SerialTerminal extends CommandLineInterface {
 		this.serial.on('close', err => {
 			serialEmitter.emit('statusDisc');
 			serialEmitter.emit(`${cmd.ilistdir}`, '');
+			portStatus = this.serial.isOpen;
 			if (!this.endsWithNewLine) {
 				this.handleDataAsText('\r\n');
 			}
@@ -74,6 +77,7 @@ export default class SerialTerminal extends CommandLineInterface {
 
 		this.serial.on('open', () => {
 			serialEmitter.emit('statusConn');
+			portStatus = this.serial.isOpen;
 			if (this.reconnectInterval) {
 				clearInterval(this.reconnectInterval);
 			}
