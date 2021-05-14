@@ -73,7 +73,6 @@ export const openConnection = vscode.commands.registerCommand(
 
 			portString = chosenPort.split(' (')[0];
 			chosenPortPath = chosenPort.split(' (')[1].slice(0, -1);
-			// chosenPortPath = chosenPort.match(/\(([^)]+)\)/)[1];
 
 			if (!chosenPortPath) {
 				return;
