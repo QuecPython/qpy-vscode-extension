@@ -71,12 +71,12 @@ export const openConnection = vscode.commands.registerCommand(
 				placeHolder: 'Select COM port',
 			});
 
-			portString = chosenPort.split(' (')[0];
-			chosenPortPath = chosenPort.split(' (')[1].slice(0, -1);
-
-			if (!chosenPortPath) {
+			if (!chosenPort) {
 				return;
 			}
+
+			portString = chosenPort.split(' (')[0];
+			chosenPortPath = chosenPort.split(' (')[1].slice(0, -1);
 		}
 
 		// resolve baud rate
