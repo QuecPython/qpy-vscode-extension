@@ -21,6 +21,8 @@ import {
 	sortTreeNodes,
 } from './treeView';
 
+import filedownload from '../fileDownload/fileDownload';
+
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
 	() => {
@@ -246,9 +248,15 @@ export const removeDir = vscode.commands.registerCommand(
 	}
 );
 
+async function delay(): Promise<void> {
+	return new Promise(resolve => {
+		setTimeout(() => resolve(), 15000);
+	});
+}
+
 export const downloadFile = vscode.commands.registerCommand(
 	'qpy-ide.downloadFile',
-	(fileUri: vscode.Uri) => {
+	async (fileUri: vscode.Uri) => {
 		try {
 			let downloadPath: vscode.Uri;
 
@@ -258,64 +266,73 @@ export const downloadFile = vscode.commands.registerCommand(
 				downloadPath = fileUri;
 			}
 
-			if (utils.isDir(downloadPath.fsPath)) {
-				vscode.window.showErrorMessage('Specified target is not a valid file.');
-				return;
-			} else {
-				const data = fs.readFileSync(downloadPath.fsPath);
-				const st = getActiveSerial();
-				setTerminalFlag(true, cmd.downloadFile);
-				const filename = downloadPath.fsPath.split('\\').pop();
+			const st = getActiveSerial();
+			st.serial.close();
+			await filedownload(downloadPath.fsPath);
+			await delay();
+			st.serial.open();
 
-				const stats = fs.statSync(downloadPath.fsPath);
-				const fileSizeInBytes = stats.size;
+			// console.log('downloadPath: ', downloadPath);
+			// console.log('downloadPath.fsPath: ', downloadPath.fsPath);
 
-				st.serial.flush(() =>
-					st.serial.write(`f = open('/usr/${filename}', 'wb')\r\n`)
-				);
-				st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
+			// if (utils.isDir(downloadPath.fsPath)) {
+			// 	vscode.window.showErrorMessage('Specified target is not a valid file.');
+			// 	return;
+			// } else {
+			// 	const data = fs.readFileSync(downloadPath.fsPath);
+			// 	const st = getActiveSerial();
+			// 	setTerminalFlag(true, cmd.downloadFile);
+			// 	const filename = downloadPath.fsPath.split('\\').pop();
 
-				const splitData = data.toString().split(/\r\n/);
+			// 	const stats = fs.statSync(downloadPath.fsPath);
+			// 	const fileSizeInBytes = stats.size;
 
-				serialEmitter.emit('startProgress');
-				splitData.forEach((dataLine: string, index: number) => {
-					const rawData = String.raw`${dataLine + '\\r\\n'}`;
-					setTimeout(
-						() =>
-							st.serial.flush(() => {
-								st.serial.write(`w(b'''${rawData}''')\r\n`);
-								const updatePaylod = {
-									index,
-									dataLen: splitData.length,
-								};
-								serialEmitter.emit('updatePercentage', updatePaylod);
-							}),
-						100 + index * 10
-					);
-				});
+			// 	st.serial.flush(() =>
+			// 		st.serial.write(`f = open('/usr/${filename}', 'wb')\r\n`)
+			// 	);
+			// 	st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
 
-				setTimeout(
-					() =>
-						st.serial.flush(() => {
-							st.serial.write(`f.close()\r\n`);
-							serialEmitter.emit('downloadFinished');
-						}),
-					100 + (splitData.length + 1) * 10
-				);
+			// 	const splitData = data.toString().split(/\r\n/);
 
-				removeTreeNodeByName(filename, moduleFsTreeProvider.data);
+			// 	serialEmitter.emit('startProgress');
+			// 	splitData.forEach((dataLine: string, index: number) => {
+			// 		const rawData = String.raw`${dataLine + '\\r\\n'}`;
+			// 		setTimeout(
+			// 			() =>
+			// 				st.serial.flush(() => {
+			// 					st.serial.write(`w(b'''${rawData}''')\r\n`);
+			// 					const updatePaylod = {
+			// 						index,
+			// 						dataLen: splitData.length,
+			// 					};
+			// 					serialEmitter.emit('updatePercentage', updatePaylod);
+			// 				}),
+			// 			100 + index * 10
+			// 		);
+			// 	});
 
-				moduleFsTreeProvider.data.push(
-					new ModuleDocument(
-						filename,
-						`${fileSizeInBytes} B`,
-						`/usr/${filename}`
-					)
-				);
+			// 	setTimeout(
+			// 		() =>
+			// 			st.serial.flush(() => {
+			// 				st.serial.write(`f.close()\r\n`);
+			// 				serialEmitter.emit('downloadFinished');
+			// 			}),
+			// 		100 + (splitData.length + 1) * 10
+			// 	);
 
-				moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-				moduleFsTreeProvider.refresh();
-			}
+			// 	removeTreeNodeByName(filename, moduleFsTreeProvider.data);
+
+			// 	moduleFsTreeProvider.data.push(
+			// 		new ModuleDocument(
+			// 			filename,
+			// 			`${fileSizeInBytes} B`,
+			// 			`/usr/${filename}`
+			// 		)
+			// 	);
+
+			// 	moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+			// 	moduleFsTreeProvider.refresh();
+			// }
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
