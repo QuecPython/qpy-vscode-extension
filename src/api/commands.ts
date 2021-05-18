@@ -64,12 +64,16 @@ export const openConnection = vscode.commands.registerCommand(
 				return port;
 			});
 
-			if (portPaths.length < 1) {
+			const filteredPortPaths = portPaths.filter(x => {
+				return x !== undefined;
+			});
+
+			if (filteredPortPaths.length < 1) {
 				vscode.window.showErrorMessage('No serial devices found');
 				return;
 			}
 
-			chosenPort = await vscode.window.showQuickPick(portPaths, {
+			chosenPort = await vscode.window.showQuickPick(filteredPortPaths, {
 				placeHolder: 'Select COM port',
 			});
 
@@ -272,19 +276,19 @@ export const downloadFile = vscode.commands.registerCommand(
 			} else {
 				const st = getActiveSerial();
 
-                const fileData = {
-                    filename: downloadPath.fsPath.split('\\').pop(),
-                    fileSizeInBytes: fs.statSync(downloadPath.fsPath).size
-                };
+				const fileData = {
+					filename: downloadPath.fsPath.split('\\').pop(),
+					fileSizeInBytes: fs.statSync(downloadPath.fsPath).size,
+				};
 
-                st.serial.close();
+				st.serial.close();
 
-                await filedownload(
-                    downloadPath.fsPath,
-                    st.serial.path,
-                    st.serial.baudRate,
-                    fileData
-                );
+				await filedownload(
+					downloadPath.fsPath,
+					st.serial.path,
+					st.serial.baudRate,
+					fileData
+				);
 			}
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
@@ -314,7 +318,7 @@ export const selectiveDownloadFile = vscode.commands.registerCommand(
 
 					const fileData = {
 						filename: fileUri.fsPath.split('\\').pop(),
-						fileSizeInBytes: fs.statSync(fileUri.fsPath).size
+						fileSizeInBytes: fs.statSync(fileUri.fsPath).size,
 					};
 
 					st.serial.close();
