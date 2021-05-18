@@ -20,7 +20,7 @@ import {
 	removeTreeNodeByName,
 	sortTreeNodes,
 } from './treeView';
-
+import { FileData } from '../types/types';
 import filedownload from '../fileDownload/fileDownload';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
@@ -266,73 +266,26 @@ export const downloadFile = vscode.commands.registerCommand(
 				downloadPath = fileUri;
 			}
 
-			const st = getActiveSerial();
-			st.serial.close();
-			await filedownload(downloadPath.fsPath);
-			await delay();
-			st.serial.open();
+			if (utils.isDir(downloadPath.fsPath)) {
+				vscode.window.showErrorMessage('Specified target is not a valid file.');
+				return;
+			} else {
+				const st = getActiveSerial();
 
-			// console.log('downloadPath: ', downloadPath);
-			// console.log('downloadPath.fsPath: ', downloadPath.fsPath);
+                const fileData = {
+                    filename: downloadPath.fsPath.split('\\').pop(),
+                    fileSizeInBytes: fs.statSync(downloadPath.fsPath).size
+                };
 
-			// if (utils.isDir(downloadPath.fsPath)) {
-			// 	vscode.window.showErrorMessage('Specified target is not a valid file.');
-			// 	return;
-			// } else {
-			// 	const data = fs.readFileSync(downloadPath.fsPath);
-			// 	const st = getActiveSerial();
-			// 	setTerminalFlag(true, cmd.downloadFile);
-			// 	const filename = downloadPath.fsPath.split('\\').pop();
+                st.serial.close();
 
-			// 	const stats = fs.statSync(downloadPath.fsPath);
-			// 	const fileSizeInBytes = stats.size;
-
-			// 	st.serial.flush(() =>
-			// 		st.serial.write(`f = open('/usr/${filename}', 'wb')\r\n`)
-			// 	);
-			// 	st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
-
-			// 	const splitData = data.toString().split(/\r\n/);
-
-			// 	serialEmitter.emit('startProgress');
-			// 	splitData.forEach((dataLine: string, index: number) => {
-			// 		const rawData = String.raw`${dataLine + '\\r\\n'}`;
-			// 		setTimeout(
-			// 			() =>
-			// 				st.serial.flush(() => {
-			// 					st.serial.write(`w(b'''${rawData}''')\r\n`);
-			// 					const updatePaylod = {
-			// 						index,
-			// 						dataLen: splitData.length,
-			// 					};
-			// 					serialEmitter.emit('updatePercentage', updatePaylod);
-			// 				}),
-			// 			100 + index * 10
-			// 		);
-			// 	});
-
-			// 	setTimeout(
-			// 		() =>
-			// 			st.serial.flush(() => {
-			// 				st.serial.write(`f.close()\r\n`);
-			// 				serialEmitter.emit('downloadFinished');
-			// 			}),
-			// 		100 + (splitData.length + 1) * 10
-			// 	);
-
-			// 	removeTreeNodeByName(filename, moduleFsTreeProvider.data);
-
-			// 	moduleFsTreeProvider.data.push(
-			// 		new ModuleDocument(
-			// 			filename,
-			// 			`${fileSizeInBytes} B`,
-			// 			`/usr/${filename}`
-			// 		)
-			// 	);
-
-			// 	moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-			// 	moduleFsTreeProvider.refresh();
-			// }
+                await filedownload(
+                    downloadPath.fsPath,
+                    st.serial.path,
+                    st.serial.baudRate,
+                    fileData
+                );
+			}
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();

@@ -48,7 +48,6 @@ export default class SerialTerminal extends CommandLineInterface {
 				this.handleDataAsText('\r\n');
 			}
 
-			this.handleDataAsText('Port closed.');
 			if (err?.disconnected) {
 				// device was disconnected, attempt to reconnect
 				this.handleDataAsText('Device disconnected.');

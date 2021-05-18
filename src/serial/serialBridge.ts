@@ -1,11 +1,13 @@
 import { EventEmitter } from 'events';
+import { strict } from 'node:assert';
 import * as vscode from 'vscode';
 import { progressBar } from '../api/progressBar';
 
 import { getActiveSerial, setTerminalFlag } from '../api/terminal';
-import { findTreeNode, initTree, removeTreeNodeByPath, sortTreeNodes } from '../api/treeView';
+import { findTreeNode, initTree, removeTreeNodeByName, removeTreeNodeByPath, sortTreeNodes } from '../api/treeView';
 import { moduleFsTreeProvider, setButtonStatus, connStatus} from '../api/userInterface';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
+import { DownloadResponse, FileData } from '../types/types';
 import { cmd } from '../utils/constants';
 import * as utils from '../utils/utils';
 
@@ -143,15 +145,33 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
     }
 });
 
-serialEmitter.on(`${cmd.downloadFile}`, (data: string) => {
+serialEmitter.on(`${cmd.downloadFile}`, (data: DownloadResponse) => {
+    const st = getActiveSerial();
     try {
-        if (data.includes('close')) {
+        if (data.code.includes('0')) {
+            st.serial.open();
+            removeTreeNodeByName(data.fileData.filename, moduleFsTreeProvider.data);
+
+            moduleFsTreeProvider.data.push(
+                new ModuleDocument(
+                    data.fileData.filename,
+                    `${data.fileData.fileSizeInBytes} B`,
+                    `${data.parentPath}/${data.fileData.filename}`
+                )
+            );
+
             moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-            setTerminalFlag();
+            moduleFsTreeProvider.refresh();
+        }
+
+        if (data.code.includes('1')) {
+            st.serial.open();
+            vscode.window.showErrorMessage('Failed to download the file.');
         }
     } catch {
-        setTerminalFlag();
-        vscode.window.showErrorMessage('Failed to download the file.');
+        st.serial.open();
+        // setTerminalFlag();
+        vscode.window.showErrorMessage('Internal error while executing file download.');
     }
 });
 

@@ -10,7 +10,6 @@ import { cmd } from '../utils/constants';
 const backspaceRegex = /^\177/;
 const enterRegex = /^\r/;
 const deleteRegex = /^\033\[3~/;
-const tabRegex = /^\011/;
 
 // navigation sequences
 const arrowRegex = /^\033\[([ABCD])/;
@@ -102,7 +101,6 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			this.endsWithNewLine = false;
 		}
 
-		console.log('stringRepr: ', stringRepr);
 		if (stringRepr !== '>>> ') {
 			this.writeEmitter.fire(stringRepr);
 		} else {
@@ -176,21 +174,6 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 				charsHandled = enterMatch[0].length;
 				this.updateInputArea();
 				continue;
-			}
-
-			//// handle tab
-			const tabMatch: RegExpMatchArray = tabRegex.exec(data) ?? [];
-			if (tabMatch.length > 0) {
-				console.log('OVDE JE TAB: ', this.currentInputLine);
-				// this.backendStream.write(this.currentInputLine);
-				// const rStream = this.backendStream.resume();
-				// console.log('rStream', rStream);
-				// this.writeEmitter.fire(this.currentInputLine);
-				// this.backendStream.on('data', this.handleData);
-				this.writeEmitter.fire('\r\n');
-				charsHandled = tabMatch[0].length;
-				this.updateInputArea();
-				// continue;
 			}
 
 			//// handle backspace
