@@ -6,7 +6,7 @@ import { cmd } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
 
-const pyFsScriptPath: string = path.join(__dirname, '..', '..', 'config');
+const pyFsScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
 const pyFsScript: string = pyFsScriptPath + '\\q_init_fs.py';
 
 export default class SerialTerminal extends CommandLineInterface {

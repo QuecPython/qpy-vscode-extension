@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { progressBar } from '../api/progressBar';
 
 import { getActiveSerial, setTerminalFlag } from '../api/terminal';
-import { findTreeNode, initTree, removeTreeNodeByName, removeTreeNodeByPath, sortTreeNodes } from '../api/treeView';
+import { findTreeNode, initTree, insertTreeNodeChild, removeTreeNodeByName, removeTreeNodeByPath, sortTreeNodes } from '../api/treeView';
 import { moduleFsTreeProvider, setButtonStatus, connStatus} from '../api/userInterface';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { DownloadResponse, FileData } from '../types/types';
@@ -170,7 +170,34 @@ serialEmitter.on(`${cmd.downloadFile}`, (data: DownloadResponse) => {
         }
     } catch {
         st.serial.open();
-        // setTerminalFlag();
+        vscode.window.showErrorMessage('Internal error while executing file download.');
+    }
+});
+
+serialEmitter.on(`${cmd.selectiveDownFile}`, (data: DownloadResponse) => {
+    const st = getActiveSerial();
+    try {
+        if (data.code.includes('0')) {
+            st.serial.open();
+            removeTreeNodeByName(data.fileData.filename, moduleFsTreeProvider.data);
+
+            const newNode = new ModuleDocument(
+                data.fileData.filename,
+                `${data.fileData.fileSizeInBytes} B`,
+                `${data.fileData.fileSizeInBytes}/${data.fileData.filename}`
+            );
+
+            insertTreeNodeChild(moduleFsTreeProvider.data, data.parentPath, newNode);
+            moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+            moduleFsTreeProvider.refresh();
+        }
+
+        if (data.code.includes('1')) {
+            st.serial.open();
+            vscode.window.showErrorMessage('Failed to download the file.');
+        }
+    } catch {
+        st.serial.open();
         vscode.window.showErrorMessage('Internal error while executing file download.');
     }
 });

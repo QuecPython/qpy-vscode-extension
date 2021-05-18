@@ -22,6 +22,7 @@ export const cmd = {
 	removeDir: '[RMD]',
 	createDir: '[MKD]',
 	downloadFile: '[DWF]',
+	selectiveDownFile: '[SDW]',
 	disconnect: 'SIG_TERM_9',
 };
 

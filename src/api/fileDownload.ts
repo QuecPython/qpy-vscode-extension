@@ -4,7 +4,7 @@ import { serialEmitter } from '../serial/serialBridge';
 import { FileData } from '../types/types';
 import { cmd } from '../utils/constants';
 
-const fileDirPath: string = path.join(__dirname, '..', '..', 'fileScript');
+const fileDirPath: string = path.join(__dirname, '..', '..', 'scripts');
 const scriptPath: string = fileDirPath + '\\QuecPyComTools.py';
 
 export default async function fileDownload(
@@ -12,9 +12,10 @@ export default async function fileDownload(
 	serialPort: string,
 	baudRate: number,
 	fileData: FileData,
-	downloadPath: string = ':/usr/'
+	downloadPath: string = '/usr'
 	) {
-	const destinationPath = downloadPath + path.basename(sourcePath);
+	const destinationPath = `:${downloadPath}/` + path.basename(sourcePath);
+
 	const fDownload = spawn('python', [
 		scriptPath,
 		'-d',
@@ -45,7 +46,7 @@ export default async function fileDownload(
 			`${cmd.downloadFile}`,
 			{
 				fileData,
-				parentPath: '/usr', 
+				parentPath: downloadPath, 
 				code: code.toString()});
 	});
 }

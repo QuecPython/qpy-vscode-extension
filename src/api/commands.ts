@@ -21,7 +21,7 @@ import {
 	sortTreeNodes,
 } from './treeView';
 import { FileData } from '../types/types';
-import filedownload from '../fileDownload/fileDownload';
+import filedownload from './fileDownload';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
@@ -310,58 +310,22 @@ export const selectiveDownloadFile = vscode.commands.registerCommand(
 				}
 
 				if (fullFilePath.startsWith('/usr/')) {
-					const data = fs.readFileSync(fileUri.fsPath);
 					const st = getActiveSerial();
-					setTerminalFlag(true, cmd.downloadFile);
-					const filename = fileUri.fsPath.split('\\').pop();
 
-					const stats = fs.statSync(fileUri.fsPath);
-					const fileSizeInBytes = stats.size;
+					const fileData = {
+						filename: fileUri.fsPath.split('\\').pop(),
+						fileSizeInBytes: fs.statSync(fileUri.fsPath).size
+					};
 
-					st.serial.flush(() =>
-						st.serial.write(`f = open('${fullFilePath}/${filename}', 'wb')\r\n`)
+					st.serial.close();
+
+					await filedownload(
+						fileUri.fsPath,
+						st.serial.path,
+						st.serial.baudRate,
+						fileData,
+						fullFilePath
 					);
-					st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
-
-					const splitData = data.toString().split(/\r\n/);
-
-					serialEmitter.emit('startProgress');
-					splitData.forEach((dataLine: string, index: number) => {
-						const rawData = String.raw`${dataLine + '\\r\\n'}`;
-						setTimeout(
-							() =>
-								st.serial.flush(() => {
-									st.serial.write(`w(b'''${rawData}''')\r\n`);
-									const updatePaylod = {
-										index,
-										dataLen: splitData.length,
-									};
-									serialEmitter.emit('updatePercentage', updatePaylod);
-								}),
-							100 + index * 10
-						);
-					});
-
-					setTimeout(
-						() =>
-							st.serial.flush(() => {
-								st.serial.write(`f.close()\r\n`);
-								serialEmitter.emit('downloadFinished');
-							}),
-						100 + (splitData.length + 1) * 10
-					);
-
-					removeTreeNodeByName(filename, moduleFsTreeProvider.data);
-
-					const newNode = new ModuleDocument(
-						filename,
-						`${fileSizeInBytes} B`,
-						`${fullFilePath}/${filename}`
-					);
-
-					insertTreeNodeChild(moduleFsTreeProvider.data, fullFilePath, newNode);
-					moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-					moduleFsTreeProvider.refresh();
 				}
 			}
 		} catch {
