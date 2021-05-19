@@ -24,7 +24,8 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
 	// fire to close terminal
 	protected closeEmitter = new vscode.EventEmitter<void>();
-	onDidClose?: vscode.Event<number | void> | undefined = this.closeEmitter.event;
+	onDidClose?: vscode.Event<number | void> | undefined =
+		this.closeEmitter.event;
 
 	// properties used for tracking and rendering terminal input
 	private currentInputLine = '';
@@ -71,7 +72,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 		if (data.toString() === cmd.disconnect) {
 			this.closeEmitter.fire();
 		}
-		
+
 		// check for UI driven command
 		if (this.cmdFlag) {
 			serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
@@ -308,7 +309,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 		if (!this.endsWithNewLine) {
 			this.moveCursor('d', 1);
 		}
-	
+
 		if (this.dimensions) {
 			const lineDelta: number = Math.trunc(index / this.dimensions.columns);
 			this.moveCursor('d', lineDelta);

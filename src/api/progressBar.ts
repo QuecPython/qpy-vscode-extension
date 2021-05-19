@@ -38,22 +38,10 @@ const updateProgressBar = (
 			clearInterval(interval);
 		});
 
-		childProcess.on('statusDisc', () => {
-			resolve();
-			clearInterval(interval);
-		});
-
 		childProcess.on('updatePercentage', data => {
-			const p = percentageParser(data.dataLen, data.index);
-			messageUpdate = p.toString() + '%';
+			messageUpdate = data.toString() + '%';
 		});
 
 		token.onCancellationRequested(_ => resolve());
 	});
-};
-
-const percentageParser = (total: number, step: number): number => {
-	const percentDecimal = (step * 100) / total;
-	const percent = Math.round(percentDecimal);
-	return percent;
 };

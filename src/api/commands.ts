@@ -5,7 +5,12 @@ import SerialPort from 'SerialPort';
 import * as utils from '../utils/utils';
 import { getActiveSerial, setTerminalFlag } from './terminal';
 import { moduleFsTreeProvider } from './userInterface';
-import { cmd, supportedBaudRates } from '../utils/constants';
+import {
+	cmd,
+	supportedBaudRates,
+	portNames,
+	fwConfig,
+} from '../utils/constants';
 import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
@@ -15,7 +20,8 @@ import {
 	removeTreeNodeByName,
 	sortTreeNodes,
 } from './treeView';
-import { portStatus } from '../serial/serialTerminal';
+import { FileData } from '../types/types';
+import filedownload from './fileDownload';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
@@ -40,96 +46,109 @@ export const openConnection = vscode.commands.registerCommand(
 		translateHex?: boolean,
 		lineEnd?: string
 	) => {
-		if (portStatus) {
-			vscode.window.showErrorMessage('Device is already connected!');
-		} else {
-			// resolve port path
-			let chosenPortPath: string | undefined = portPath;
-			if (!chosenPortPath) {
-				const ports = await SerialPort.list();
-				const portPaths = ports.map(p => p.path);
-				if (portPaths.length < 1) {
-					vscode.window.showErrorMessage('No serial devices found');
-					return;
+		// resolve port path
+		let chosenPort: string | undefined = portPath;
+		let chosenPortPath: string | undefined;
+		let portString: string | undefined;
+		if (!chosenPort) {
+			const ports = await SerialPort.list();
+			const portPaths = ports.map(p => {
+				let port: string;
+				if (p.pnpId.includes(fwConfig.deviceDiagPort)) {
+					port = `${portNames.diagPort} (${p.path})`;
+				} else if (p.pnpId.includes(fwConfig.deviceAtPort)) {
+					port = `${portNames.atPort} (${p.path})`;
+				} else if (p.pnpId.includes(fwConfig.deviceMainPort)) {
+					port = `${portNames.mainPort} (${p.path})`;
 				}
+				return port;
+			});
 
-				chosenPortPath = await vscode.window.showQuickPick(portPaths, {
-					placeHolder: 'Select COM port',
-				});
+			const filteredPortPaths = portPaths.filter(x => {
+				return x !== undefined;
+			});
 
-				if (!chosenPortPath) {
-					return;
-				}
-			}
-
-			// resolve baud rate
-			let chosenBaud: number | undefined = baudRate;
-			if (!chosenBaud) {
-				let chosenBaudString: string | undefined =
-					await vscode.window.showQuickPick(
-						['[Other]', ...supportedBaudRates],
-						{
-							placeHolder: 'Choose baud rate',
-						}
-					);
-
-				if (chosenBaudString === '[Other]') {
-					chosenBaudString = await vscode.window.showInputBox({
-						placeHolder: 'Enter baud rate',
-					});
-				}
-
-				if (!chosenBaudString) {
-					return;
-				}
-
-				try {
-					chosenBaud = Number.parseInt(chosenBaudString);
-				} catch {
-					vscode.window.showErrorMessage(
-						`Invalid baud rate ${chosenBaudString}!`
-					);
-					return;
-				}
-			}
-
-			if (chosenBaud <= 0 || !Number.isInteger(chosenBaud)) {
-				vscode.window.showErrorMessage(`Invalid baud rate ${chosenBaud}!`);
+			if (filteredPortPaths.length < 1) {
+				vscode.window.showErrorMessage('No serial devices found');
 				return;
 			}
 
-			// figure out if hex from the com port should be converted to text
-			const wsConfig = vscode.workspace.getConfiguration();
-			translateHex =
-				translateHex ?? wsConfig.get('QuecPython.translateHex') ?? true;
-
-			// resolve line terminator
-			const configDLT: string | undefined = wsConfig.get(
-				'QuecPython.defaultLineTerminator'
-			);
-
-			if (configDLT !== undefined && lineEnd === undefined) {
-				lineEnd = utils.unescape(configDLT);
-			}
-
-			lineEnd = lineEnd ?? '\r\n';
-
-			const st = new SerialTerminal(
-				chosenPortPath,
-				chosenBaud,
-				translateHex,
-				lineEnd
-			);
-
-			const terminal = vscode.window.createTerminal({
-				name: `QPY: ${chosenPortPath} (${chosenBaud} baud)`,
-				pty: st,
+			chosenPort = await vscode.window.showQuickPick(filteredPortPaths, {
+				placeHolder: 'Select COM port',
 			});
 
-			terminal.show();
-			terminalRegistry[terminal.name] = st;
-			return terminal;
+			if (!chosenPort) {
+				return;
+			}
+
+			portString = chosenPort.split(' (')[0];
+			chosenPortPath = chosenPort.split(' (')[1].slice(0, -1);
 		}
+
+		// resolve baud rate
+		let chosenBaud: number | undefined = baudRate;
+		if (!chosenBaud) {
+			let chosenBaudString: string | undefined =
+				await vscode.window.showQuickPick(['[Other]', ...supportedBaudRates], {
+					placeHolder: 'Choose baud rate',
+				});
+
+			if (chosenBaudString === '[Other]') {
+				chosenBaudString = await vscode.window.showInputBox({
+					placeHolder: 'Enter baud rate',
+				});
+			}
+
+			if (!chosenBaudString) {
+				return;
+			}
+
+			try {
+				chosenBaud = Number.parseInt(chosenBaudString);
+			} catch {
+				vscode.window.showErrorMessage(
+					`Invalid baud rate ${chosenBaudString}!`
+				);
+				return;
+			}
+		}
+
+		if (chosenBaud <= 0 || !Number.isInteger(chosenBaud)) {
+			vscode.window.showErrorMessage(`Invalid baud rate ${chosenBaud}!`);
+			return;
+		}
+
+		// figure out if hex from the com port should be converted to text
+		const wsConfig = vscode.workspace.getConfiguration();
+		translateHex =
+			translateHex ?? wsConfig.get('QuecPython.translateHex') ?? true;
+
+		// resolve line terminator
+		const configDLT: string | undefined = wsConfig.get(
+			'QuecPython.defaultLineTerminator'
+		);
+
+		if (configDLT !== undefined && lineEnd === undefined) {
+			lineEnd = utils.unescape(configDLT);
+		}
+
+		lineEnd = lineEnd ?? '\r\n';
+
+		const st = new SerialTerminal(
+			chosenPortPath,
+			chosenBaud,
+			translateHex,
+			lineEnd
+		);
+
+		const terminal = vscode.window.createTerminal({
+			name: `QPY: ${portString}`,
+			pty: st,
+		});
+
+		terminal.show();
+		terminalRegistry[terminal.name] = st;
+		return terminal;
 	}
 );
 
@@ -235,7 +254,7 @@ export const removeDir = vscode.commands.registerCommand(
 
 export const downloadFile = vscode.commands.registerCommand(
 	'qpy-ide.downloadFile',
-	(fileUri: vscode.Uri) => {
+	async (fileUri: vscode.Uri) => {
 		try {
 			let downloadPath: vscode.Uri;
 
@@ -249,59 +268,21 @@ export const downloadFile = vscode.commands.registerCommand(
 				vscode.window.showErrorMessage('Specified target is not a valid file.');
 				return;
 			} else {
-				const data = fs.readFileSync(downloadPath.fsPath);
 				const st = getActiveSerial();
-				setTerminalFlag(true, cmd.downloadFile);
-				const filename = downloadPath.fsPath.split('\\').pop();
 
-				const stats = fs.statSync(downloadPath.fsPath);
-				const fileSizeInBytes = stats.size;
+				const fileData = {
+					filename: downloadPath.fsPath.split('\\').pop(),
+					fileSizeInBytes: fs.statSync(downloadPath.fsPath).size,
+				};
 
-				st.serial.flush(() =>
-					st.serial.write(`f = open('/usr/${filename}', 'wb')\r\n`)
+				st.serial.close();
+
+				await filedownload(
+					downloadPath.fsPath,
+					st.serial.path,
+					st.serial.baudRate,
+					fileData
 				);
-				st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
-
-				const splitData = data.toString().split(/\r\n/);
-
-				serialEmitter.emit('startProgress');
-				splitData.forEach((dataLine: string, index: number) => {
-					const rawData = String.raw`${dataLine + '\\r\\n'}`;
-					setTimeout(
-						() =>
-							st.serial.flush(() => {
-								st.serial.write(`w(b'''${rawData}''')\r\n`);
-								const updatePaylod = {
-									index,
-									dataLen: splitData.length,
-								};
-								serialEmitter.emit('updatePercentage', updatePaylod);
-							}),
-						100 + index * 10
-					);
-				});
-
-				setTimeout(
-					() =>
-						st.serial.flush(() => {
-							st.serial.write(`f.close()\r\n`);
-							serialEmitter.emit('downloadFinished');
-						}),
-					100 + (splitData.length + 1) * 10
-				);
-
-				removeTreeNodeByName(filename, moduleFsTreeProvider.data);
-
-				moduleFsTreeProvider.data.push(
-					new ModuleDocument(
-						filename,
-						`${fileSizeInBytes} B`,
-						`/usr/${filename}`
-					)
-				);
-
-				moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-				moduleFsTreeProvider.refresh();
 			}
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
@@ -327,58 +308,22 @@ export const selectiveDownloadFile = vscode.commands.registerCommand(
 				}
 
 				if (fullFilePath.startsWith('/usr/')) {
-					const data = fs.readFileSync(fileUri.fsPath);
 					const st = getActiveSerial();
-					setTerminalFlag(true, cmd.downloadFile);
-					const filename = fileUri.fsPath.split('\\').pop();
 
-					const stats = fs.statSync(fileUri.fsPath);
-					const fileSizeInBytes = stats.size;
+					const fileData = {
+						filename: fileUri.fsPath.split('\\').pop(),
+						fileSizeInBytes: fs.statSync(fileUri.fsPath).size,
+					};
 
-					st.serial.flush(() =>
-						st.serial.write(`f = open('${fullFilePath}/${filename}', 'wb')\r\n`)
+					st.serial.close();
+
+					await filedownload(
+						fileUri.fsPath,
+						st.serial.path,
+						st.serial.baudRate,
+						fileData,
+						fullFilePath
 					);
-					st.serial.flush(() => st.serial.write(`w = f.write\r\n`));
-
-					const splitData = data.toString().split(/\r\n/);
-
-					serialEmitter.emit('startProgress');
-					splitData.forEach((dataLine: string, index: number) => {
-						const rawData = String.raw`${dataLine + '\\r\\n'}`;
-						setTimeout(
-							() =>
-								st.serial.flush(() => {
-									st.serial.write(`w(b'''${rawData}''')\r\n`);
-									const updatePaylod = {
-										index,
-										dataLen: splitData.length,
-									};
-									serialEmitter.emit('updatePercentage', updatePaylod);
-								}),
-							100 + index * 10
-						);
-					});
-
-					setTimeout(
-						() =>
-							st.serial.flush(() => {
-								st.serial.write(`f.close()\r\n`);
-								serialEmitter.emit('downloadFinished');
-							}),
-						100 + (splitData.length + 1) * 10
-					);
-
-					removeTreeNodeByName(filename, moduleFsTreeProvider.data);
-
-					const newNode = new ModuleDocument(
-						filename,
-						`${fileSizeInBytes} B`,
-						`${fullFilePath}/${filename}`
-					);
-
-					insertTreeNodeChild(moduleFsTreeProvider.data, fullFilePath, newNode);
-					moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-					moduleFsTreeProvider.refresh();
 				}
 			}
 		} catch {

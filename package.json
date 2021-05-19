@@ -197,7 +197,7 @@
 		"test": "node ./out/test/runTest.js",
 		"rebuild": "electron-rebuild -f -w serialport",
 		"dev:rebuild": "electron-rebuild --version 11.3.0 --force",
-		"postinstall": "electron-rebuild --version 12.0.0 --force",
+		"postinstall": "electron-rebuild --version 12.0.0 --force && pip install -r ./config/requirements.txt",
 		"ext:prepublish": "npm ci && npm prune"
 	},
 	"devDependencies": {
