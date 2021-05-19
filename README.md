@@ -5,7 +5,8 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 - Works with Windows only at the moment.
 
 ## Requirements
-- **NodeJS installed on your system (12 or higher)** https://nodejs.org
+- **NodeJS installed on your system (12 or higher) -** [NodeJS](https://nodejs.org)
+- **Python3 installed (3.2 or higher) -** [Python](https://www.python.org/)
 
 ## Supported Modules
 
@@ -22,6 +23,7 @@ Open the serial connection by opening the commands palette the `CTRL+SHIFT+P` an
 Upon successful connection, the terminal with open with either REPL or AT CLI depending on the chosen port. The board can be disconnected from the VSC by killing the active serial connection terminal. When manually closing the terminal (`x` on the right top of the terminal) the connection stays active.
 
 ## Extension Settings
+
 This extension contributes the following settings for configuring it's usage:
 
 * `QuecPython.defaultLineTerminator`: Text added to end of all sent lines. Will be appended to sent data but will not be rendered in terminal. Allows escape characters (\\r, \\n etc.), hex    representation (\\x6F, \\xF8 etc.) and unicode representation (\\u006F, \\u00F8 etc.)
@@ -35,7 +37,7 @@ This extension contributes the following settings for configuring it's usage:
 
 ## Known Issues
 
-There are cases that carret `'>>>'` does not appear on boot-up, if that happens, please restart the module.
+* There are cases that carret `'>>>'` does not appear on boot-up, if that happens, please restart the module.
 
 ## Release Notes
 
