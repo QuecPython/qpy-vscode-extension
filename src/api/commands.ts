@@ -16,6 +16,7 @@ import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { sortTreeNodes } from './treeView';
 import filedownload from './fileDownload';
+import { portStatus } from '../serial/serialTerminal';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
@@ -40,109 +41,113 @@ export const openConnection = vscode.commands.registerCommand(
 		translateHex?: boolean,
 		lineEnd?: string
 	) => {
-		// resolve port path
-		let chosenPort: string | undefined = portPath;
-		let chosenPortPath: string | undefined;
-		let portString: string | undefined;
-		if (!chosenPort) {
-			const ports = await SerialPort.list();
-			const portPaths = ports.map(p => {
-				let port: string;
-				if (p.pnpId.includes(fwConfig.deviceDiagPort)) {
-					port = `${portNames.diagPort} (${p.path})`;
-				} else if (p.pnpId.includes(fwConfig.deviceAtPort)) {
-					port = `${portNames.atPort} (${p.path})`;
-				} else if (p.pnpId.includes(fwConfig.deviceMainPort)) {
-					port = `${portNames.mainPort} (${p.path})`;
-				}
-				return port;
-			});
-
-			const filteredPortPaths = portPaths.filter(x => {
-				return x !== undefined;
-			});
-
-			if (filteredPortPaths.length < 1) {
-				vscode.window.showErrorMessage('No serial devices found');
-				return;
-			}
-
-			chosenPort = await vscode.window.showQuickPick(filteredPortPaths, {
-				placeHolder: 'Select COM port',
-			});
-
+		if (portStatus) {
+			vscode.window.showErrorMessage('Device is already connected!');
+		} else {
+			// resolve port path
+			let chosenPort: string | undefined = portPath;
+			let chosenPortPath: string | undefined;
+			let portString: string | undefined;
 			if (!chosenPort) {
-				return;
-			}
-
-			portString = chosenPort.split(' (')[0];
-			chosenPortPath = chosenPort.split(' (')[1].slice(0, -1);
-		}
-
-		// resolve baud rate
-		let chosenBaud: number | undefined = baudRate;
-		if (!chosenBaud) {
-			let chosenBaudString: string | undefined =
-				await vscode.window.showQuickPick(['[Other]', ...supportedBaudRates], {
-					placeHolder: 'Choose baud rate',
+				const ports = await SerialPort.list();
+				const portPaths = ports.map(p => {
+					let port: string;
+					if (p.pnpId.includes(fwConfig.deviceDiagPort)) {
+						port = `${portNames.diagPort} (${p.path})`;
+					} else if (p.pnpId.includes(fwConfig.deviceAtPort)) {
+						port = `${portNames.atPort} (${p.path})`;
+					} else if (p.pnpId.includes(fwConfig.deviceMainPort)) {
+						port = `${portNames.mainPort} (${p.path})`;
+					}
+					return port;
 				});
 
-			if (chosenBaudString === '[Other]') {
-				chosenBaudString = await vscode.window.showInputBox({
-					placeHolder: 'Enter baud rate',
+				const filteredPortPaths = portPaths.filter(x => {
+					return x !== undefined;
 				});
+
+				if (filteredPortPaths.length < 1) {
+					vscode.window.showErrorMessage('No serial devices found');
+					return;
+				}
+
+				chosenPort = await vscode.window.showQuickPick(filteredPortPaths, {
+					placeHolder: 'Select COM port',
+				});
+
+				if (!chosenPort) {
+					return;
+				}
+
+				portString = chosenPort.split(' (')[0];
+				chosenPortPath = chosenPort.split(' (')[1].slice(0, -1);
 			}
 
-			if (!chosenBaudString) {
+			// resolve baud rate
+			let chosenBaud: number | undefined = baudRate;
+			if (!chosenBaud) {
+				let chosenBaudString: string | undefined =
+					await vscode.window.showQuickPick(['[Other]', ...supportedBaudRates], {
+						placeHolder: 'Choose baud rate',
+					});
+
+				if (chosenBaudString === '[Other]') {
+					chosenBaudString = await vscode.window.showInputBox({
+						placeHolder: 'Enter baud rate',
+					});
+				}
+
+				if (!chosenBaudString) {
+					return;
+				}
+
+				try {
+					chosenBaud = Number.parseInt(chosenBaudString);
+				} catch {
+					vscode.window.showErrorMessage(
+						`Invalid baud rate ${chosenBaudString}!`
+					);
+					return;
+				}
+			}
+
+			if (chosenBaud <= 0 || !Number.isInteger(chosenBaud)) {
+				vscode.window.showErrorMessage(`Invalid baud rate ${chosenBaud}!`);
 				return;
 			}
 
-			try {
-				chosenBaud = Number.parseInt(chosenBaudString);
-			} catch {
-				vscode.window.showErrorMessage(
-					`Invalid baud rate ${chosenBaudString}!`
-				);
-				return;
+			// figure out if hex from the com port should be converted to text
+			const wsConfig = vscode.workspace.getConfiguration();
+			translateHex =
+				translateHex ?? wsConfig.get('QuecPython.translateHex') ?? true;
+
+			// resolve line terminator
+			const configDLT: string | undefined = wsConfig.get(
+				'QuecPython.defaultLineTerminator'
+			);
+
+			if (configDLT !== undefined && lineEnd === undefined) {
+				lineEnd = utils.unescape(configDLT);
 			}
+
+			lineEnd = lineEnd ?? '\r\n';
+
+			const st = new SerialTerminal(
+				chosenPortPath,
+				chosenBaud,
+				translateHex,
+				lineEnd
+			);
+
+			const terminal = vscode.window.createTerminal({
+				name: `QPY: ${portString}`,
+				pty: st,
+			});
+
+			terminal.show();
+			terminalRegistry[terminal.name] = st;
+			return terminal;
 		}
-
-		if (chosenBaud <= 0 || !Number.isInteger(chosenBaud)) {
-			vscode.window.showErrorMessage(`Invalid baud rate ${chosenBaud}!`);
-			return;
-		}
-
-		// figure out if hex from the com port should be converted to text
-		const wsConfig = vscode.workspace.getConfiguration();
-		translateHex =
-			translateHex ?? wsConfig.get('QuecPython.translateHex') ?? true;
-
-		// resolve line terminator
-		const configDLT: string | undefined = wsConfig.get(
-			'QuecPython.defaultLineTerminator'
-		);
-
-		if (configDLT !== undefined && lineEnd === undefined) {
-			lineEnd = utils.unescape(configDLT);
-		}
-
-		lineEnd = lineEnd ?? '\r\n';
-
-		const st = new SerialTerminal(
-			chosenPortPath,
-			chosenBaud,
-			translateHex,
-			lineEnd
-		);
-
-		const terminal = vscode.window.createTerminal({
-			name: `QPY: ${portString}`,
-			pty: st,
-		});
-
-		terminal.show();
-		terminalRegistry[terminal.name] = st;
-		return terminal;
 	}
 );
 

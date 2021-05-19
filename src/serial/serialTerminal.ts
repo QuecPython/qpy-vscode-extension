@@ -2,9 +2,11 @@ import SerialPort from 'SerialPort';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { cmd } from '../utils/constants';
+import { cmd, status } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
+
+export let portStatus: boolean;
 
 const pyFsScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
 const pyFsScript: string = pyFsScriptPath + '\\q_init_fs.py';
@@ -43,6 +45,7 @@ export default class SerialTerminal extends CommandLineInterface {
 
 		this.serial.on('close', err => {
 			serialEmitter.emit(`${cmd.ilistdir}`, '');
+			portStatus = this.serial.isOpen;
 			if (!this.endsWithNewLine) {
 				this.handleDataAsText('\r\n');
 			}
@@ -71,7 +74,8 @@ export default class SerialTerminal extends CommandLineInterface {
 		});
 
 		this.serial.on('open', () => {
-			serialEmitter.emit('statusConn');
+			serialEmitter.emit(status.conn);
+			portStatus = this.serial.isOpen;
 			if (this.reconnectInterval) {
 				clearInterval(this.reconnectInterval);
 			}
