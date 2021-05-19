@@ -1,6 +1,8 @@
 import sys
 import time
 import os
+from pubsub import pub
+import time
 
 
 try:
@@ -189,16 +191,35 @@ class QuecPyComTools:
 
 	def fs_put(self, src, dest, chunk_size=256):
 		self.exec_("f=open('%s','wb')\nw=f.write" % dest)
+		fileSize = os.stat(src).st_size
+		# print('fileSize: ', fileSize)
+		progress = 0
+		pub.subscribe(self.updateFileProgress, "updateFileProgress")
 		with open(src, "rb") as f:
 			while True:
 				data = f.read(chunk_size)
+				# print(sys.getsizeof(data), flush=True)
 				if not data:
 					break
+				else:
+					progress += len(data)
+					percentage = progress/fileSize * 100
+				if percentage<=100:
+					pub.sendMessage('updateFileProgress', arg1=percentage)
+				else:
+					pub.sendMessage('updateFileProgress', arg1=100)
+
 				if sys.version_info < (3,):
 					self.exec_("w(b" + repr(data) + ")")
 				else:
 					self.exec_("w(" + repr(data) + ")")
 		self.exec_("f.close()")
+
+	def updateFileProgress(self, arg1):
+		print("{:.2f}".format(arg1), flush=True)
+		# sys.stdout.write("{:.2f}\n".format(arg1))
+		# if (arg1==100):
+		# 	pub.unsubscribe(self.updateFileProgress, "updateFileProgress")
 
 	def fs_mkdir(self, dir):
 		self.exec_("import uos\nuos.mkdir('%s')" % dir)
@@ -251,7 +272,7 @@ def filesystem_command(qpy, args):
 			for src in srcs:
 				src = fname_remote(src)
 				dest2 = fname_cp_dest(src, dest)
-				print(fmt % (src, dest2))
+				# print(fmt % (src, dest2))
 				op(src, dest2)
 		else:
 			op = {
