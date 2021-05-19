@@ -47,3 +47,8 @@ export const status = {
 	updateProg: 'updatePercentage',
 	downFinish: 'downloadFinished'
 };
+
+export const scriptName = {
+	fileDownloadScript: '\\QuecPyComTools.py',
+	initTreeScript: '\\q_init_fs.py'
+};

@@ -2,10 +2,10 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import { serialEmitter } from '../serial/serialBridge';
 import { FileData } from '../types/types';
-import { cmd } from '../utils/constants';
+import { cmd, scriptName, status } from '../utils/constants';
 
 const fileDirPath: string = path.join(__dirname, '..', '..', 'scripts');
-const scriptPath: string = fileDirPath + '\\QuecPyComTools.py';
+const scriptPath: string = fileDirPath + scriptName.fileDownloadScript;
 
 export default async function fileDownload(
 	sourcePath: string,
@@ -16,7 +16,7 @@ export default async function fileDownload(
 ) {
 	const destinationPath = `:${downloadPath}/` + path.basename(sourcePath);
 
-	serialEmitter.emit('startProgress');
+	serialEmitter.emit(status.startProg);
 
 	const fDownload = spawn('python', [
 		scriptPath,
@@ -31,7 +31,7 @@ export default async function fileDownload(
 	]);
 
 	fDownload.stdout.on('data', data => {
-		serialEmitter.emit('updatePercentage', data);
+		serialEmitter.emit(status.updateProg, data);
 	});
 
 	fDownload.stderr.on('data', data => {
@@ -48,6 +48,6 @@ export default async function fileDownload(
 			parentPath: downloadPath,
 			code: code.toString(),
 		});
-		serialEmitter.emit('downloadFinished');
+		serialEmitter.emit(status.downFinish);
 	});
 }

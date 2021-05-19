@@ -2,14 +2,14 @@ import SerialPort from 'SerialPort';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { cmd, status } from '../utils/constants';
+import { cmd, scriptName, status } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
 
 export let portStatus: boolean;
 
 const pyFsScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
-const pyFsScript: string = pyFsScriptPath + '\\q_init_fs.py';
+const pyFsScript: string = pyFsScriptPath + scriptName.initTreeScript;
 
 export default class SerialTerminal extends CommandLineInterface {
 	public serial: SerialPort;
