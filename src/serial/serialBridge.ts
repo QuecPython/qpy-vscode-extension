@@ -19,6 +19,10 @@ serialEmitter.on(status.conn, () => {
 	setButtonStatus(connStatus, true);
 });
 
+serialEmitter.on(status.disc, () => {
+	setButtonStatus(connStatus, false);
+});
+
 serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
 	try {
 		let stringToParse: string;

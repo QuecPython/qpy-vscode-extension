@@ -126,6 +126,18 @@
 				{
 					"command": "qpy-ide.closeConnection",
 					"when": "terminalIsOpen"
+				},
+				{
+					"command": "qpy-ide.downloadFile",
+					"title": "QPY: Download File",
+					"category": "QuecPython",
+					"when": "false"
+				},
+				{
+					"command": "qpy-ide.selectiveDownloadFile",
+					"title": "QPY: Selective Download File",
+					"category": "QuecPython",
+					"when": "false"
 				}
 			],
 			"view/title": [

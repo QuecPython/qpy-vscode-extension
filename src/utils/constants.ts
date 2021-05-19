@@ -43,6 +43,7 @@ export const fwConfig = {
 
 export const status = {
 	conn: 'statusConn',
+	disc: 'statusDisc',
 	startProg: 'startProgress',
 	updateProg: 'updatePercentage',
 	downFinish: 'downloadFinished'
