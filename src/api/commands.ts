@@ -14,13 +14,7 @@ import {
 import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
-import { serialEmitter } from '../serial/serialBridge';
-import {
-	insertTreeNodeChild,
-	removeTreeNodeByName,
-	sortTreeNodes,
-} from './treeView';
-import { FileData } from '../types/types';
+import { sortTreeNodes } from './treeView';
 import filedownload from './fileDownload';
 
 export const refreshModuleFs = vscode.commands.registerCommand(

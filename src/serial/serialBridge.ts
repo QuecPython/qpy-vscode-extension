@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import { strict } from 'node:assert';
 import * as vscode from 'vscode';
 import { progressBar } from '../api/progressBar';
 
@@ -7,8 +6,8 @@ import { getActiveSerial, setTerminalFlag } from '../api/terminal';
 import { findTreeNode, initTree, insertTreeNodeChild, removeTreeNodeByName, removeTreeNodeByPath, sortTreeNodes } from '../api/treeView';
 import { moduleFsTreeProvider, setButtonStatus, connStatus} from '../api/userInterface';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
-import { DownloadResponse, FileData } from '../types/types';
-import { cmd } from '../utils/constants';
+import { DownloadResponse } from '../types/types';
+import { cmd, status } from '../utils/constants';
 import * as utils from '../utils/utils';
 
 class SerialEmitter extends EventEmitter {}
@@ -16,7 +15,7 @@ class SerialEmitter extends EventEmitter {}
 export const serialEmitter = new SerialEmitter();
 
 // serial emitter events
-serialEmitter.on('statusConn', () => {
+serialEmitter.on(status.conn, () => {
 	setButtonStatus(connStatus, true);
 });
 
@@ -196,6 +195,6 @@ serialEmitter.on(`${cmd.selectiveDownFile}`, (data: DownloadResponse) => {
     }
 });
 
-serialEmitter.on('startProgress', () => {
+serialEmitter.on(status.startProg, () => {
 	progressBar();
 });

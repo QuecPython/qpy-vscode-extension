@@ -1,5 +1,7 @@
+import { stat } from 'node:fs';
 import * as vscode from 'vscode';
 import { serialEmitter } from '../serial/serialBridge';
+import { status } from '../utils/constants';
 
 export const progressBar = (): void => {
 	vscode.window.withProgress(
@@ -33,12 +35,12 @@ const updateProgressBar = (
 			timerUpdate
 		);
 
-		let childProcess = serialEmitter.on('downloadFinished', () => {
+		let childProcess = serialEmitter.on(status.downFinish, () => {
 			resolve();
 			clearInterval(interval);
 		});
 
-		childProcess.on('updatePercentage', data => {
+		childProcess.on(status.updateProg, data => {
 			messageUpdate = data.toString() + '%';
 		});
 

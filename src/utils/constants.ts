@@ -40,3 +40,10 @@ export const fwConfig = {
 	deviceDownloadPort: 'VID_2ECC&PID_3017',
 	atQdownload: 'at+qdownload=1\r\n',
 };
+
+export const status = {
+	conn: 'statusConn',
+	startProg: 'startProgress',
+	updateProg: 'updatePercentage',
+	downFinish: 'downloadFinished'
+};
