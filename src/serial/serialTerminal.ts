@@ -42,7 +42,6 @@ export default class SerialTerminal extends CommandLineInterface {
 		}
 
 		this.serial.on('close', err => {
-			serialEmitter.emit('statusDisc');
 			serialEmitter.emit(`${cmd.ilistdir}`, '');
 			if (!this.endsWithNewLine) {
 				this.handleDataAsText('\r\n');

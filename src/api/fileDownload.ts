@@ -1,5 +1,4 @@
 import { spawn } from 'child_process';
-import { spawnSync } from 'node:child_process';
 import * as path from 'path';
 import { serialEmitter } from '../serial/serialBridge';
 import { FileData } from '../types/types';
@@ -17,6 +16,8 @@ export default async function fileDownload(
 ) {
 	const destinationPath = `:${downloadPath}/` + path.basename(sourcePath);
 
+	serialEmitter.emit('startProgress');
+
 	const fDownload = spawn('python', [
 		scriptPath,
 		'-d',
@@ -29,8 +30,8 @@ export default async function fileDownload(
 		destinationPath,
 	]);
 
-	fDownload.stdout.on('data', percentage => {
-		console.log(`${percentage}`);
+	fDownload.stdout.on('data', data => {
+		serialEmitter.emit('updatePercentage', data);
 	});
 
 	fDownload.stderr.on('data', data => {
@@ -42,11 +43,11 @@ export default async function fileDownload(
 	});
 
 	fDownload.on('close', code => {
-		console.log(`child process exited with code ${code}`);
 		serialEmitter.emit(`${cmd.downloadFile}`, {
 			fileData,
 			parentPath: downloadPath,
 			code: code.toString(),
 		});
+		serialEmitter.emit('downloadFinished');
 	});
 }

@@ -216,7 +216,7 @@ class QuecPyComTools:
 		self.exec_("f.close()")
 
 	def updateFileProgress(self, arg1):
-		print("{:.2f}".format(arg1), flush=True)
+		print("{:.0f}".format(arg1), flush=True)
 		# sys.stdout.write("{:.2f}\n".format(arg1))
 		# if (arg1==100):
 		# 	pub.unsubscribe(self.updateFileProgress, "updateFileProgress")

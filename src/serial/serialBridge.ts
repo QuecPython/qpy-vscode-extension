@@ -20,12 +20,6 @@ serialEmitter.on('statusConn', () => {
     setButtonStatus(connStatus, true);
 });
 
-serialEmitter.on('statusDisc', () => {
-    setButtonStatus(connStatus, false);
-    moduleFsTreeProvider.data = [];
-    moduleFsTreeProvider.refresh();
-});
-
 serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
     try {
         let stringToParse: string;
