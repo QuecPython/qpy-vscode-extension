@@ -173,7 +173,6 @@ class QuecPyComTools:
 					pub.sendMessage('updateFileProgress', arg1=percentage)
 				else:
 					pub.sendMessage('updateFileProgress', arg1=100)
-				print('VERSION: ', sys.version_info)
 				if sys.version_info < (3,):
 					self.exec_("w(b" + repr(data) + ")")
 				else:
