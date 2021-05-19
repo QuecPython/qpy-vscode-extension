@@ -27,12 +27,26 @@ This extension contributes the following settings for configuring it's usage:
 * `QuecPython.defaultLineTerminator`: Text added to end of all sent lines. Will be appended to sent data but will not be rendered in terminal. Allows escape characters (\\r, \\n etc.), hex    representation (\\x6F, \\xF8 etc.) and unicode representation (\\u006F, \\u00F8 etc.)
 * `QuecPython.translateHex`: Set to true to translate incomming hex data. Set to false to output raw hex.
 
+## Commands list
+
+* `openConnection` - Opens a connection with a serial port of choice
+* `closeConnection` - Closes currently open connection
+* `qpy-ide.clearTerminal` - Clears active terminal
 
 ## Known Issues
 
-Nothing reported so far.
+There are cases that carret `'>>>'` does not appear on boot-up, if that happens, please restart the module.
 
 ## Release Notes
+
+### 1.0.2
+
+- Fixed issue with downloading files
+- Fixed issues with connectivity
+### 1.0.1
+
+- Fixed issue with removing directory
+- Fixed issue with removing files
 ### 1.0.0
 
-Initial release of QuecPython VSCode Extension
+Initial version of QuecPython VSCode Extension
