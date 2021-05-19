@@ -155,50 +155,15 @@ class QuecPyComTools:
 		if ret_err:
 			raise QuecPyComToolsError("exception", ret, ret_err)
 		return ret
-
-	def execfile(self, filename):
-		with open(filename, "rb") as f:
-			pyfile = f.read()
-			print(pyfile)
-		return self.exec_(pyfile)
-	def fs_ls(self, src):
-		cmd = (
-			"import uos\nfor f in uos.ilistdir(%s):\n"
-			" print('{:12} {}{}'.format(f[3]if len(f)>3 else 0,f[0],'/'if f[1]&0x4000 else ''))"
-			% (("'%s'" % src) if src else "")
-		)
-		self.exec_(cmd, data_consumer=stdout_write_bytes)
-
-	def fs_cat(self, src, chunk_size=256):
-		cmd = (
-			"with open('%s') as f:\n while 1:\n"
-			"  b=f.read(%u)\n  if not b:break\n  print(b,end='')" % (src, chunk_size)
-		)
-		self.exec_(cmd, data_consumer=stdout_write_bytes)
-
-	def fs_get(self, src, dest, chunk_size=256):
-		self.exec_("f=open('%s','rb')\nr=f.read" % src)
-		with open(dest, "wb") as f:
-			while True:
-				data = bytearray()
-				self.exec_("print(r(%u))" % chunk_size, data_consumer=lambda d: data.extend(d))
-				assert data.endswith(b"\r\n\x04")
-				data = eval(str(data[:-3], "ascii"))
-				if not data:
-					break
-				f.write(data)
-		self.exec_("f.close()")
-
+	
 	def fs_put(self, src, dest, chunk_size=256):
 		self.exec_("f=open('%s','wb')\nw=f.write" % dest)
 		fileSize = os.stat(src).st_size
-		# print('fileSize: ', fileSize)
 		progress = 0
 		pub.subscribe(self.updateFileProgress, "updateFileProgress")
 		with open(src, "rb") as f:
 			while True:
 				data = f.read(chunk_size)
-				# print(sys.getsizeof(data), flush=True)
 				if not data:
 					break
 				else:
@@ -208,7 +173,7 @@ class QuecPyComTools:
 					pub.sendMessage('updateFileProgress', arg1=percentage)
 				else:
 					pub.sendMessage('updateFileProgress', arg1=100)
-
+				print('VERSION: ', sys.version_info)
 				if sys.version_info < (3,):
 					self.exec_("w(b" + repr(data) + ")")
 				else:
@@ -217,28 +182,8 @@ class QuecPyComTools:
 
 	def updateFileProgress(self, arg1):
 		print("{:.0f}".format(arg1), flush=True)
-		# sys.stdout.write("{:.2f}\n".format(arg1))
-		# if (arg1==100):
-		# 	pub.unsubscribe(self.updateFileProgress, "updateFileProgress")
-
-	def fs_mkdir(self, dir):
-		self.exec_("import uos\nuos.mkdir('%s')" % dir)
-
-	def fs_rmdir(self, dir):
-		self.exec_("import uos\nuos.rmdir('%s')" % dir)
-
-	def fs_rm(self, src):
-		self.exec_("import uos\nuos.remove('%s')" % src)
 
 setattr(QuecPyComTools, "exec", QuecPyComTools.exec_)
-
-def execfile(filename, device="COM24", baudrate=115200):
-	qpy = QuecPyComTools(device, baudrate)
-	qpy.enter_raw_repl()
-	output = qpy.execfile(filename)
-	stdout_write_bytes(output)
-	qpy.exit_raw_repl()
-	qpy.close()
 
 def filesystem_command(qpy, args):
 	def fname_remote(src):
@@ -264,30 +209,12 @@ def filesystem_command(qpy, args):
 			dest = args[-1]
 			if srcs[0].startswith("./") or dest.startswith(":"):
 				op = qpy.fs_put
-				fmt = "cp %s :%s"
 				dest = fname_remote(dest)
-			else:
-				op = qpy.fs_get
-				fmt = "cp :%s %s"
 			for src in srcs:
 				src = fname_remote(src)
 				dest2 = fname_cp_dest(src, dest)
-				# print(fmt % (src, dest2))
 				op(src, dest2)
-		else:
-			op = {
-				"ls": qpy.fs_ls,
-				"cat": qpy.fs_cat,
-				"mkdir": qpy.fs_mkdir,
-				"rmdir": qpy.fs_rmdir,
-				"rm": qpy.fs_rm,
-			}[cmd]
-			if cmd == "ls" and not args:
-				args = [""]
-			for src in args:
-				src = fname_remote(src)
-				print("%s :%s" % (cmd, src))
-				op(src)
+	
 	except QuecPyComToolsError as er:
 		print(str(er.args[2], "ascii"))
 		qpy.exit_raw_repl()
