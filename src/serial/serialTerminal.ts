@@ -101,18 +101,18 @@ export default class SerialTerminal extends CommandLineInterface {
 				this.cmdFlagLabel = cmd.ilistdir;
 
 				this.handleInput(
-					`${cmd.ilistdir}f = open('/usr/q_init_fs.py', 'wb', encoding='utf-8')\r\n`
+					`f = open('/usr/q_init_fs.py', 'wb', encoding='utf-8')\r\n`
 				);
-				this.handleInput(`${cmd.ilistdir}w = f.write\r\n`);
+				this.handleInput(`w = f.write\r\n`);
 				splitData.forEach((dataLine: string) => {
-					this.handleInput(`${cmd.ilistdir}w(b"${dataLine}\\r\\n")\r\n`);
+					this.handleInput(`w(b'''${dataLine}\\r\\n''')\r\n`);
 				});
-				this.handleInput(`${cmd.ilistdir}f.close()\r\n`);
+				this.handleInput(`f.close()\r\n`);
 
-				this.handleInput(`${cmd.ilistdir}import example\r\n`);
-				this.handleInput(`${cmd.ilistdir}example.exec('usr/q_init_fs.py')\r\n`);
+				this.handleInput(`import example\r\n`);
+				this.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
 
-				this.handleInput(`${cmd.ilistdir}uos.remove('/usr/q_init_fs.py')\r\n`);
+				setTimeout(() => this.handleInput(`uos.remove('/usr/q_init_fs.py')\r\n`), 100);
 			});
 	}
 

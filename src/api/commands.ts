@@ -17,6 +17,7 @@ import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { sortTreeNodes } from './treeView';
 import filedownload from './fileDownload';
 import { portStatus } from '../serial/serialTerminal';
+import { serialEmitter } from '../serial/serialBridge';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
@@ -212,10 +213,8 @@ export const runScript = vscode.commands.registerCommand(
 		try {
 			setTerminalFlag(true, cmd.runScript);
 			const st = getActiveSerial();
-			st.handleInput(`${cmd.runScript}import example\r\n`);
-			st.handleInput(
-				`${cmd.runScript}example.exec('${node.filePath.slice(1)}')\r\n`
-			);
+			st.handleInput(`import example\r\n`);
+			st.handleInput(`example.exec('${node.filePath.slice(1)}')\r\n`);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -229,7 +228,8 @@ export const removeFile = vscode.commands.registerCommand(
 		try {
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.removeFile);
-			st.handleInput(`${cmd.removeFile}uos.remove('${node.filePath}')\r\n`);
+			st.handleInput(`uos.remove('${node.filePath}')\r\n`);
+			serialEmitter.emit(cmd.removeFile, `${cmd.removeFile}${node.filePath}`);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -243,7 +243,8 @@ export const removeDir = vscode.commands.registerCommand(
 		try {
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.removeDir);
-			st.handleInput(`${cmd.removeDir}uos.rmdir('${node.filePath}')\r\n`);
+			st.handleInput(`uos.rmdir('${node.filePath}')\r\n`);
+			serialEmitter.emit(cmd.removeDir, `${cmd.removeDir}${node.filePath}`);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -347,7 +348,8 @@ export const createDir = vscode.commands.registerCommand(
 			if (fullFilePath.startsWith('/usr/')) {
 				const st = getActiveSerial();
 				setTerminalFlag(true, cmd.createDir);
-				st.handleInput(`${cmd.createDir}uos.mkdir('${fullFilePath}')\r\n`);
+				st.handleInput(`uos.mkdir('${fullFilePath}')\r\n`);
+				serialEmitter.emit(cmd.createDir, `${cmd.createDir}${fullFilePath}`);
 			} else {
 				vscode.window.showErrorMessage('Invalid directory path.');
 				return;
