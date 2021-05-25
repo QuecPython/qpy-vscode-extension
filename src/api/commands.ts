@@ -229,7 +229,6 @@ export const removeFile = vscode.commands.registerCommand(
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.removeFile);
 			st.handleInput(`uos.remove('${node.filePath}')\r\n`);
-			serialEmitter.emit(cmd.removeFile, `${cmd.removeFile}${node.filePath}`);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -244,7 +243,6 @@ export const removeDir = vscode.commands.registerCommand(
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.removeDir);
 			st.handleInput(`uos.rmdir('${node.filePath}')\r\n`);
-			serialEmitter.emit(cmd.removeDir, `${cmd.removeDir}${node.filePath}`);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -349,7 +347,6 @@ export const createDir = vscode.commands.registerCommand(
 				const st = getActiveSerial();
 				setTerminalFlag(true, cmd.createDir);
 				st.handleInput(`uos.mkdir('${fullFilePath}')\r\n`);
-				serialEmitter.emit(cmd.createDir, `${cmd.createDir}${fullFilePath}`);
 			} else {
 				vscode.window.showErrorMessage('Invalid directory path.');
 				return;
