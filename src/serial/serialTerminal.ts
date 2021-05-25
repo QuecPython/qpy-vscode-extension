@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import { cmd, scriptName, status } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
+import { sleep } from '../utils/utils';
 
 export let portStatus: boolean;
 
@@ -94,7 +95,7 @@ export default class SerialTerminal extends CommandLineInterface {
 			.on('data', chunk => {
 				data += chunk;
 			})
-			.on('end', () => {
+			.on('end', async () => {
 				const splitData = data.split(/\r\n/);
 
 				this.cmdFlag = true;
@@ -103,16 +104,20 @@ export default class SerialTerminal extends CommandLineInterface {
 				this.handleInput(
 					`f = open('/usr/q_init_fs.py', 'wb', encoding='utf-8')\r\n`
 				);
+				await sleep(50);
 				this.handleInput(`w = f.write\r\n`);
 				splitData.forEach((dataLine: string) => {
 					this.handleInput(`w(b'''${dataLine}\\r\\n''')\r\n`);
 				});
+				await sleep(50);
 				this.handleInput(`f.close()\r\n`);
-
+				await sleep(50);
 				this.handleInput(`import example\r\n`);
+				await sleep(50);
 				this.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
-
-				setTimeout(() => this.handleInput(`uos.remove('/usr/q_init_fs.py')\r\n`), 100);
+				await sleep(100);
+				this.handleInput(`uos.remove('/usr/q_init_fs.py')\r\n`);
+				serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			});
 	}
 

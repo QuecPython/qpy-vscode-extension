@@ -48,3 +48,7 @@ export function isDir(path: string): boolean {
         return false;
     }
 }
+
+export function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
