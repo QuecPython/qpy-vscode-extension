@@ -101,8 +101,13 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			this.endsWithNewLine = false;
 		}
 
-		if (stringRepr !== '>>> ') {
+		if (stringRepr === '\r\n') {
+			this.backendStream.write(this.lineEnd);
+		} else if (stringRepr !== '>>> ') {
 			this.writeEmitter.fire(stringRepr);
+			if (stringRepr.includes('QuecPython Serial Terminal')) {
+				this.backendStream.write(this.lineEnd);
+			}
 		} else {
 			this.backendStream.write(this.lineEnd);
 		}
