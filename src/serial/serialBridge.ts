@@ -65,7 +65,6 @@ serialEmitter.on(`${cmd.runScript}`, async (data: string) => {
 		if (data.includes(')')) {
 			setTerminalFlag();
 			const st = getActiveSerial();
-			st.handleDataAsText('\r\n');
 			const jointData = data.split(/\r\n/).slice(2).join('\r\n');
 			st.handleDataAsText(`${jointData}`);
 		}
@@ -137,8 +136,9 @@ serialEmitter.on(`${cmd.removeDir}`, (data: string) => {
 			setTimeout(() => setTerminalFlag(), 100);
 		}
 	} catch {
-		setTerminalFlag();
-		vscode.window.showErrorMessage('Failed to remove the specified directory.');
+		const st = getActiveSerial();
+		st.readStatFiles();
+		moduleFsTreeProvider.refresh();
 	}
 });
 
@@ -157,8 +157,9 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
 			setTimeout(() => setTerminalFlag(), 100);
 		}
 	} catch {
-		setTerminalFlag();
-		vscode.window.showErrorMessage('Failed to remove the specified file.');
+		const st = getActiveSerial();
+		st.readStatFiles();
+		moduleFsTreeProvider.refresh();
 	}
 });
 
