@@ -376,6 +376,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
 	private loadCursor(): void {
 		this.writeEmitter.fire('\u001b[u');
+		this.writeEmitter.fire('\u001b[38;5;118m');
 	}
 
 	private clearScreen(level = 0): void {

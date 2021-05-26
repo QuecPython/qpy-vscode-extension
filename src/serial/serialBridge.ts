@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
 import * as vscode from 'vscode';
 import { progressBar } from '../api/progressBar';
-
 import { getActiveSerial, setTerminalFlag } from '../api/terminal';
 import { 
 	findTreeNode,
@@ -15,7 +14,6 @@ import { moduleFsTreeProvider, setButtonStatus, connStatus} from '../api/userInt
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { DownloadResponse } from '../types/types';
 import { cmd, status } from '../utils/constants';
-import { sleep } from '../utils/utils';
 
 let listBuffer: string;
 
@@ -66,8 +64,9 @@ serialEmitter.on(`${cmd.runScript}`, async (data: string) => {
 	try {
 		if (data.includes(')')) {
 			setTerminalFlag();
-			const jointData = data.split(/\r\n/).slice(2).join('\r\n');
 			const st = getActiveSerial();
+			st.handleDataAsText('\r\n');
+			const jointData = data.split(/\r\n/).slice(2).join('\r\n');
 			st.handleDataAsText(`${jointData}`);
 		}
 	} catch {
