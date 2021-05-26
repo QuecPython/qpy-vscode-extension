@@ -299,6 +299,16 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 				this.currentInputLine.substring(0, this.inputIndex - 1) +
 				char +
 				this.currentInputLine.substring(this.inputIndex - 1);
+
+			const regex = /^\n/;
+			const found = this.currentInputLine.match(regex);
+			if (this.currentInputLine === '\n') {
+				this.inputIndex = 0;
+			}
+			if (found) {
+				this.currentInputLine = this.currentInputLine.replace('\n', '');
+			}
+
 			this.updateInputArea();
 			charsHandled = char.length;
 		}
