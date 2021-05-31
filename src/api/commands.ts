@@ -17,7 +17,6 @@ import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { sortTreeNodes } from './treeView';
 import filedownload from './fileDownload';
 import { portStatus } from '../serial/serialTerminal';
-import { serialEmitter } from '../serial/serialBridge';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
