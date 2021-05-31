@@ -88,9 +88,12 @@ export const openConnection = vscode.commands.registerCommand(
 			let chosenBaud: number | undefined = baudRate;
 			if (!chosenBaud) {
 				let chosenBaudString: string | undefined =
-					await vscode.window.showQuickPick(['[Other]', ...supportedBaudRates], {
-						placeHolder: 'Choose baud rate',
-					});
+					await vscode.window.showQuickPick(
+						['[Other]', ...supportedBaudRates],
+						{
+							placeHolder: 'Choose baud rate',
+						}
+					);
 
 				if (chosenBaudString === '[Other]') {
 					chosenBaudString = await vscode.window.showInputBox({
@@ -141,7 +144,7 @@ export const openConnection = vscode.commands.registerCommand(
 			);
 
 			const terminal = vscode.window.createTerminal({
-				name: `QPY: ${portString}`,
+				name: `QPY: ${chosenPort}`,
 				pty: st,
 			});
 
