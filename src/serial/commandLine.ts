@@ -161,7 +161,9 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 						this.prevCommands[this.prevCommands.length - 1] !==
 							this.currentInputLine)
 				) {
-					this.prevCommands.push(this.currentInputLine);
+					if (!this.cmdFlag) {
+						this.prevCommands.push(this.currentInputLine);
+					}
 					if (this.prevCommands.length > 1000) {
 						this.prevCommands.shift();
 					}
