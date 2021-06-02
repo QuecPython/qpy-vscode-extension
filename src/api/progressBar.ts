@@ -1,4 +1,3 @@
-import { stat } from 'node:fs';
 import * as vscode from 'vscode';
 import { serialEmitter } from '../serial/serialBridge';
 import { status } from '../utils/constants';

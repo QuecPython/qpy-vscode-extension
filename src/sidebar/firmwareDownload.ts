@@ -57,35 +57,22 @@ export default async function firmwareDownload(
 		vscode.window.showErrorMessage('Failed to remove the specified file.');
 	}
 
-	let downloadPortEC100Y = await getPorts(fwConfig.downloadPortEC100Y);
-	let downloadPortEC600S = await getPorts(fwConfig.downloadPortEC600S);
-
 	let i = 0;
-	let downloadPort: string;
+	let downloadPort: string = undefined;
+	let percentFlag: boolean = false;
 
-	while (
-		downloadPortEC100Y === undefined &&
-		downloadPortEC600S === undefined &&
-		i < 10
-	) {
-		downloadPortEC100Y = await getPorts(fwConfig.downloadPortEC100Y);
-		downloadPortEC600S = await getPorts(fwConfig.downloadPortEC600S);
+	while (downloadPort === undefined && i < 10) {
+		for (const port in fwConfig.downloadPorts) {
+			downloadPort = await getPorts(fwConfig.downloadPorts[port]);
+			if (downloadPort != undefined) {
+				if (progressBarFlag === false) {
+					serialEmitter.emit(status.startProg);
+					progressBarFlag = true;
+				}
+				break;
+			}
+		}
 		await delay(3000);
-		i = i + 1;
-		// set timer to 30sec and break the loop (if port doesn't appear)
-	}
-
-	if (downloadPortEC100Y != undefined) {
-		downloadPort = downloadPortEC100Y;
-	} else {
-		downloadPort = downloadPortEC600S;
-	}
-
-	let percentFlag = false;
-
-	if (progressBarFlag === false) {
-		serialEmitter.emit(status.startProg);
-		progressBarFlag = true;
 	}
 
 	const adownload = spawn(exePath, [
@@ -120,14 +107,14 @@ export default async function firmwareDownload(
 	});
 
 	adownload.on('close', code => {
-		serialEmitter.emit(status.downFinish);
 		progressBarFlag = false;
 		console.log(`child process exited with code ${code}`);
+		serialEmitter.emit(status.downFinish);
 	});
 
 	adownload.stderr.on('error', error => {
-		serialEmitter.emit(status.downFinish);
 		progressBarFlag = false;
 		console.log(`stderr: ${error.message}`);
+		serialEmitter.emit(status.downFinish);
 	});
 }
