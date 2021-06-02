@@ -11,13 +11,14 @@ import {
 	portNames,
 	fwConfig,
 } from '../utils/constants';
+import { fwProvider } from '../extension';
 import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
-import { sortTreeNodes } from './treeView';
 import filedownload from './fileDownload';
 import { portStatus } from '../serial/serialTerminal';
-import { serialEmitter } from '../serial/serialBridge';
+import { sortTreeNodes } from './treeView';
+import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
@@ -31,6 +32,13 @@ export const refreshModuleFs = vscode.commands.registerCommand(
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
 		}
+	}
+);
+
+export const clearFirmware = vscode.commands.registerCommand(
+	'qpy-ide.clearFw',
+	() => {
+		fwProvider.clearFw();
 	}
 );
 
@@ -370,10 +378,15 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		clearCommand,
 		downloadFile,
 		selectiveDownloadFile,
+		clearFirmware,
 		refreshModuleFs,
 		runScript,
 		removeFile,
 		removeDir,
-		createDir
+		createDir,
+		vscode.window.registerWebviewViewProvider(
+			FirmwareViewProvider.viewType,
+			fwProvider
+		)
 	);
 };
