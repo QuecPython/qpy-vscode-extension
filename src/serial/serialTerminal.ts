@@ -81,13 +81,13 @@ export default class SerialTerminal extends CommandLineInterface {
 			if (this.reconnectInterval) {
 				clearInterval(this.reconnectInterval);
 			}
-			this.readStatFiles();
+			this.initFsFiles();
 		});
 
 		super.open(initialDimensions);
 	}
 
-	public readStatFiles() {
+	public initFsFiles() {
 		let data = '';
 		const readStream = fs.createReadStream(pyFsScript, 'utf8');
 
@@ -115,8 +115,6 @@ export default class SerialTerminal extends CommandLineInterface {
 				this.handleInput(`import example\r\n`);
 				await sleep(50);
 				this.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
-				await sleep(50);
-				this.handleInput(`uos.remove('/usr/q_init_fs.py')\r\n`);
 				await sleep(50);
 				serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			});

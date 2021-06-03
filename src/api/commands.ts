@@ -19,13 +19,17 @@ import filedownload from './fileDownload';
 import { portStatus } from '../serial/serialTerminal';
 import { sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
+import { serialEmitter } from '../serial/serialBridge';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
-	() => {
+	async () => {
 		try {
+			setTerminalFlag(true, cmd.ilistdir);
 			const st = getActiveSerial();
-			st.readStatFiles();
+			st.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
+			await utils.sleep(100);
+			serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
 			moduleFsTreeProvider.refresh();
 		} catch {

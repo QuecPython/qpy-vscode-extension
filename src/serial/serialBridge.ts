@@ -141,7 +141,7 @@ serialEmitter.on(`${cmd.removeDir}`, (data: string) => {
 		}
 	} catch {
 		const st = getActiveSerial();
-		st.readStatFiles();
+		st.initFsFiles();
 		moduleFsTreeProvider.refresh();
 	}
 });
@@ -162,7 +162,7 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
 		}
 	} catch {
 		const st = getActiveSerial();
-		st.readStatFiles();
+		st.initFsFiles();
 		moduleFsTreeProvider.refresh();
 	}
 });
