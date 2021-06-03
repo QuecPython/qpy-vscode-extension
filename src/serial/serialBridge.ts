@@ -154,6 +154,7 @@ serialEmitter.on(`${cmd.removeDir}`, async (data: string) => {
 });
 
 serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
+	remFileBuffer += data;
 	try {
 		if (data === cmd.removeFile) {
 			if (remFileBuffer.includes('Traceback')) {
