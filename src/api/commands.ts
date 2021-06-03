@@ -239,11 +239,13 @@ export const runScript = vscode.commands.registerCommand(
 
 export const removeFile = vscode.commands.registerCommand(
 	'qpy-ide.removeFile',
-	(node: ModuleDocument) => {
+	async (node: ModuleDocument) => {
 		try {
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.removeFile);
 			st.handleInput(`uos.remove('${node.filePath}')\r\n`);
+			await utils.sleep(100);
+			serialEmitter.emit(cmd.removeFile, cmd.removeFile);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -253,11 +255,13 @@ export const removeFile = vscode.commands.registerCommand(
 
 export const removeDir = vscode.commands.registerCommand(
 	'qpy-ide.removeDir',
-	(node: ModuleDocument) => {
+	async (node: ModuleDocument) => {
 		try {
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.removeDir);
 			st.handleInput(`uos.rmdir('${node.filePath}')\r\n`);
+			await utils.sleep(100);
+			serialEmitter.emit(cmd.removeDir, cmd.removeDir);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();

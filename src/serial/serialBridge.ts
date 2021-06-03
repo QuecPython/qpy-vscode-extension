@@ -20,6 +20,8 @@ import { DownloadResponse } from '../types/types';
 import { cmd, status } from '../utils/constants';
 
 let listBuffer: string;
+let remDirBuffer: string;
+let remFileBuffer: string;
 
 class SerialEmitter extends EventEmitter {}
 
@@ -126,18 +128,23 @@ serialEmitter.on(`${cmd.createDir}`, (data: string) => {
 	}
 });
 
-serialEmitter.on(`${cmd.removeDir}`, (data: string) => {
+serialEmitter.on(`${cmd.removeDir}`, async (data: string) => {
+	remDirBuffer += data;
 	try {
-		if (data.includes('Traceback')) {
-			vscode.window.showErrorMessage('Unable to remove directory.');
-			setTerminalFlag();
-			return;
-		}
-		if (data.includes('/')) {
-			const parsedData = data.match(/'([^']+)'/)[1];
-			removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
-			moduleFsTreeProvider.refresh();
-			setTimeout(() => setTerminalFlag(), 100);
+		if (data === cmd.removeDir) {
+			if (remDirBuffer.includes('Traceback')) {
+				vscode.window.showErrorMessage('Unable to remove directory.');
+				remDirBuffer = '';
+				setTerminalFlag();
+				return;
+			}
+			if (remDirBuffer.includes('/usr')) {
+				const parsedData = remDirBuffer.match(/'([^']+)'/)[1];
+				removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
+				moduleFsTreeProvider.refresh();
+				remDirBuffer = '';
+				setTerminalFlag();
+			}
 		}
 	} catch {
 		const st = getActiveSerial();
@@ -148,17 +155,20 @@ serialEmitter.on(`${cmd.removeDir}`, (data: string) => {
 
 serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
 	try {
-		if (data.includes('Traceback')) {
-			vscode.window.showErrorMessage('Unable to remove file.');
-			setTerminalFlag();
-			return;
-		}
-
-		if (data.includes('/')) {
-			const parsedData = data.match(/'([^']+)'/)[1];
-			removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
-			moduleFsTreeProvider.refresh();
-			setTimeout(() => setTerminalFlag(), 100);
+		if (data === cmd.removeFile) {
+			if (remFileBuffer.includes('Traceback')) {
+				vscode.window.showErrorMessage('Unable to remove file.');
+				remFileBuffer = '';
+				setTerminalFlag();
+				return;
+			}
+			if (remFileBuffer.includes('/usr')) {
+				const parsedData = remFileBuffer.match(/'([^']+)'/)[1];
+				removeTreeNodeByPath(moduleFsTreeProvider.data, parsedData);
+				moduleFsTreeProvider.refresh();
+				remFileBuffer = '';
+				setTerminalFlag();
+			}
 		}
 	} catch {
 		const st = getActiveSerial();
