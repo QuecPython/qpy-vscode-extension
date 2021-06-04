@@ -115,7 +115,7 @@ export default class SerialTerminal extends CommandLineInterface {
 				this.handleInput(`import example\r\n`);
 				await sleep(100);
 				this.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
-				await sleep(100);
+				await sleep(200);
 				serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			});
 	}

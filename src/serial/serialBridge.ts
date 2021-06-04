@@ -18,6 +18,7 @@ import {
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { DownloadResponse } from '../types/types';
 import { cmd, status } from '../utils/constants';
+import { sleep } from '../utils/utils';
 
 let listBuffer: string;
 let remDirBuffer: string;
@@ -178,11 +179,12 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
 	}
 });
 
-serialEmitter.on(`${cmd.downloadFile}`, (data: DownloadResponse) => {
+serialEmitter.on(`${cmd.downloadFile}`, async (data: DownloadResponse) => {
 	const st = getActiveSerial();
 	try {
 		if (data.code.includes('0')) {
 			st.serial.open();
+			await sleep(100);
 			removeTreeNodeByName(data.fileData.filename, moduleFsTreeProvider.data);
 
 			moduleFsTreeProvider.data.push(
