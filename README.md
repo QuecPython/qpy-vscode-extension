@@ -12,15 +12,15 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 
 | Platform | Module model      |
 | -------- | ----------------- | 
-| ASR      | EC100Y<br/>EC600S | 
-| RDA      | EC200U<br/>EC600U | 
+| ASR      | EC100Y<br/>EC600SCNLA<br/>EC600SCNLB | 
+| RDA      | EC600NCNLC<br/>EC600NCNLA | 
 
 
 ## Usage
 
 Open the serial connection by opening the commands palette the `CTRL+SHIFT+P` and running the command `QuecPython: Connect to COM Port`.
 
-Upon successful connection, the terminal with open with either REPL or AT CLI depending on the chosen port. The board can be disconnected from the VSC by killing the active serial connection terminal. When manually closing the terminal (`x` on the right top of the terminal) the connection stays active.
+Upon successful connection, the terminal will open with either REPL or AT CLI depending on the chosen port. The board can be disconnected from the VSC by killing the active serial connection terminal. When manually closing the terminal (`x` on the right top of the terminal) the connection stays active.
 
 ## Extension Settings
 
@@ -37,10 +37,14 @@ This extension contributes the following settings for configuring it's usage:
 
 ## Known Issues
 
-* There are cases that carret `'>>>'` does not appear on boot-up, if that happens, please restart the module.
+* There are cases that carret `'>>>'` does not appear on boot-up, if that happens, press `ENTER` key.
+* There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
 
+## 1.0.3
+- Added support for EC600S_CNLA and EC600S_CNLB
+- Added firmware flashing feature for supported modules
 ### 1.0.2
 
 - Fixed issue with downloading files
@@ -51,4 +55,4 @@ This extension contributes the following settings for configuring it's usage:
 - Fixed issue with removing files
 ### 1.0.0
 
-Initial version of QuecPython VSCode Extension
+- Initial version of QuecPython VSCode Extension

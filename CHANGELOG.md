@@ -1,3 +1,7 @@
+## 1.0.3
+- Added support for EC600S_CNLA and EC600S_CNLB
+- Added firmware flashing feature for supported modules
+
 ## 1.0.2
 
 - Fixed issue with downloading files
