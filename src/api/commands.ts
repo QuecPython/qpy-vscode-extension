@@ -11,25 +11,38 @@ import {
 	portNames,
 	fwConfig,
 } from '../utils/constants';
+import { fwProvider } from '../extension';
 import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
-import { sortTreeNodes } from './treeView';
 import filedownload from './fileDownload';
 import { portStatus } from '../serial/serialTerminal';
+import { sortTreeNodes } from './treeView';
+import FirmwareViewProvider from '../sidebar/firmwareSidebar';
+import { serialEmitter } from '../serial/serialBridge';
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
-	() => {
+	async () => {
 		try {
+			setTerminalFlag(true, cmd.ilistdir);
 			const st = getActiveSerial();
-			st.readStatFiles();
+			st.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
+			await utils.sleep(100);
+			serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
 			moduleFsTreeProvider.refresh();
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
 		}
+	}
+);
+
+export const clearFirmware = vscode.commands.registerCommand(
+	'qpy-ide.clearFw',
+	() => {
+		fwProvider.clearFw();
 	}
 );
 
@@ -87,9 +100,12 @@ export const openConnection = vscode.commands.registerCommand(
 			let chosenBaud: number | undefined = baudRate;
 			if (!chosenBaud) {
 				let chosenBaudString: string | undefined =
-					await vscode.window.showQuickPick(['[Other]', ...supportedBaudRates], {
-						placeHolder: 'Choose baud rate',
-					});
+					await vscode.window.showQuickPick(
+						['[Other]', ...supportedBaudRates],
+						{
+							placeHolder: 'Choose baud rate',
+						}
+					);
 
 				if (chosenBaudString === '[Other]') {
 					chosenBaudString = await vscode.window.showInputBox({
@@ -140,7 +156,7 @@ export const openConnection = vscode.commands.registerCommand(
 			);
 
 			const terminal = vscode.window.createTerminal({
-				name: `QPY: ${portString}`,
+				name: `QPY: ${chosenPort}`,
 				pty: st,
 			});
 
@@ -212,10 +228,8 @@ export const runScript = vscode.commands.registerCommand(
 		try {
 			setTerminalFlag(true, cmd.runScript);
 			const st = getActiveSerial();
-			st.handleInput(`${cmd.runScript}import example\r\n`);
-			st.handleInput(
-				`${cmd.runScript}example.exec('${node.filePath.slice(1)}')\r\n`
-			);
+			st.handleInput(`import example\r\n`);
+			st.handleInput(`example.exec('${node.filePath.slice(1)}')\r\n`);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -225,11 +239,13 @@ export const runScript = vscode.commands.registerCommand(
 
 export const removeFile = vscode.commands.registerCommand(
 	'qpy-ide.removeFile',
-	(node: ModuleDocument) => {
+	async (node: ModuleDocument) => {
 		try {
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.removeFile);
-			st.handleInput(`${cmd.removeFile}uos.remove('${node.filePath}')\r\n`);
+			st.handleInput(`uos.remove('${node.filePath}')\r\n`);
+			await utils.sleep(100);
+			serialEmitter.emit(cmd.removeFile, cmd.removeFile);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -239,11 +255,13 @@ export const removeFile = vscode.commands.registerCommand(
 
 export const removeDir = vscode.commands.registerCommand(
 	'qpy-ide.removeDir',
-	(node: ModuleDocument) => {
+	async (node: ModuleDocument) => {
 		try {
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.removeDir);
-			st.handleInput(`${cmd.removeDir}uos.rmdir('${node.filePath}')\r\n`);
+			st.handleInput(`uos.rmdir('${node.filePath}')\r\n`);
+			await utils.sleep(100);
+			serialEmitter.emit(cmd.removeDir, cmd.removeDir);
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -347,7 +365,7 @@ export const createDir = vscode.commands.registerCommand(
 			if (fullFilePath.startsWith('/usr/')) {
 				const st = getActiveSerial();
 				setTerminalFlag(true, cmd.createDir);
-				st.handleInput(`${cmd.createDir}uos.mkdir('${fullFilePath}')\r\n`);
+				st.handleInput(`uos.mkdir('${fullFilePath}')\r\n`);
 			} else {
 				vscode.window.showErrorMessage('Invalid directory path.');
 				return;
@@ -368,10 +386,15 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		clearCommand,
 		downloadFile,
 		selectiveDownloadFile,
+		clearFirmware,
 		refreshModuleFs,
 		runScript,
 		removeFile,
 		removeDir,
-		createDir
+		createDir,
+		vscode.window.registerWebviewViewProvider(
+			FirmwareViewProvider.viewType,
+			fwProvider
+		)
 	);
 };

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import { cmd, scriptName, status } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
+import { sleep } from '../utils/utils';
 
 export let portStatus: boolean;
 
@@ -80,13 +81,13 @@ export default class SerialTerminal extends CommandLineInterface {
 			if (this.reconnectInterval) {
 				clearInterval(this.reconnectInterval);
 			}
-			this.readStatFiles();
+			this.initFsFiles();
 		});
 
 		super.open(initialDimensions);
 	}
 
-	public readStatFiles() {
+	public initFsFiles() {
 		let data = '';
 		const readStream = fs.createReadStream(pyFsScript, 'utf8');
 
@@ -94,25 +95,28 @@ export default class SerialTerminal extends CommandLineInterface {
 			.on('data', chunk => {
 				data += chunk;
 			})
-			.on('end', () => {
+			.on('end', async () => {
 				const splitData = data.split(/\r\n/);
 
 				this.cmdFlag = true;
 				this.cmdFlagLabel = cmd.ilistdir;
 
 				this.handleInput(
-					`${cmd.ilistdir}f = open('/usr/q_init_fs.py', 'wb', encoding='utf-8')\r\n`
+					`f = open('/usr/q_init_fs.py', 'wb', encoding='utf-8')\r\n`
 				);
-				this.handleInput(`${cmd.ilistdir}w = f.write\r\n`);
+				await sleep(50);
+				this.handleInput(`w = f.write\r\n`);
 				splitData.forEach((dataLine: string) => {
-					this.handleInput(`${cmd.ilistdir}w(b"${dataLine}\\r\\n")\r\n`);
+					this.handleInput(`w(b'''${dataLine}\\r\\n''')\r\n`);
 				});
-				this.handleInput(`${cmd.ilistdir}f.close()\r\n`);
-
-				this.handleInput(`${cmd.ilistdir}import example\r\n`);
-				this.handleInput(`${cmd.ilistdir}example.exec('usr/q_init_fs.py')\r\n`);
-
-				this.handleInput(`${cmd.ilistdir}uos.remove('/usr/q_init_fs.py')\r\n`);
+				await sleep(50);
+				this.handleInput(`f.close()\r\n`);
+				await sleep(50);
+				this.handleInput(`import example\r\n`);
+				await sleep(100);
+				this.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
+				await sleep(200);
+				serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			});
 	}
 

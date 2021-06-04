@@ -101,8 +101,13 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			this.endsWithNewLine = false;
 		}
 
-		if (stringRepr !== '>>> ') {
+		if (stringRepr === '\r\n') {
+			this.backendStream.write(this.lineEnd);
+		} else if (stringRepr !== '>>> ') {
 			this.writeEmitter.fire(stringRepr);
+			if (stringRepr.includes('QuecPython Serial Terminal')) {
+				this.backendStream.write(this.lineEnd);
+			}
 		} else {
 			this.backendStream.write(this.lineEnd);
 		}
@@ -156,7 +161,9 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 						this.prevCommands[this.prevCommands.length - 1] !==
 							this.currentInputLine)
 				) {
-					this.prevCommands.push(this.currentInputLine);
+					if (!this.cmdFlag) {
+						this.prevCommands.push(this.currentInputLine);
+					}
 					if (this.prevCommands.length > 1000) {
 						this.prevCommands.shift();
 					}
@@ -299,6 +306,16 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 				this.currentInputLine.substring(0, this.inputIndex - 1) +
 				char +
 				this.currentInputLine.substring(this.inputIndex - 1);
+
+			const regex = /^\n/;
+			const found = this.currentInputLine.match(regex);
+			if (this.currentInputLine === '\n') {
+				this.inputIndex = 0;
+			}
+			if (found) {
+				this.currentInputLine = this.currentInputLine.replace('\n', '');
+			}
+
 			this.updateInputArea();
 			charsHandled = char.length;
 		}
@@ -366,6 +383,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
 	private loadCursor(): void {
 		this.writeEmitter.fire('\u001b[u');
+		this.writeEmitter.fire('\u001b[38;5;118m');
 	}
 
 	private clearScreen(level = 0): void {

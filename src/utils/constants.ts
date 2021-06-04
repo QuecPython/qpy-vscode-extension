@@ -37,7 +37,7 @@ export const fwConfig = {
 	deviceDiagPort: 'MI_02',
 	deviceAtPort: 'MI_03',
 	deviceMainPort: 'MI_05',
-	deviceDownloadPort: 'VID_2ECC&PID_3017',
+	downloadPorts: ['VID_2ECC&PID_3017', 'VID_2ECC&PID_3004'],
 	atQdownload: 'at+qdownload=1\r\n',
 };
 
@@ -46,10 +46,10 @@ export const status = {
 	disc: 'statusDisc',
 	startProg: 'startProgress',
 	updateProg: 'updatePercentage',
-	downFinish: 'downloadFinished'
+	downFinish: 'downloadFinished',
 };
 
 export const scriptName = {
 	fileDownloadScript: '\\QuecPyComTools.py',
-	initTreeScript: '\\q_init_fs.py'
+	initTreeScript: '\\q_init_fs.py',
 };
