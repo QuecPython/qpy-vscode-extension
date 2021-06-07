@@ -6,6 +6,7 @@ import { cmd, scriptName, status } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
 import { sleep } from '../utils/utils';
+import { chosenModule } from '../api/commands';
 
 export let portStatus: boolean;
 
@@ -115,7 +116,8 @@ export default class SerialTerminal extends CommandLineInterface {
 				this.handleInput(`import example\r\n`);
 				await sleep(100);
 				this.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
-				await sleep(200);
+				chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB' ?
+				await sleep(400) : await sleep(200);
 				serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			});
 	}

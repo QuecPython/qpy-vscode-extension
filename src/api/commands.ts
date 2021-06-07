@@ -10,6 +10,7 @@ import {
 	supportedBaudRates,
 	portNames,
 	fwConfig,
+	moduleList,
 } from '../utils/constants';
 import { fwProvider } from '../extension';
 import SerialTerminal from '../serial/serialTerminal';
@@ -21,6 +22,8 @@ import { sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 import { serialEmitter } from '../serial/serialBridge';
 
+export let chosenModule: string | undefined;
+
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
 	async () => {
@@ -28,7 +31,8 @@ export const refreshModuleFs = vscode.commands.registerCommand(
 			setTerminalFlag(true, cmd.ilistdir);
 			const st = getActiveSerial();
 			st.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
-			await utils.sleep(100);
+			chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB' ?
+			await utils.sleep(400) : await utils.sleep(200);
 			serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
 			moduleFsTreeProvider.refresh();
@@ -57,6 +61,19 @@ export const openConnection = vscode.commands.registerCommand(
 		if (portStatus) {
 			vscode.window.showErrorMessage('Device is already connected!');
 		} else {
+
+			chosenModule = await vscode.window.showQuickPick(moduleList, {
+				placeHolder: 'Select module type',
+			});
+
+			if (!chosenModule) {
+				return;
+			}
+
+			if (chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB') {
+				fwConfig.deviceMainPort = 'MI_08';
+			}
+
 			// resolve port path
 			let chosenPort: string | undefined = portPath;
 			let chosenPortPath: string | undefined;

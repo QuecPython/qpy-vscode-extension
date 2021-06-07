@@ -61,7 +61,8 @@ serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
 			}
 			setTimeout(() => setTerminalFlag(), 50);
 		}
-	} catch {
+	} catch (error) {
+		console.error(error);
 		setTerminalFlag();
 		vscode.window.showErrorMessage('Failed to list files.');
 	}

@@ -53,3 +53,14 @@ export const scriptName = {
 	fileDownloadScript: '\\QuecPyComTools.py',
 	initTreeScript: '\\q_init_fs.py',
 };
+
+
+export const moduleList = [
+	'EC100Y',
+	'EC600SCNLA',
+	'EC600SCNLB',
+	'EC600NCNLA',
+	'EC600NCNLC',
+	'EC600UCNLA',
+	'EC600UCNLB'
+];
