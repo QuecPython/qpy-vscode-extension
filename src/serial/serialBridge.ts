@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import * as vscode from 'vscode';
+import { chosenModule, newDirPath } from '../api/commands';
 import { progressBar } from '../api/progressBar';
 import { getActiveSerial, setTerminalFlag } from '../api/terminal';
 import {
@@ -82,7 +83,7 @@ serialEmitter.on(`${cmd.runScript}`, async (data: string) => {
 	}
 });
 
-serialEmitter.on(`${cmd.createDir}`, (data: string) => {
+serialEmitter.on(`${cmd.createDir}`, async (data: string) => {
 	try {
 		if (data.includes('Traceback')) {
 			setTerminalFlag();
@@ -90,15 +91,14 @@ serialEmitter.on(`${cmd.createDir}`, (data: string) => {
 			return;
 		}
 
-		if (data.includes('(')) {
-			const parsedData = data
-				.match(/\(([^)]+)\)/)[1]
-				.slice(1, -1)
-				.split('/')
-				.slice(1);
+		if (chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB') {
+			await sleep(400);
+		}
 
-			const parentPath = `/${parsedData.slice(0, -1).join('/')}`;
-			const newDirName = parsedData.pop();
+		if (data.includes('(')) {
+			const parsedData = newDirPath.split('/');
+			const parentPath = parsedData.slice(0, -1).join('/');
+			const newDirName = parsedData[parsedData.length - 1];
 			const newDir = new ModuleDocument(
 				newDirName,
 				'',
@@ -124,7 +124,8 @@ serialEmitter.on(`${cmd.createDir}`, (data: string) => {
 			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
 			setTerminalFlag();
 		}
-	} catch {
+	} catch (error) {
+		console.error(error);
 		setTerminalFlag();
 		vscode.window.showErrorMessage('Failed to create the specified directory.');
 	}

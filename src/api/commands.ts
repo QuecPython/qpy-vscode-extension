@@ -23,6 +23,7 @@ import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 import { serialEmitter } from '../serial/serialBridge';
 
 export let chosenModule: string | undefined;
+export let newDirPath: string | undefined;
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
@@ -382,6 +383,7 @@ export const createDir = vscode.commands.registerCommand(
 			if (fullFilePath.startsWith('/usr/')) {
 				const st = getActiveSerial();
 				setTerminalFlag(true, cmd.createDir);
+				newDirPath = fullFilePath;
 				st.handleInput(`uos.mkdir('${fullFilePath}')\r\n`);
 			} else {
 				vscode.window.showErrorMessage('Invalid directory path.');

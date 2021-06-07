@@ -117,7 +117,7 @@ export default class SerialTerminal extends CommandLineInterface {
 				await sleep(100);
 				this.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
 				chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB' ?
-				await sleep(400) : await sleep(200);
+				await sleep(500) : await sleep(200);
 				serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			});
 	}
