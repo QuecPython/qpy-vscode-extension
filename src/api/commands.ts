@@ -73,12 +73,13 @@ export const openConnection = vscode.commands.registerCommand(
 
 			if (chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB') {
 				fwConfig.deviceMainPort = 'MI_08';
+			} else {
+				fwConfig.deviceMainPort = 'MI_05';
 			}
 
 			// resolve port path
 			let chosenPort: string | undefined = portPath;
 			let chosenPortPath: string | undefined;
-			let portString: string | undefined;
 			if (!chosenPort) {
 				const ports = await SerialPort.list();
 				const portPaths = ports.map(p => {
@@ -93,6 +94,8 @@ export const openConnection = vscode.commands.registerCommand(
 					return port;
 				});
 
+				console.log('mi:', fwConfig.deviceMainPort);
+				console.log('ports:', portPaths);
 				const filteredPortPaths = portPaths.filter(x => {
 					return x !== undefined;
 				});
@@ -110,7 +113,6 @@ export const openConnection = vscode.commands.registerCommand(
 					return;
 				}
 
-				portString = chosenPort.split(' (')[0];
 				chosenPortPath = chosenPort.split(' (')[1].slice(0, -1);
 			}
 
