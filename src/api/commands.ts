@@ -94,8 +94,6 @@ export const openConnection = vscode.commands.registerCommand(
 					return port;
 				});
 
-				console.log('mi:', fwConfig.deviceMainPort);
-				console.log('ports:', portPaths);
 				const filteredPortPaths = portPaths.filter(x => {
 					return x !== undefined;
 				});
