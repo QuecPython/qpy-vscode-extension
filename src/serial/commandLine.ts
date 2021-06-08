@@ -101,6 +101,12 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			this.endsWithNewLine = false;
 		}
 
+		if (stringRepr.includes('>>> >>> ')) {
+			stringRepr = '>>> ';
+		} else if (stringRepr.includes('>>> \r\n>>> ')) {
+			stringRepr = '>>> ';
+		}
+
 		if (stringRepr === '\r\n') {
 			this.backendStream.write(this.lineEnd);
 		} else if (stringRepr !== '>>> ') {
