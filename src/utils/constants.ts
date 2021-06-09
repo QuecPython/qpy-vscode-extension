@@ -28,15 +28,18 @@ export const cmd = {
 
 export const portNames = {
 	atPort: 'Quectel USB AT Port',
-	diagPort: 'Quectel USB DIAG Port',
-	mainPort: 'USB Serial Device',
+	mainPort: 'Quectel USB MI05 COM Port',
+	mainEc600uPort: 'Quectel USB Serial-1 Port',
+	mainEc600u: 'MI_08',
+	mainDevice: 'MI_05',
+	atEc600u: 'MI_02',
+	atDevice: 'MI_03',
+	productEc600u: '0901',
+	productDevice: '6001',
 };
 
 export const fwConfig = {
 	baud: '115200',
-	deviceDiagPort: 'MI_02',
-	deviceAtPort: 'MI_03',
-	deviceMainPort: 'MI_05',
 	downloadPorts: ['VID_2ECC&PID_3017', 'VID_2ECC&PID_3004'],
 	atQdownload: 'at+qdownload=1\r\n',
 };
@@ -54,15 +57,13 @@ export const scriptName = {
 	initTreeScript: '\\q_init_fs.py',
 };
 
+export const moduleList = {
+	all: ['EC100Y', 'EC600S', 'EC600N', 'EC600U'],
+	ec100y: 'EC100Y',
+	ec600s: 'EC600S',
+	ec600n: 'EC600N',
+	ec600u: 'EC600U',
+};
 
-export const moduleList = [
-	'EC100Y',
-	'EC600SCNLA',
-	'EC600SCNLB',
-	'EC600NCNLA',
-	'EC600NCNLC',
-	'EC600UCNLA',
-	'EC600UCNLB'
-];
-
-export const chiregex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+export const chiregex =
+	/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;

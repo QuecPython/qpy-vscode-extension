@@ -33,8 +33,9 @@ export const refreshModuleFs = vscode.commands.registerCommand(
 			setTerminalFlag(true, cmd.ilistdir);
 			const st = getActiveSerial();
 			st.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
-			chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB' ?
-			await utils.sleep(400) : await utils.sleep(200);
+			chosenModule === moduleList.ec600u
+				? await utils.sleep(400)
+				: await utils.sleep(200);
 			serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
 			moduleFsTreeProvider.refresh();
@@ -63,19 +64,24 @@ export const openConnection = vscode.commands.registerCommand(
 		if (portStatus) {
 			vscode.window.showErrorMessage('Device is already connected!');
 		} else {
-
-			chosenModule = await vscode.window.showQuickPick(moduleList, {
+			chosenModule = await vscode.window.showQuickPick(moduleList.all, {
 				placeHolder: 'Select module type',
 			});
 
 			if (!chosenModule) {
 				return;
 			}
-
-			if (chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB') {
-				fwConfig.deviceMainPort = 'MI_08';
+			let deviceMainPort: string;
+			let deviceAtPort: string;
+			let product: string;
+			if (chosenModule === moduleList.ec600u) {
+				deviceMainPort = portNames.mainEc600u;
+				deviceAtPort = portNames.atEc600u;
+				product = portNames.productEc600u;
 			} else {
-				fwConfig.deviceMainPort = 'MI_05';
+				deviceMainPort = portNames.mainDevice;
+				deviceAtPort = portNames.atDevice;
+				product = portNames.productDevice;
 			}
 
 			// resolve port path
@@ -85,12 +91,22 @@ export const openConnection = vscode.commands.registerCommand(
 				const ports = await SerialPort.list();
 				const portPaths = ports.map(p => {
 					let port: string;
-					if (p.pnpId.includes(fwConfig.deviceDiagPort)) {
-						port = `${portNames.diagPort} (${p.path})`;
-					} else if (p.pnpId.includes(fwConfig.deviceAtPort)) {
+					if (p.pnpId.includes(deviceAtPort) && p.productId === product) {
 						port = `${portNames.atPort} (${p.path})`;
-					} else if (p.pnpId.includes(fwConfig.deviceMainPort)) {
-						port = `${portNames.mainPort} (${p.path})`;
+					} else if (
+						p.pnpId.includes(deviceAtPort) &&
+						p.productId === product
+					) {
+						port = `${portNames.atPort} (${p.path})`;
+					} else if (
+						p.pnpId.includes(deviceMainPort) &&
+						p.productId === product
+					) {
+						if (product === portNames.productEc600u) {
+							port = `${portNames.mainEc600uPort} (${p.path})`;
+						} else if (product === portNames.productDevice) {
+							port = `${portNames.mainPort} (${p.path})`;
+						}
 					}
 					return port;
 				});

@@ -18,7 +18,7 @@ import {
 } from '../api/userInterface';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { DownloadResponse } from '../types/types';
-import { cmd, status } from '../utils/constants';
+import { cmd, moduleList, status } from '../utils/constants';
 import { sleep } from '../utils/utils';
 
 let listBuffer: string;
@@ -91,9 +91,10 @@ serialEmitter.on(`${cmd.createDir}`, async (data: string) => {
 			return;
 		}
 
-		if (chosenModule === 'EC600UCNLA' || chosenModule === 'EC600UCNLB') {
+		if (chosenModule === moduleList.ec600u) {
 			await sleep(400);
 		}
+		moduleList;
 
 		if (data.includes('(')) {
 			const parsedData = newDirPath.split('/');
