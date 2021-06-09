@@ -4,13 +4,12 @@ import * as Stream from 'stream';
 
 import * as util from '../utils/utils';
 import { serialEmitter } from './serialBridge';
-import { cmd } from '../utils/constants';
+import { chiregex, cmd } from '../utils/constants';
 
 // text manipulation sequences
 const backspaceRegex = /^\177/;
 const enterRegex = /^\r/;
 const deleteRegex = /^\033\[3~/;
-const chiregex = /^[\u4E00-\u9FA5]+$/;
 
 // navigation sequences
 const arrowRegex = /^\033\[([ABCD])/;
