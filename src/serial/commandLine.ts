@@ -10,6 +10,7 @@ import { cmd } from '../utils/constants';
 const backspaceRegex = /^\177/;
 const enterRegex = /^\r/;
 const deleteRegex = /^\033\[3~/;
+const chiregex = /^[\u4E00-\u9FA5]+$/;
 
 // navigation sequences
 const arrowRegex = /^\033\[([ABCD])/;
@@ -131,6 +132,11 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	handleInput(data: string): void {
 		let firstRun = true;
 		let charsHandled = 0;
+
+		// Ignore Chinese letters
+		if (data.match(chiregex)) {
+			return;
+		}
 
 		while (data.length > 0) {
 			// remove handled data
