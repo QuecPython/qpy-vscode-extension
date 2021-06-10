@@ -1,14 +1,16 @@
 import SerialPort from 'SerialPort';
 import { spawn } from 'child_process';
 import * as path from 'path';
-import { fwConfig } from '../utils/constants';
+import { fwConfig, portNames } from '../utils/constants';
 import { serialEmitter } from '../serial/serialBridge';
 import * as vscode from 'vscode';
 import { status } from '../utils/constants';
+import { sleep } from '../utils/utils';
 
 const fwDirPath: string = path.join(__dirname, '..', '..', 'fw');
-const exePath: string = fwDirPath + '\\adownload.exe';
+let exePath: string;
 let progressBarFlag: boolean = false;
+let deviceSelect: boolean = false;
 interface PortResponse {
 	path: string;
 	manufacturer: string;
@@ -19,9 +21,25 @@ interface PortResponse {
 	productId: string;
 }
 
-function delay(ms: number) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
+const getModule = async (productId: string): Promise<string | undefined> => {
+	let response: PortResponse[];
+	let atResponse: string;
+	await SerialPort.list().then((ports: PortResponse[]) => {
+		response = ports.filter(port => port.productId.includes(productId));
+		if (response[0] === undefined) {
+			return undefined;
+		} else {
+			response.forEach(res => {
+				if (res.pnpId.includes(portNames.atEc600u)) {
+					atResponse = portNames.atEc600u;
+				} else {
+					atResponse = portNames.atDevice;
+				}
+			});
+		}
+	});
+	return atResponse;
+};
 
 const getPorts = async (portId: string): Promise<string | undefined> => {
 	let response: PortResponse[];
@@ -38,7 +56,14 @@ const getPorts = async (portId: string): Promise<string | undefined> => {
 };
 
 async function setDownloadPort(): Promise<void> {
-	const atPort = await getPorts(fwConfig.deviceAtPort);
+	let moduleAtPort = await getModule(portNames.productEc600u);
+	if (moduleAtPort === undefined) {
+		moduleAtPort = await getModule(portNames.productDevice);
+		deviceSelect = false;
+	} else {
+		deviceSelect = true;
+	}
+	const atPort = await getPorts(moduleAtPort);
 	let port: SerialPort = new SerialPort(atPort, {
 		baudRate: 115200,
 	});
@@ -72,10 +97,11 @@ export default async function firmwareDownload(
 				break;
 			}
 		}
-		await delay(3000);
+		await sleep(3000);
 	}
 
-	const adownload = spawn(exePath, [
+	let processEc600u = ['-pac', filePath, '-port', downloadPort];
+	let processDevice = [
 		'-p',
 		downloadPort,
 		'-a',
@@ -84,7 +110,21 @@ export default async function firmwareDownload(
 		'-s',
 		fwConfig.baud,
 		filePath,
-	]);
+	];
+
+	let process: string[];
+
+	if (deviceSelect) {
+		process = processEc600u;
+		exePath = fwDirPath + '\\CmdDloader.exe';
+	} else {
+		process = processDevice;
+		exePath = fwDirPath + '\\adownload.exe';
+	}
+
+	console.log('exePath:', exePath);
+	console.log('process:', process);
+	const adownload = spawn(exePath, process);
 
 	if (downloadPort === undefined) {
 		vscode.window.showErrorMessage(

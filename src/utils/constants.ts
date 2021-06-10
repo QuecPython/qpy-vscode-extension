@@ -40,7 +40,11 @@ export const portNames = {
 
 export const fwConfig = {
 	baud: '115200',
-	downloadPorts: ['VID_2ECC&PID_3017', 'VID_2ECC&PID_3004'],
+	downloadPorts: [
+		'VID_2ECC&PID_3017',
+		'VID_2ECC&PID_3004',
+		'VID_0525&PID_A4A7',
+	],
 	atQdownload: 'at+qdownload=1\r\n',
 };
 
