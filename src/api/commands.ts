@@ -10,6 +10,8 @@ import {
 	supportedBaudRates,
 	portNames,
 	fwConfig,
+	moduleList,
+	chiregex,
 } from '../utils/constants';
 import { fwProvider } from '../extension';
 import SerialTerminal from '../serial/serialTerminal';
@@ -21,6 +23,9 @@ import { sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 import { serialEmitter } from '../serial/serialBridge';
 
+export let chosenModule: string | undefined;
+export let newDirPath: string | undefined;
+
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
 	async () => {
@@ -28,7 +33,9 @@ export const refreshModuleFs = vscode.commands.registerCommand(
 			setTerminalFlag(true, cmd.ilistdir);
 			const st = getActiveSerial();
 			st.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
-			await utils.sleep(100);
+			chosenModule === moduleList.ec600u
+				? await utils.sleep(400)
+				: await utils.sleep(200);
 			serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
 			moduleFsTreeProvider.refresh();
@@ -57,20 +64,49 @@ export const openConnection = vscode.commands.registerCommand(
 		if (portStatus) {
 			vscode.window.showErrorMessage('Device is already connected!');
 		} else {
+			chosenModule = await vscode.window.showQuickPick(moduleList.all, {
+				placeHolder: 'Select module type',
+			});
+
+			if (!chosenModule) {
+				return;
+			}
+			let deviceMainPort: string;
+			let deviceAtPort: string;
+			let product: string;
+			if (chosenModule === moduleList.ec600u) {
+				deviceMainPort = portNames.mainEc600u;
+				deviceAtPort = portNames.atEc600u;
+				product = portNames.productEc600u;
+			} else {
+				deviceMainPort = portNames.mainDevice;
+				deviceAtPort = portNames.atDevice;
+				product = portNames.productDevice;
+			}
+
 			// resolve port path
 			let chosenPort: string | undefined = portPath;
 			let chosenPortPath: string | undefined;
-			let portString: string | undefined;
 			if (!chosenPort) {
 				const ports = await SerialPort.list();
 				const portPaths = ports.map(p => {
 					let port: string;
-					if (p.pnpId.includes(fwConfig.deviceDiagPort)) {
-						port = `${portNames.diagPort} (${p.path})`;
-					} else if (p.pnpId.includes(fwConfig.deviceAtPort)) {
+					if (p.pnpId.includes(deviceAtPort) && p.productId === product) {
 						port = `${portNames.atPort} (${p.path})`;
-					} else if (p.pnpId.includes(fwConfig.deviceMainPort)) {
-						port = `${portNames.mainPort} (${p.path})`;
+					} else if (
+						p.pnpId.includes(deviceAtPort) &&
+						p.productId === product
+					) {
+						port = `${portNames.atPort} (${p.path})`;
+					} else if (
+						p.pnpId.includes(deviceMainPort) &&
+						p.productId === product
+					) {
+						if (product === portNames.productEc600u) {
+							port = `${portNames.mainEc600uPort} (${p.path})`;
+						} else if (product === portNames.productDevice) {
+							port = `${portNames.mainPort} (${p.path})`;
+						}
 					}
 					return port;
 				});
@@ -92,7 +128,6 @@ export const openConnection = vscode.commands.registerCommand(
 					return;
 				}
 
-				portString = chosenPort.split(' (')[0];
 				chosenPortPath = chosenPort.split(' (')[1].slice(0, -1);
 			}
 
@@ -281,6 +316,11 @@ export const downloadFile = vscode.commands.registerCommand(
 				downloadPath = fileUri;
 			}
 
+			if (downloadPath.fsPath.match(chiregex)) {
+				vscode.window.showErrorMessage('Invalid file name for download.');
+				return;
+			}
+
 			if (utils.isDir(downloadPath.fsPath)) {
 				vscode.window.showErrorMessage('Specified target is not a valid file.');
 				return;
@@ -312,6 +352,11 @@ export const selectiveDownloadFile = vscode.commands.registerCommand(
 	'qpy-ide.selectiveDownloadFile',
 	async (fileUri: vscode.Uri) => {
 		try {
+			if (fileUri.fsPath.match(chiregex)) {
+				vscode.window.showErrorMessage('Invalid file name for download.');
+				return;
+			}
+
 			if (utils.isDir(fileUri.fsPath)) {
 				vscode.window.showErrorMessage('Specified target is not a valid file.');
 				return;
@@ -365,6 +410,7 @@ export const createDir = vscode.commands.registerCommand(
 			if (fullFilePath.startsWith('/usr/')) {
 				const st = getActiveSerial();
 				setTerminalFlag(true, cmd.createDir);
+				newDirPath = fullFilePath;
 				st.handleInput(`uos.mkdir('${fullFilePath}')\r\n`);
 			} else {
 				vscode.window.showErrorMessage('Invalid directory path.');

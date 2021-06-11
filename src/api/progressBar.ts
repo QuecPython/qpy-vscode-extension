@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { serialEmitter } from '../serial/serialBridge';
 import { status } from '../utils/constants';
 
-export const progressBar = (): void => {
+export const progressBar = (title: string): void => {
 	vscode.window.withProgress(
 		{
 			location: vscode.ProgressLocation.Notification,
-			title: 'Downloading file',
+			title,
 			cancellable: false,
 		},
 		async (progress, token) => {

@@ -1,14 +1,16 @@
 import SerialPort from 'SerialPort';
 import { spawn } from 'child_process';
 import * as path from 'path';
-import { fwConfig } from '../utils/constants';
+import { fwConfig, portNames, progLabel } from '../utils/constants';
 import { serialEmitter } from '../serial/serialBridge';
 import * as vscode from 'vscode';
 import { status } from '../utils/constants';
+import { sleep } from '../utils/utils';
 
 const fwDirPath: string = path.join(__dirname, '..', '..', 'fw');
-const exePath: string = fwDirPath + '\\adownload.exe';
+let exePath: string;
 let progressBarFlag: boolean = false;
+let deviceSelect: boolean = false;
 interface PortResponse {
 	path: string;
 	manufacturer: string;
@@ -19,9 +21,31 @@ interface PortResponse {
 	productId: string;
 }
 
-function delay(ms: number) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
+const getModule = async (productId: string): Promise<string | undefined> => {
+	let response: PortResponse[];
+	let atResponse: string;
+	await SerialPort.list().then((ports: PortResponse[]) => {
+		response = ports.filter(port => port.productId.includes(productId));
+		if (response[0] === undefined) {
+			return undefined;
+		} else {
+			response.forEach(res => {
+				if (
+					res.pnpId.includes(portNames.atEc600u) &&
+					productId === portNames.productEc600u
+				) {
+					atResponse = portNames.atEc600u;
+				} else if (
+					res.pnpId.includes(portNames.atDevice) &&
+					productId === portNames.productDevice
+				) {
+					atResponse = portNames.atDevice;
+				}
+			});
+		}
+	});
+	return atResponse;
+};
 
 const getPorts = async (portId: string): Promise<string | undefined> => {
 	let response: PortResponse[];
@@ -38,7 +62,14 @@ const getPorts = async (portId: string): Promise<string | undefined> => {
 };
 
 async function setDownloadPort(): Promise<void> {
-	const atPort = await getPorts(fwConfig.deviceAtPort);
+	let moduleAtPort = await getModule(portNames.productEc600u);
+	if (moduleAtPort === undefined) {
+		moduleAtPort = await getModule(portNames.productDevice);
+		deviceSelect = false;
+	} else {
+		deviceSelect = true;
+	}
+	const atPort = await getPorts(moduleAtPort);
 	let port: SerialPort = new SerialPort(atPort, {
 		baudRate: 115200,
 	});
@@ -57,25 +88,26 @@ export default async function firmwareDownload(
 		vscode.window.showErrorMessage('Failed to remove the specified file.');
 	}
 
-	let i = 0;
+	let portIteration = 0;
 	let downloadPort: string = undefined;
 	let percentFlag: boolean = false;
 
-	while (downloadPort === undefined && i < 10) {
+	while (downloadPort === undefined && portIteration < 10) {
 		for (const port in fwConfig.downloadPorts) {
 			downloadPort = await getPorts(fwConfig.downloadPorts[port]);
-			if (downloadPort != undefined) {
+			if (downloadPort !== undefined) {
 				if (progressBarFlag === false) {
-					serialEmitter.emit(status.startProg);
+					serialEmitter.emit(status.startProg, progLabel.flashFw);
 					progressBarFlag = true;
 				}
 				break;
 			}
 		}
-		await delay(3000);
+		await sleep(3000);
 	}
 
-	const adownload = spawn(exePath, [
+	let processEc600u = ['-pac', filePath, '-port', downloadPort];
+	let processDevice = [
 		'-p',
 		downloadPort,
 		'-a',
@@ -84,13 +116,28 @@ export default async function firmwareDownload(
 		'-s',
 		fwConfig.baud,
 		filePath,
-	]);
+	];
+
+	let process: string[];
+
+	if (deviceSelect) {
+		process = processEc600u;
+		exePath = fwDirPath + fwConfig.cmdDloader;
+	} else {
+		process = processDevice;
+		exePath = fwDirPath + fwConfig.adownload;
+	}
+
+	const adownload = spawn(exePath, process);
 
 	if (downloadPort === undefined) {
 		vscode.window.showErrorMessage(
 			'Something went wrong. Please reset the Module.'
 		);
 	}
+
+	let fileDownloadEc600 = 1;
+	let percArray = [];
 
 	adownload.stdout.on('data', data => {
 		if (data.includes('"progress" :')) {
@@ -103,6 +150,16 @@ export default async function firmwareDownload(
 			}
 			serialEmitter.emit(status.updateProg, percentage);
 			percentFlag = true;
+		} else if (data.includes('( ')) {
+			const result: string = data.toString();
+			const percentage = result.match(/( \d{1,3})/g);
+
+			percArray.push(parseInt(percentage[0]));
+			if (percArray[percArray.length - 1] < percArray[percArray.length - 2]) {
+				fileDownloadEc600++;
+			}
+			const percentageText = `${fileDownloadEc600}/9 ${percentage[0]}`;
+			serialEmitter.emit(status.updateProg, percentageText);
 		}
 	});
 

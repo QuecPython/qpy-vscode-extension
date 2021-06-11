@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import * as vscode from 'vscode';
+import { chosenModule, newDirPath } from '../api/commands';
 import { progressBar } from '../api/progressBar';
 import { getActiveSerial, setTerminalFlag } from '../api/terminal';
 import {
@@ -17,7 +18,7 @@ import {
 } from '../api/userInterface';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { DownloadResponse } from '../types/types';
-import { cmd, status } from '../utils/constants';
+import { cmd, moduleList, status } from '../utils/constants';
 import { sleep } from '../utils/utils';
 
 let listBuffer: string;
@@ -61,7 +62,8 @@ serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
 			}
 			setTimeout(() => setTerminalFlag(), 50);
 		}
-	} catch {
+	} catch (error) {
+		console.error(error);
 		setTerminalFlag();
 		vscode.window.showErrorMessage('Failed to list files.');
 	}
@@ -81,7 +83,7 @@ serialEmitter.on(`${cmd.runScript}`, async (data: string) => {
 	}
 });
 
-serialEmitter.on(`${cmd.createDir}`, (data: string) => {
+serialEmitter.on(`${cmd.createDir}`, async (data: string) => {
 	try {
 		if (data.includes('Traceback')) {
 			setTerminalFlag();
@@ -89,15 +91,15 @@ serialEmitter.on(`${cmd.createDir}`, (data: string) => {
 			return;
 		}
 
-		if (data.includes('(')) {
-			const parsedData = data
-				.match(/\(([^)]+)\)/)[1]
-				.slice(1, -1)
-				.split('/')
-				.slice(1);
+		if (chosenModule === moduleList.ec600u) {
+			await sleep(400);
+		}
+		moduleList;
 
-			const parentPath = `/${parsedData.slice(0, -1).join('/')}`;
-			const newDirName = parsedData.pop();
+		if (data.includes('(')) {
+			const parsedData = newDirPath.split('/');
+			const parentPath = parsedData.slice(0, -1).join('/');
+			const newDirName = parsedData[parsedData.length - 1];
 			const newDir = new ModuleDocument(
 				newDirName,
 				'',
@@ -123,7 +125,8 @@ serialEmitter.on(`${cmd.createDir}`, (data: string) => {
 			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
 			setTerminalFlag();
 		}
-	} catch {
+	} catch (error) {
+		console.error(error);
 		setTerminalFlag();
 		vscode.window.showErrorMessage('Failed to create the specified directory.');
 	}
@@ -241,6 +244,6 @@ serialEmitter.on(`${cmd.selectiveDownFile}`, (data: DownloadResponse) => {
 	}
 });
 
-serialEmitter.on(status.startProg, () => {
-	progressBar();
+serialEmitter.on(status.startProg, (data: string) => {
+	progressBar(data);
 });

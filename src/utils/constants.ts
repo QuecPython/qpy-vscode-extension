@@ -28,17 +28,26 @@ export const cmd = {
 
 export const portNames = {
 	atPort: 'Quectel USB AT Port',
-	diagPort: 'Quectel USB DIAG Port',
-	mainPort: 'USB Serial Device',
+	mainPort: 'Quectel USB MI05 COM Port',
+	mainEc600uPort: 'Quectel USB Serial-1 Port',
+	mainEc600u: 'MI_08',
+	mainDevice: 'MI_05',
+	atEc600u: 'MI_02',
+	atDevice: 'MI_03',
+	productEc600u: '0901',
+	productDevice: '6001',
 };
 
 export const fwConfig = {
 	baud: '115200',
-	deviceDiagPort: 'MI_02',
-	deviceAtPort: 'MI_03',
-	deviceMainPort: 'MI_05',
-	downloadPorts: ['VID_2ECC&PID_3017', 'VID_2ECC&PID_3004'],
+	downloadPorts: [
+		'VID_2ECC&PID_3017',
+		'VID_2ECC&PID_3004',
+		'VID_0525&PID_A4A7',
+	],
 	atQdownload: 'at+qdownload=1\r\n',
+	adownload: '\\adownload.exe',
+	cmdDloader: '\\CmdDloader.exe',
 };
 
 export const status = {
@@ -49,7 +58,23 @@ export const status = {
 	downFinish: 'downloadFinished',
 };
 
+export const progLabel = {
+	downloadFile: 'Downloading File',
+	flashFw: 'Flashing Firmware'
+};
+
 export const scriptName = {
 	fileDownloadScript: '\\QuecPyComTools.py',
 	initTreeScript: '\\q_init_fs.py',
 };
+
+export const moduleList = {
+	all: ['EC100Y', 'EC600S', 'EC600N', 'EC600U'],
+	ec100y: 'EC100Y',
+	ec600s: 'EC600S',
+	ec600n: 'EC600N',
+	ec600u: 'EC600U',
+};
+
+export const chiregex =
+	/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;

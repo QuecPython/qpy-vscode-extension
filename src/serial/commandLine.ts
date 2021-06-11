@@ -4,7 +4,7 @@ import * as Stream from 'stream';
 
 import * as util from '../utils/utils';
 import { serialEmitter } from './serialBridge';
-import { cmd } from '../utils/constants';
+import { chiregex, cmd } from '../utils/constants';
 
 // text manipulation sequences
 const backspaceRegex = /^\177/;
@@ -101,8 +101,13 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			this.endsWithNewLine = false;
 		}
 
+		if (stringRepr.includes('>>> >>> ')) {
+			stringRepr = '>>> ';
+		} else if (stringRepr.includes('>>> \r\n>>> ')) {
+			stringRepr = '>>> ';
+		}
+
 		if (stringRepr === '\r\n') {
-			this.backendStream.write(this.lineEnd);
 		} else if (stringRepr !== '>>> ') {
 			this.writeEmitter.fire(stringRepr);
 			if (stringRepr.includes('QuecPython Serial Terminal')) {
@@ -126,6 +131,11 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	handleInput(data: string): void {
 		let firstRun = true;
 		let charsHandled = 0;
+
+		// Ignore Chinese letters
+		if (data.match(chiregex)) {
+			return;
+		}
 
 		while (data.length > 0) {
 			// remove handled data

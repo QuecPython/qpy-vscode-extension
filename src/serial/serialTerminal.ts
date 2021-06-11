@@ -2,10 +2,11 @@ import SerialPort from 'SerialPort';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { cmd, scriptName, status } from '../utils/constants';
+import { cmd, moduleList, scriptName, status } from '../utils/constants';
 import { CommandLineInterface } from './commandLine';
 import { serialEmitter } from './serialBridge';
 import { sleep } from '../utils/utils';
+import { chosenModule } from '../api/commands';
 
 export let portStatus: boolean;
 
@@ -115,7 +116,9 @@ export default class SerialTerminal extends CommandLineInterface {
 				this.handleInput(`import example\r\n`);
 				await sleep(100);
 				this.handleInput(`example.exec('usr/q_init_fs.py')\r\n`);
-				await sleep(200);
+				chosenModule === moduleList.ec600u
+					? await sleep(500)
+					: await sleep(200);
 				serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			});
 	}
