@@ -30,10 +30,18 @@ const getModule = async (productId: string): Promise<string | undefined> => {
 			return undefined;
 		} else {
 			response.forEach(res => {
-				if (res.pnpId.includes(portNames.atEc600u)) {
+				if (
+					res.pnpId.includes(portNames.atEc600u) &&
+					productId === portNames.productEc600u
+				) {
 					atResponse = portNames.atEc600u;
-				} else {
+				} else if (
+					res.pnpId.includes(portNames.atDevice) &&
+					productId === portNames.productDevice
+				) {
 					atResponse = portNames.atDevice;
+				} else {
+					atResponse = undefined;
 				}
 			});
 		}
@@ -116,14 +124,12 @@ export default async function firmwareDownload(
 
 	if (deviceSelect) {
 		process = processEc600u;
-		exePath = fwDirPath + '\\CmdDloader.exe';
+		exePath = fwDirPath + fwConfig.cmdDloader;
 	} else {
 		process = processDevice;
-		exePath = fwDirPath + '\\adownload.exe';
+		exePath = fwDirPath + fwConfig.adownload;
 	}
 
-	console.log('exePath:', exePath);
-	console.log('process:', process);
 	const adownload = spawn(exePath, process);
 
 	if (downloadPort === undefined) {

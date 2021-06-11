@@ -46,6 +46,8 @@ export const fwConfig = {
 		'VID_0525&PID_A4A7',
 	],
 	atQdownload: 'at+qdownload=1\r\n',
+	adownload: '\\adownload.exe',
+	cmdDloader: '\\CmdDloader.exe',
 };
 
 export const status = {
