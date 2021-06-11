@@ -40,9 +40,7 @@ const getModule = async (productId: string): Promise<string | undefined> => {
 					productId === portNames.productDevice
 				) {
 					atResponse = portNames.atDevice;
-				} else {
-					atResponse = undefined;
-				}
+				} // provide error handling - if there is no port to find
 			});
 		}
 	});
@@ -149,6 +147,8 @@ export default async function firmwareDownload(
 			}
 			serialEmitter.emit(status.updateProg, percentage);
 			percentFlag = true;
+		} else {
+			console.log(data.toString());
 		}
 	});
 
