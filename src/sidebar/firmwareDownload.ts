@@ -40,7 +40,7 @@ const getModule = async (productId: string): Promise<string | undefined> => {
 					productId === portNames.productDevice
 				) {
 					atResponse = portNames.atDevice;
-				} // provide error handling - if there is no port to find
+				}
 			});
 		}
 	});
@@ -136,6 +136,9 @@ export default async function firmwareDownload(
 		);
 	}
 
+	let j = 1;
+	let percArray = [];
+
 	adownload.stdout.on('data', data => {
 		if (data.includes('"progress" :')) {
 			const result: string = data.toString();
@@ -147,8 +150,16 @@ export default async function firmwareDownload(
 			}
 			serialEmitter.emit(status.updateProg, percentage);
 			percentFlag = true;
-		} else {
-			console.log(data.toString());
+		} else if (data.includes('( ')) {
+			const result: string = data.toString();
+			const percentage = result.match(/( \d{1,3})/g);
+
+			percArray.push(parseInt(percentage[0]));
+			if (percArray[percArray.length - 1] < percArray[percArray.length - 2]) {
+				j++;
+			}
+			const percentageText = `${j}/9 ${percentage[0]}`;
+			serialEmitter.emit(status.updateProg, percentageText);
 		}
 	});
 
