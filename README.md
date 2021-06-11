@@ -41,7 +41,8 @@ Steps for flashing are:
 * Select firmware from the PC file system
 * Click `Flash` button
 
-**NOTE**: When flashing EC600U modules, there will be a pop-up window promting you to confrim firmware flashing.
+#### Note: When flashing EC600U modules, there will be a pop-up window promting you to confrim firmware flashing.
+#### Note: Only one module can be flashed simultaneously.
 
 ## Known Issues
 
@@ -49,11 +50,11 @@ Steps for flashing are:
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
-## 1.0.4
+### 1.0.4
 - Added support for EC600U modules
 - Added support for firmware flashing for EC600U modules
 - Improved stability for file system tree view
-## 1.0.3
+### 1.0.3
 - Added support for EC600S_CNLA and EC600S_CNLB
 - Added firmware flashing feature for supported modules
 ### 1.0.2
