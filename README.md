@@ -12,8 +12,8 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 
 | Platform | Module model      |
 | -------- | ----------------- | 
-| ASR      | EC100Y<br/>EC600SCNLA<br/>EC600SCNLB | 
-| RDA      | EC600NCNLC<br/>EC600NCNLA | 
+| ASR      | EC100Y<br/>EC600S | 
+| RDA      | EC600N<br/>EC600U | 
 
 
 ## Usage
@@ -35,13 +35,24 @@ This extension contributes the following settings for configuring it's usage:
 * `closeConnection` - Closes currently open connection
 * `qpy-ide.clearTerminal` - Clears active terminal
 
+## Flashing Firmware
+It is possible to flash firmware using built-in activity bar `QuecPython`.
+Steps for flashing are:
+* Select firmware from the PC file system
+* Click `Flash` button
+
+**NOTE**: When flashing EC600U modules, there will be a pop-up window promting you to confrim firmware flashing.
+
 ## Known Issues
 
 * There are cases that carret `'>>>'` does not appear on boot-up, if that happens, press `ENTER` key.
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
-
+## 1.0.4
+- Added support for EC600U modules
+- Added support for firmware flashing for EC600U modules
+- Improved stability for file system tree view
 ## 1.0.3
 - Added support for EC600S_CNLA and EC600S_CNLB
 - Added firmware flashing feature for supported modules
