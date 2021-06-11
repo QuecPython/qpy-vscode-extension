@@ -58,6 +58,11 @@ export const status = {
 	downFinish: 'downloadFinished',
 };
 
+export const progLabel = {
+	downloadFile: 'Downloading File',
+	flashFw: 'Flashing Firmware'
+};
+
 export const scriptName = {
 	fileDownloadScript: '\\QuecPyComTools.py',
 	initTreeScript: '\\q_init_fs.py',

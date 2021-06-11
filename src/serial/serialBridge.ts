@@ -244,6 +244,6 @@ serialEmitter.on(`${cmd.selectiveDownFile}`, (data: DownloadResponse) => {
 	}
 });
 
-serialEmitter.on(status.startProg, () => {
-	progressBar();
+serialEmitter.on(status.startProg, (data: string) => {
+	progressBar(data);
 });

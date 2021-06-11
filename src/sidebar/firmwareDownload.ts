@@ -1,7 +1,7 @@
 import SerialPort from 'SerialPort';
 import { spawn } from 'child_process';
 import * as path from 'path';
-import { fwConfig, portNames } from '../utils/constants';
+import { fwConfig, portNames, progLabel } from '../utils/constants';
 import { serialEmitter } from '../serial/serialBridge';
 import * as vscode from 'vscode';
 import { status } from '../utils/constants';
@@ -88,16 +88,16 @@ export default async function firmwareDownload(
 		vscode.window.showErrorMessage('Failed to remove the specified file.');
 	}
 
-	let i = 0;
+	let portIteration = 0;
 	let downloadPort: string = undefined;
 	let percentFlag: boolean = false;
 
-	while (downloadPort === undefined && i < 10) {
+	while (downloadPort === undefined && portIteration < 10) {
 		for (const port in fwConfig.downloadPorts) {
 			downloadPort = await getPorts(fwConfig.downloadPorts[port]);
-			if (downloadPort != undefined) {
+			if (downloadPort !== undefined) {
 				if (progressBarFlag === false) {
-					serialEmitter.emit(status.startProg);
+					serialEmitter.emit(status.startProg, progLabel.flashFw);
 					progressBarFlag = true;
 				}
 				break;
@@ -136,7 +136,7 @@ export default async function firmwareDownload(
 		);
 	}
 
-	let j = 1;
+	let fileDownloadEc600 = 1;
 	let percArray = [];
 
 	adownload.stdout.on('data', data => {
@@ -156,9 +156,9 @@ export default async function firmwareDownload(
 
 			percArray.push(parseInt(percentage[0]));
 			if (percArray[percArray.length - 1] < percArray[percArray.length - 2]) {
-				j++;
+				fileDownloadEc600++;
 			}
-			const percentageText = `${j}/9 ${percentage[0]}`;
+			const percentageText = `${fileDownloadEc600}/9 ${percentage[0]}`;
 			serialEmitter.emit(status.updateProg, percentageText);
 		}
 	});

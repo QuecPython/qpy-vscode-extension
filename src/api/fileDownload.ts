@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import { serialEmitter } from '../serial/serialBridge';
 import { FileData } from '../types/types';
-import { cmd, scriptName, status } from '../utils/constants';
+import { cmd, progLabel, scriptName, status } from '../utils/constants';
 
 const fileDirPath: string = path.join(__dirname, '..', '..', 'scripts');
 const scriptPath: string = fileDirPath + scriptName.fileDownloadScript;
@@ -16,7 +16,7 @@ export default async function fileDownload(
 ) {
 	const destinationPath = `:${downloadPath}/` + path.basename(sourcePath);
 
-	serialEmitter.emit(status.startProg);
+	serialEmitter.emit(status.startProg, progLabel.downloadFile);
 
 	const fDownload = spawn('python', [
 		scriptPath,
