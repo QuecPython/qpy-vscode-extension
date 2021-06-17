@@ -60,7 +60,7 @@ export const status = {
 
 export const progLabel = {
 	downloadFile: 'Downloading File',
-	flashFw: 'Flashing Firmware'
+	flashFw: 'Flashing Firmware',
 };
 
 export const scriptName = {

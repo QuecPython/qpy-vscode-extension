@@ -24,8 +24,14 @@ interface PortResponse {
 const getModule = async (productId: string): Promise<string | undefined> => {
 	let response: PortResponse[];
 	let atResponse: string;
+	let newPorts: Array<any> = [];
 	await SerialPort.list().then((ports: PortResponse[]) => {
-		response = ports.filter(port => port.productId.includes(productId));
+		ports.forEach(port => {
+			if (port.productId !== undefined) {
+				newPorts.push(port);
+			}
+		});
+		response = newPorts.filter(port => port.productId === productId);
 		if (response[0] === undefined) {
 			return undefined;
 		} else {
@@ -73,6 +79,7 @@ async function setDownloadPort(): Promise<void> {
 	let port: SerialPort = new SerialPort(atPort, {
 		baudRate: 115200,
 	});
+
 	port.on('open', async () => {
 		await port.write(fwConfig.atQdownload);
 		port.close();
@@ -136,7 +143,7 @@ export default async function firmwareDownload(
 		);
 	}
 
-	let fileDownloadEc600 = 1;
+	let fileDownloadEc600 = 0;
 	let percArray = [];
 
 	adownload.stdout.on('data', data => {
@@ -158,7 +165,7 @@ export default async function firmwareDownload(
 			if (percArray[percArray.length - 1] < percArray[percArray.length - 2]) {
 				fileDownloadEc600++;
 			}
-			const percentageText = `${fileDownloadEc600}/9 ${percentage[0]}`;
+			const percentageText = `${fileDownloadEc600}/8 ${percentage[0]}`;
 			serialEmitter.emit(status.updateProg, percentageText);
 		}
 	});
