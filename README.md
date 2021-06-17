@@ -50,6 +50,8 @@ Steps for flashing are:
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
+### 1.0.5
+- Improved stability for firmware operations
 ### 1.0.4
 - Added support for EC600U modules
 - Added support for firmware flashing for EC600U modules
