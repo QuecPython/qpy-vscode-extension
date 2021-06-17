@@ -189,11 +189,6 @@
 					"when": "view == qpyModuleFS && viewItem == moduleDocument"
 				},
 				{
-					"command": "qpy-ide.runScript",
-					"when": "view == qpyModuleFS && viewItem == moduleDocument",
-					"group": "inline"
-				},
-				{
 					"command": "qpy-ide.removeFile",
 					"when": "view == qpyModuleFS && viewItem == moduleDocument"
 				},

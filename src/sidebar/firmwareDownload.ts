@@ -27,7 +27,7 @@ const getModule = async (productId: string): Promise<string | undefined> => {
 	let newPorts: Array<any> = [];
 	await SerialPort.list().then((ports: PortResponse[]) => {
 		ports.forEach(port => {
-			if (port.productId != undefined) {
+			if (port.productId !== undefined) {
 				newPorts.push(port);
 			}
 		});
