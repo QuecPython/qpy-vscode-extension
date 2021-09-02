@@ -81,7 +81,9 @@ async function setDownloadPort(): Promise<void> {
 	});
 
 	port.on('open', async () => {
+		await sleep(30);
 		await port.write(fwConfig.atQdownload);
+		await sleep(30);
 		port.close();
 	});
 }
