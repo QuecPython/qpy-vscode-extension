@@ -1,9 +1,9 @@
 {
 	"name": "qpy-ide",
 	"displayName": "QuecPython",
-	"publisher": "Quectel",
+	"publisher": "Petar Jovancic",
 	"description": "QuecPython interaction extension. It includes REPL console, AT CLI, preview of the module file system. Flash firmware, download files, run files and interact with the module file system from the VSCode.",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"engines": {
 		"vscode": "^1.54.3"
 	},
@@ -234,9 +234,9 @@
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js",
-		"rebuild": "electron-rebuild -f -w serialport",
-		"dev:rebuild": "electron-rebuild --version 11.3.0 --force",
-		"postinstall": "electron-rebuild --version 12.0.0 --force && pip install -r ./config/requirements.txt",
+		"rebuild": "electron-rebuild --version 13.1.9 -f -w serialport",
+		"dev:rebuild": "electron-rebuild --version 13.1.9 --force",
+		"postinstall": "electron-rebuild --version 13.1.9 --force && pip install -r ./config/requirements.txt",
 		"ext:prepublish": "npm ci && npm prune"
 	},
 	"devDependencies": {
