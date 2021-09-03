@@ -9,12 +9,7 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 - **Python3 installed (3.2 or higher) -** [Python](https://www.python.org/)
 
 ## Supported Modules
-
-| Platform | Module model      |
-| -------- | ----------------- | 
-| ASR      | EC100Y<br/>EC600S | 
-| RDA      | EC600N<br/>EC600U | 
-
+- Support all QuecPython modules.
 
 ## Usage
 
@@ -50,23 +45,25 @@ Steps for flashing are:
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
-### 1.0.5
+## 1.0.5
 - Improved stability for firmware operations
-### 1.0.4
+
+## 1.0.4
 - Added support for EC600U modules
 - Added support for firmware flashing for EC600U modules
 - Improved stability for file system tree view
-### 1.0.3
+
+## 1.0.3
 - Added support for EC600S_CNLA and EC600S_CNLB
 - Added firmware flashing feature for supported modules
-### 1.0.2
 
+## 1.0.2
 - Fixed issue with downloading files
 - Fixed issues with connectivity
-### 1.0.1
 
+## 1.0.1
 - Fixed issue with removing directory
 - Fixed issue with removing files
-### 1.0.0
 
+## 1.0.0
 - Initial version of QuecPython VSCode Extension

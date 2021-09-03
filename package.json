@@ -1,9 +1,10 @@
 {
 	"name": "qpy-ide",
 	"displayName": "QuecPython",
-	"publisher": "Petar Jovancic",
+	"publisher": "PetarJovancic",
 	"description": "QuecPython interaction extension. It includes REPL console, AT CLI, preview of the module file system. Flash firmware, download files, run files and interact with the module file system from the VSCode.",
-	"version": "1.0.0",
+	"icon": "images/quectel.png",
+	"version": "1.0.5",
 	"engines": {
 		"vscode": "^1.54.3"
 	},
@@ -258,6 +259,7 @@
 		"vscode-test": "^1.5.0"
 	},
 	"dependencies": {
+		"node-abi": "^3.0.0",
 		"serialport": "^9.0.7"
 	}
 }
