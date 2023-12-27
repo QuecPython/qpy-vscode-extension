@@ -1,10 +1,12 @@
 {
 	"name": "qpy-ide",
-	"displayName": "qpy-ide",
-	"description": "QuecPython IDE extension",
-	"version": "0.0.1",
+	"displayName": "QuecPython",
+	"publisher": "Quectel",
+	"description": "QuecPython interaction extension. It includes REPL console, AT CLI, preview of the module file system. Flash firmware, download files, run files and interact with the module file system from the VSCode.",
+	"icon": "images/quectel.png",
+	"version": "1.0.6",
 	"engines": {
-		"vscode": "^1.54.3"
+		"vscode": "^1.80.2"
 	},
 	"categories": [
 		"Other"
@@ -26,25 +28,16 @@
 					"description": "Set to true to translate incomming hex data. Set to false to output raw hex.",
 					"type": "boolean",
 					"default": true
+				},
+				"qpy-ide.showRunCommandInEditorContextMenu": {
+					"type": "boolean",
+					"default": true,
+					"description": "Whether to show 'Run Code' command in editor context menu.",
+					"scope": "resource"
 				}
 			}
 		},
 		"commands": [
-			{
-				"command": "qpy-ide.selectComPort",
-				"title": "Hello World",
-				"category": "QuecPython"
-			},
-			{
-				"command": "qpy-ide.startSerialTerminal",
-				"title": "Hello World",
-				"category": "QuecPython"
-			},
-			{
-				"command": "qpy-ide.refreshPorts",
-				"title": "Show COM Ports",
-				"category": "QuecPython"
-			},
 			{
 				"command": "qpy-ide.refreshModuleFS",
 				"title": "Refresh",
@@ -52,21 +45,6 @@
 					"light": "resources/light/refresh.svg",
 					"dark": "resources/dark/refresh.svg"
 				}
-			},
-			{
-				"command": "qpy-ide.connectOrDisconnect",
-				"title": "Connect/Disconnect",
-				"category": "QuecPython"
-			},
-			{
-				"command": "qpy-ide.setBaudRate",
-				"title": "Set Baud Rate",
-				"category": "QuecPython"
-			},
-			{
-				"command": "qpy-ide.downloadFiles",
-				"title": "QPY: Download File(s)",
-				"category": "QuecPython"
 			},
 			{
 				"command": "qpy-ide.selectFirmware",
@@ -80,8 +58,23 @@
 				"icon": "$(clear-all)"
 			},
 			{
-				"command": "qpy-ide.openTerminal",
-				"title": "Open terminal",
+				"command": "qpy-ide.openConnection",
+				"title": "Connect to COM Port",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.closeConnection",
+				"title": "Disconnect COM Port",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.downloadFile",
+				"title": "QPY: Download File",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.selectiveDownloadFile",
+				"title": "QPY: Selective Download File",
 				"category": "QuecPython"
 			},
 			{
@@ -98,12 +91,26 @@
 				"command": "qpy-ide.clearTerminal",
 				"title": "Clear active terminal",
 				"category": "QuecPython"
-			}
-		],
-		"keybindings": [
+			},
 			{
-				"command": "qpy-ide.downloadFiles",
-				"key": "ctrl+shift+u"
+				"command": "qpy-ide.runScript",
+				"title": "Run Script",
+				"icon": {
+					"light": "resources/light/play-circle.svg",
+					"dark": "resources/dark/play-circle.svg"
+				}
+			},
+			{
+				"command": "qpy-ide.removeFile",
+				"title": "Delete File"
+			},
+			{
+				"command": "qpy-ide.removeDir",
+				"title": "Delete Directory"
+			},
+			{
+				"command": "qpy-ide.createDir",
+				"title": "Create Directory"
 			}
 		],
 		"viewsContainers": {
@@ -119,7 +126,7 @@
 			"explorer": [
 				{
 					"id": "qpyModuleFS",
-					"name": "QuecPython: Module File System"
+					"name": "QPY: File System (usr)"
 				}
 			],
 			"qpy": [
@@ -143,6 +150,22 @@
 				{
 					"command": "qpy-ide.clearTerminal",
 					"when": "terminalIsOpen"
+				},
+				{
+					"command": "qpy-ide.closeConnection",
+					"when": "terminalIsOpen"
+				},
+				{
+					"command": "qpy-ide.downloadFile",
+					"title": "QPY: Download File",
+					"category": "QuecPython",
+					"when": "false"
+				},
+				{
+					"command": "qpy-ide.selectiveDownloadFile",
+					"title": "QPY: Selective Download File",
+					"category": "QuecPython",
+					"when": "false"
 				}
 			],
 			"view/title": [
@@ -155,11 +178,45 @@
 					"command": "qpy-ide.clearFw",
 					"group": "navigation",
 					"when": "view == qpyFirmware"
+				},
+				{
+					"command": "qpy-ide.createDir",
+					"when": "view == qpyModuleFS"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "qpy-ide.runScript",
+					"when": "view == qpyModuleFS && viewItem == moduleDocument"
+				},
+				{
+					"command": "qpy-ide.removeFile",
+					"when": "view == qpyModuleFS && viewItem == moduleDocument"
+				},
+				{
+					"command": "qpy-ide.removeDir",
+					"when": "view == qpyModuleFS && viewItem == moduleDocument"
 				}
 			],
 			"explorer/context": [
 				{
-					"command": "qpy-ide.downloadFiles",
+					"command": "qpy-ide.downloadFile",
+					"group": "QuecPython@1"
+				},
+				{
+					"command": "qpy-ide.selectiveDownloadFile",
+					"group": "QuecPython@1"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "qpy-ide.downloadFile",
+					"when": "!inOutput && config.qpy-ide.showRunCommandInEditorContextMenu",
+					"group": "QuecPython@1"
+				},
+				{
+					"command": "qpy-ide.selectiveDownloadFile",
+					"when": "!inOutput && config.qpy-ide.showRunCommandInEditorContextMenu",
 					"group": "QuecPython@1"
 				}
 			]
@@ -172,31 +229,29 @@
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js",
-		"rebuild": "electron-rebuild -f -w serialport",
-		"dev:rebuild": "electron-rebuild --version 11.3.0 --force"
+		"rebuild": "electron-rebuild -f --version 25.8.4 -w serialport",
+		"dev:rebuild": "electron-rebuild --version 22.3.14 --force",
+		"ext:prepublish": "npm ci && npm prune"
 	},
 	"devDependencies": {
+		"@vscode/test-electron": "^1.6.2",
 		"@types/glob": "^7.1.3",
 		"@types/mocha": "^8.0.4",
 		"@types/node": "^12.11.7",
-		"@types/serialport": "^8.0.1",
-		"@types/vscode": "^1.54.0",
+		"@types/serialport": "^8.0.3",
+		"@types/vscode": "^1.80.2",
 		"@typescript-eslint/eslint-plugin": "^4.14.1",
 		"@typescript-eslint/parser": "^4.14.1",
-		"electron": "^12.0.1",
-		"electron-prebuilt": "^1.4.13",
-		"electron-rebuild": "^2.3.5",
+		"electron-rebuild": "^3.2.9",
 		"eslint": "^7.19.0",
 		"glob": "^7.1.6",
 		"mocha": "^8.2.1",
+		"prebuild-install": "^6.0.0",
 		"typescript": "^4.1.3",
-		"vscode-test": "^1.5.0"
+		"vscode-test": "^1.6.1"
 	},
 	"dependencies": {
+		"node-abi": "^3.51.0",
 		"serialport": "^9.0.7"
-	},
-	"build": {
-		"npmRebuild": false,
-		"buildDependenciesFromSource": true
 	}
 }

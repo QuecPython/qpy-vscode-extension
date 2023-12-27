@@ -1,70 +1,69 @@
-# qpy-ide README
+# QuecPython
 
-This is the README for your extension "qpy-ide". After writing up a brief description, we recommend including the following sections.
+Extension for handling interaction with QuecPython based modules. Communicate with Python based Quectel modules using the built-in REPL or AT CLI. Besides serial communication, extension provides out-of-the box module file system preview in a tree view. Users are free to opt using commands from the extension UI or execute raw commands via REPL.
 
-## Features
-
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- Works with Windows only at the moment.
 
 ## Requirements
+- **NodeJS installed on your system (12 or higher) -** [NodeJS](https://nodejs.org)
+- **Python3 installed (3.2 or higher) -** [Python](https://www.python.org/)
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Supported Modules
+- Support all QuecPython modules.
+
+## Usage
+
+Open the serial connection by opening the commands palette the `CTRL+SHIFT+P` and running the command `QuecPython: Connect to COM Port`.
+
+Upon successful connection, the terminal will open with either REPL or AT CLI depending on the chosen port. The board can be disconnected from the VSC by killing the active serial connection terminal. When manually closing the terminal (`x` on the right top of the terminal) the connection stays active.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+This extension contributes the following settings for configuring it's usage:
 
-For example:
+* `QuecPython.defaultLineTerminator`: Text added to end of all sent lines. Will be appended to sent data but will not be rendered in terminal. Allows escape characters (\\r, \\n etc.), hex    representation (\\x6F, \\xF8 etc.) and unicode representation (\\u006F, \\u00F8 etc.)
+* `QuecPython.translateHex`: Set to true to translate incomming hex data. Set to false to output raw hex.
 
-This extension contributes the following settings:
+## Commands list
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+* `openConnection` - Opens a connection with a serial port of choice
+* `closeConnection` - Closes currently open connection
+* `qpy-ide.clearTerminal` - Clears active terminal
+
+## Flashing Firmware
+It is possible to flash firmware using built-in activity bar `QuecPython`.
+Steps for flashing are:
+* Select firmware from the PC file system
+* Click `Flash` button
+
+#### Note: When flashing EC600U modules, there will be a pop-up window promting you to confrim firmware flashing.
+#### Note: Only one module can be flashed simultaneously.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+* There are cases that carret `'>>>'` does not appear on boot-up, if that happens, press `ENTER` key.
+* There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
+## 1.0.5
+- Improved stability for firmware operations
 
-Users appreciate release notes as you update your extension.
+## 1.0.4
+- Added support for EC600U modules
+- Added support for firmware flashing for EC600U modules
+- Improved stability for file system tree view
 
-### 1.0.0
+## 1.0.3
+- Added support for EC600S_CNLA and EC600S_CNLB
+- Added firmware flashing feature for supported modules
 
-Initial release of ...
+## 1.0.2
+- Fixed issue with downloading files
+- Fixed issues with connectivity
 
-### 1.0.1
+## 1.0.1
+- Fixed issue with removing directory
+- Fixed issue with removing files
 
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+## 1.0.0
+- Initial version of QuecPython VSCode Extension

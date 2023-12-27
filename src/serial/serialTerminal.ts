@@ -1,0 +1,141 @@
+import SerialPort from 'serialport';
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import { cmd, moduleList, scriptName, status } from '../utils/constants';
+import { CommandLineInterface } from './commandLine';
+import { serialEmitter } from './serialBridge';
+import { sleep } from '../utils/utils';
+import { chosenModule } from '../api/commands';
+
+export let portStatus: boolean;
+
+const pyFsScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
+const pyFsScript: string = pyFsScriptPath + scriptName.initTreeScript;
+
+export default class SerialTerminal extends CommandLineInterface {
+	public serial: SerialPort;
+
+	// used to automatically attempt to reconnect when device is disconnected
+	private reconnectInterval: NodeJS.Timeout | undefined;
+
+	constructor(
+		comPort: string,
+		baudRate: number,
+		translateHex = true,
+		lineEnd?: string
+	) {
+		const serial: SerialPort = new SerialPort(comPort, {
+			autoOpen: false,
+			baudRate: baudRate,
+		});
+
+		super(serial, translateHex, lineEnd);
+		this.serial = serial;
+	}
+
+	open(initialDimensions: vscode.TerminalDimensions | undefined): void {
+		super.handleDataAsText(
+			`\r\nQuecPython Serial Terminal
+            \r\nPort: ${this.serial.path}
+            \r\nBaud rate: ${this.serial.baudRate} baud\r\n`
+		);
+
+		if (!this.serial.isOpen) {
+			this.serial.open(this.writeError);
+		}
+
+		this.serial.on('close', err => {
+			serialEmitter.emit(status.disc);
+			serialEmitter.emit(`${cmd.ilistdir}`, '');
+			portStatus = this.serial.isOpen;
+			if (!this.endsWithNewLine) {
+				this.handleDataAsText('\r\n');
+			}
+
+			if (err?.disconnected) {
+				// device was disconnected, attempt to reconnect
+				this.handleDataAsText('Device disconnected.');
+				this.reconnectInterval = setInterval(async () => {
+					// attempt to reopen
+					const availablePorts = await SerialPort.list();
+					for (const port of availablePorts) {
+						if (port.path === this.serial.path) {
+							if (!this.endsWithNewLine) {
+								this.handleDataAsText('\r\n');
+							}
+							this.handleDataAsText(
+								`Device reconnected at port ${this.serial.path}.\r\n`
+							);
+							this.serial.open();
+							break;
+						}
+					}
+				}, 1000);
+			}
+			this.handleDataAsText('\r\n');
+		});
+
+		this.serial.on('open', () => {
+			serialEmitter.emit(status.conn, this.serial.path);
+			portStatus = this.serial.isOpen;
+			if (this.reconnectInterval) {
+				clearInterval(this.reconnectInterval);
+			}
+			this.initFsFiles();
+		});
+
+		super.open(initialDimensions);
+	}
+
+	public initFsFiles() {
+		let data = '';
+		const readStream = fs.createReadStream(pyFsScript, 'utf8');
+
+		readStream
+			.on('data', chunk => {
+				data += chunk;
+			})
+			.on('end', async () => {
+				// const splitData = data.split(/\r\n/);
+				const splitData = data.split("\n");
+				this.cmdFlag = true;
+				this.cmdFlagLabel = cmd.ilistdir;
+
+				this.handleCmd(`f = open('/usr/q_init_fs.py', 'wb', encoding='utf-8')\r\n`);
+				await sleep(50);
+				this.handleCmd(`w = f.write\r\n`);
+				splitData.forEach((dataLine: string) => {
+					this.handleCmd(`w(b'''${dataLine}\\r\\n''')\r\n`);
+				});
+				await sleep(50);
+				this.handleCmd(`f.close()\r\n`);
+				await sleep(50);
+				this.handleCmd(`import example\r\n`);
+				await sleep(100);
+				this.handleCmd(`example.exec('usr/q_init_fs.py')\r\n`);
+				chosenModule === moduleList.ec600u
+					? await sleep(500)
+					: await sleep(200);
+				serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
+			});
+	}
+
+	close(): void {
+		if (this.serial.isOpen) {
+			this.serial.close(err => {
+				if (err) {
+					throw new Error(
+						`Could not properly close serial terminal: ${err.message}`
+					);
+				}
+			});
+		}
+
+		if (this.reconnectInterval) {
+			clearInterval(this.reconnectInterval);
+		}
+
+		super.close();
+	}
+}
