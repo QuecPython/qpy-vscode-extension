@@ -2,10 +2,20 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import getNonce from '../utils/getNonce';
-import firmwareDownload from '../sidebar/firmwareDownload';
+import { firmwareFlash } from '../sidebar/firmwareDownload';
+import {moduleList} from '../utils/constants';
+import axios from 'axios';
+import { sleep } from '../utils/utils';
+
+
 
 const fwJsonPath: string = path.join(__dirname, '..', '..', 'config');
 const fwConfig: string = fwJsonPath + '\\qpy_fw.json';
+const newFwPath = {
+	path: "",
+	url: "",
+	downloadflag: false
+};
 
 export default class FirmwareViewProvider
 	implements vscode.WebviewViewProvider
@@ -32,9 +42,13 @@ export default class FirmwareViewProvider
 
 		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-		webviewView.webview.onDidReceiveMessage(data => {
+		webviewView.webview.onDidReceiveMessage(async data => {
 			const rawFwConfig = fs.readFileSync(fwConfig);
 			const parsedFwConfig = JSON.parse(rawFwConfig.toString());
+			const getFirmwareConfig = {action: "get_download_by_sec", title: ""};
+			let onlineUrl: string = "";
+			let selectVersionList: any = [];
+			let onlineUrlall: any = {};
 			switch (data.type) {
 				case 'fwSelect': {
 					const options: vscode.OpenDialogOptions = {
@@ -43,36 +57,155 @@ export default class FirmwareViewProvider
 						canSelectFiles: true,
 						canSelectFolders: false,
 					};
-
-					vscode.window.showOpenDialog(options).then(fileUri => {
-						if (fileUri && fileUri[0]) {
-							const newFwPath = {
-								path: fileUri[0].fsPath,
-							};
-							fs.writeFile(fwConfig, JSON.stringify(newFwPath), err => {
-								if (err) {
-									vscode.window.showErrorMessage(
-										'Unable to set selected firmware!'
-									);
-									console.error(err);
-								}
-
-								vscode.window.showInformationMessage('New firmware selected!');
-							});
-							this.selectFirmware(fileUri[0].fsPath);
-						}
+					let downloadType = undefined;
+					downloadType = await vscode.window.showQuickPick(["Online Firmware", "Local Firmware"], {
+						placeHolder: 'Select Firmware Type',
 					});
+					if (downloadType === undefined) {
+						return;
+					};
+					if (downloadType === "Online Firmware") {
+						vscode.window.showInformationMessage('Select Online firmware...');
+						let platform = undefined;
+						platform = await vscode.window.showQuickPick(moduleList.all, {
+							placeHolder: 'Select Platform Type',
+						});
+					if (platform !== undefined) {
+						let model = moduleList['platform'][platform.toLowerCase()];
+						let modelList = [];
+						let module = undefined;
+						if (model.length === 0) {
+							model = platform;
+						} else {
+							for (let i = 0; i < model.length; i++) {
+								modelList[i] = platform + model[i];
+							};
+							module = await vscode.window.showQuickPick(modelList, {
+								placeHolder: 'Select Model Type',
+							});
+						};
+						
+						// post获取固件参数
+						if (['FCM360W', 'FC41D'].includes(platform)) {
+							getFirmwareConfig["title"] = module;
+						} else if (['BC25', 'BG95', 'BG900L'].includes(platform)) {
+							if (module.length === 4) {
+								getFirmwareConfig["title"] = module;
+							} else {
+								getFirmwareConfig["title"] = platform + "-" +  module.slice(module.length - 2, module.length);
+							};
+						} else {
+							getFirmwareConfig["title"] = platform + "-" +  module.slice(6, 8);
+						}
+
+						console.info(moduleList.url[0], getFirmwareConfig);
+						axios.postForm(moduleList.url[0], getFirmwareConfig).then(response => {
+							if (response.status !== 200) {
+								vscode.window.showErrorMessage('Unable to get online firmware!');
+								return;
+							} else {
+								console.log(response);
+								const firmwareConfig = response.data;
+								console.info(firmwareConfig);
+								let dwList = firmwareConfig['data']['download'];
+								console.log(dwList);
+								if (dwList.length === 0) {
+									vscode.window.showErrorMessage('No online firmware available!');
+									return;
+								}else {
+									dwList.forEach((item) => {
+										const platformStr = item['title'].toString().replaceAll("_", "");
+										console.info(platformStr, module);
+										if (platformStr.includes(module)){
+											// console.log(item['download_content']);
+											const versionList = item['download_content'];
+											versionList.forEach((version) => {
+												selectVersionList.push(version['version']);
+												onlineUrlall[version['version']] = version['download_file'];
+											});
+										};
+										
+									});
+								}
+							}
+						
+						})
+						.catch((error) => {
+							console.error(error);
+						});
+						for (var i = 0; i < 50; i++) {
+							console.log(onlineUrlall);
+							if (selectVersionList.length > 0) {
+								break;
+						  	} else{
+								await sleep(50);
+							}
+						  };
+						
+						onlineUrl = await vscode.window.showQuickPick(selectVersionList, {
+							placeHolder: 'Select Firmware Version',
+						});
+
+						// console.log(onlineUrlall[onlineUrl]);
+						if (onlineUrl === undefined) {
+							return;
+						};
+
+						parsedFwConfig["path"] = "";
+						parsedFwConfig["url"] =  onlineUrlall[onlineUrl];
+						parsedFwConfig["downloadflag"] = false;
+						fs.writeFile(fwConfig, JSON.stringify(parsedFwConfig), err => {
+							if (err) {
+								vscode.window.showErrorMessage(
+									'Unable to set selected online firmware!'
+								);
+								console.error(err);
+							}
+							vscode.window.showInformationMessage('New online firmware selected!');
+						});
+						this.selectFirmware(onlineUrlall[onlineUrl]);
+					};
+					};
+					if (downloadType === "Local Firmware") {
+						vscode.window.showInformationMessage('Select firmware...');
+						vscode.window.showOpenDialog(options).then(fileUri => {
+							if (fileUri && fileUri[0]) {
+								newFwPath["path"] =  fileUri[0].fsPath;
+								newFwPath["downloadflag"] = true;
+								newFwPath["url"] = "";
+								fs.writeFile(fwConfig, JSON.stringify(newFwPath), err => {
+									if (err) {
+										vscode.window.showErrorMessage(
+											'Unable to set selected firmware!'
+										);
+										console.error(err);
+									}
+									vscode.window.showInformationMessage('New firmware selected!');
+								});
+								this.selectFirmware(fileUri[0].fsPath);
+							}
+						});
+					};
+
 					break;
 				}
 				case 'fwFlash': {
-					// vscode.window.showInformationMessage('FIRMARE FLASH METHOD');
-					firmwareDownload(parsedFwConfig['path']);
+					if (data.value === undefined) {
+						vscode.window.showErrorMessage('firmware not select!');
+						return;
+					}
+					firmwareFlash(data.value);
 					break;
 				}
 				case 'fwLoad': {
 					const rawFwConfig = fs.readFileSync(fwConfig);
 					const parsedFwConfig = JSON.parse(rawFwConfig.toString());
-					this.selectFirmware(parsedFwConfig['path']);
+					if (parsedFwConfig['path'] === '') {
+						this.selectFirmware(parsedFwConfig['url']);
+					};
+					if (parsedFwConfig['url'] === '') {
+						this.selectFirmware(parsedFwConfig['path']);
+					};
 					break;
 				}
 			}
@@ -82,7 +215,7 @@ export default class FirmwareViewProvider
 	public clearFw() {
 		if (this._view) {
 			this.selectFirmware('');
-			fs.writeFileSync(fwConfig, JSON.stringify({ path: '' }));
+			fs.writeFileSync(fwConfig, JSON.stringify({ path: '', url: "", downloadflag: false }));
 			this._view.webview.postMessage({ type: 'clearFw' });
 		}
 	}
@@ -153,4 +286,9 @@ export default class FirmwareViewProvider
 			</body>
 			</html>`;
 	}
-}
+};
+
+export function activate() {
+
+};
+ 

@@ -39,7 +39,7 @@
     }
 
     function flashDevice() {
-        vscode.postMessage({ type: 'fwFlash' });
+        vscode.postMessage({ type: 'fwFlash', value: document.querySelector('.fw-value').textContent});
     }
 
     function loadFirmware() {

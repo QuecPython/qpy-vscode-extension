@@ -21,7 +21,7 @@ export const setButtonStatus = (connStatus: vscode.StatusBarItem, status: boolea
 		connStatus.tooltip = 'COM Port is connected';
 		connStatus.command = 'qpy-ide.closeConnection';
 	} else {
-		connStatus.text = `$(plug) Connected`;
+		connStatus.text = `$(plug) Connect`;
 		connStatus.tooltip = 'COM Port not connected';
 		connStatus.command = 'qpy-ide.openConnection';
 	}

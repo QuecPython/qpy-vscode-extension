@@ -6,7 +6,6 @@ import { moduleFsTreeProvider, executeBatScript } from './userInterface';
 import {
 	cmd,
 	supportedBaudRates,
-	moduleList,
 	chiregex,
 } from '../utils/constants';
 import { fwProvider } from '../extension';
@@ -29,9 +28,7 @@ export const refreshModuleFs = vscode.commands.registerCommand(
 			setTerminalFlag(true, cmd.ilistdir);
 			const st = getActiveSerial();
 			st.handleCmd(`example.exec('usr/q_init_fs.py')\r\n`);
-			chosenModule === moduleList.ec600u
-				? await utils.sleep(400)
-				: await utils.sleep(200);
+			await utils.sleep(400);
 			serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
 			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
 			moduleFsTreeProvider.refresh();

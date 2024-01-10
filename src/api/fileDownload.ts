@@ -30,6 +30,7 @@ export default async function fileDownload(
 	]);
 
 	fDownload.stdout.on('data', data => {
+		console.log(`stdout: ${data}`);
 		serialEmitter.emit(status.updateProg, data);
 	});
 

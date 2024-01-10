@@ -70,11 +70,13 @@ export const status = {
 	startProg: 'startProgress',
 	updateProg: 'updatePercentage',
 	downFinish: 'downloadFinished',
+	downFail: 'download failed',
 };
 
 export const progLabel = {
 	downloadFile: 'Downloading File',
 	flashFw: 'Flashing Firmware',
+	downloadOnlineFw: 'download Online Firmware',
 };
 
 export const scriptName = {
@@ -85,13 +87,40 @@ export const scriptName = {
 };
 
 export const moduleList = {
-	all: ['EC100Y', 'EC600S', 'EC600N', 'EC600U',  'BG95', 'FCM360W'],
-	ec100y: 'EC100Y',
-	ec600s: 'EC600S',
-	ec600n: 'EC600N',
-	ec600u: 'EC600U',
-	bg95: 'BG95',
-	fcm360w: 'FCM360W',
+	all: [	'EC600N', 'EC800N', 'EC200N', 'EG915N', 'EG912N', 
+			'EC800K', 'EC600K',
+			'EG800M', 'EG810M', 'EC600M',
+			'EC600U',  'EC200U',  'EG915U', 'EG912U', 
+			'EC600G', 'EC800G',
+			'EC600E', 'EC800E',
+			'EC200A',
+			'BC25',
+			'BG95', 'BG600L',
+			'FCM360W', 'FC41D'],
+	platform: {
+		ec600n: ['CNLA', 'CNLC', 'CNLD', 'CNLE', 'CNLF'],
+		ec800n: ['CNLA'],
+		ec200n: ['CNAC', 'CNAA', 'CNLA'],
+		eg915n: ['EUAC', 'EUAG', 'EAAC'],
+		eg912n: ['ENAA'],
+		ec800k: ['CNLC'],
+		ec600k: ['CNLC'],
+		ec600u: ['CNLB', 'CNLBBT', 'CNLBEXTFS8M', 'CNLC', 'CNLCEXTFS8M', 'EUAB'],
+		ec200u: ['CNLA', 'CNLB', 'CNAA', 'EUAA', 'EUAB', 'AUAA', 'AUAB'],
+		eg915u: ['EUAB', 'LAAB', 'EAAC'],
+		eg912u: ['GLAA', 'GLAC'],
+		ec600g: ['CNLD'],
+		ec800g: ['CNLD', 'CNLB'],
+		ec600e: ['CNLC', 'CNLCAUDIO'],
+		ec800e: ['CNLC', 'CNLCAUDIO'],
+		ec200a: ['CNDA', 'CNHA', 'AUHA', 'EUHA', ],
+		bc25: ['', 'B5', 'B8'],
+		bg95: ['M1', 'M3', 'M6', 'M8', 'M9'],
+		bg600l: ['M3'],
+		fcm360w: [],
+		fc41d: []
+		},
+	url: ["https://python.quectel.com/wp-admin/admin-ajax.php", "https://python.quectel.com/en/wp-admin/admin-ajax.php"]
 };
 
 export const chiregex =

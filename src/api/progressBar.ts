@@ -35,12 +35,19 @@ const updateProgressBar = (
 		);
 
 		let childProcess = serialEmitter.on(status.downFinish, () => {
+			vscode.window.showInformationMessage('downloaded Successfully!');
 			resolve();
 			clearInterval(interval);
 		});
 
-		childProcess.on(status.updateProg, data => {
-			messageUpdate = data.toString() + '%';
+		childProcess.on(status.updateProg, (data) => {
+			messageUpdate = data.toString();
+		});
+
+		childProcess.on(status.downFail, () => {
+			resolve();
+			clearInterval(interval);
+			vscode.window.showErrorMessage('downloaded failed!');
 		});
 
 		token.onCancellationRequested(_ => resolve());
