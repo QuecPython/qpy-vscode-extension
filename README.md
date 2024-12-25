@@ -4,9 +4,12 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 
 - Works with Windows only at the moment.
 
+`compile`
+npm install -g vsce
+vsce package
+
 ## Requirements
 - **NodeJS installed on your system (12 or higher) -** [NodeJS](https://nodejs.org)
-- **Python3 installed (3.2 or higher) -** [Python](https://www.python.org/)
 
 ## Supported Modules
 - Support all QuecPython modules.
@@ -14,6 +17,7 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 ## Usage
 
 Open the serial connection by opening the commands palette the `CTRL+SHIFT+P` and running the command `QuecPython: Connect to COM Port`.
+or click statusbar button `Connect`.
 
 Upon successful connection, the terminal will open with either REPL or AT CLI depending on the chosen port. The board can be disconnected from the VSC by killing the active serial connection terminal. When manually closing the terminal (`x` on the right top of the terminal) the connection stays active.
 
@@ -33,18 +37,28 @@ This extension contributes the following settings for configuring it's usage:
 ## Flashing Firmware
 It is possible to flash firmware using built-in activity bar `QuecPython`.
 Steps for flashing are:
-* Select firmware from the PC file system
+* Select firmware from the PC file system or select firmware from the online.
 * Click `Flash` button
 
-#### Note: When flashing EC600U modules, there will be a pop-up window promting you to confrim firmware flashing.
-#### Note: Only one module can be flashed simultaneously.
-
 ## Known Issues
-
-* There are cases that carret `'>>>'` does not appear on boot-up, if that happens, press `ENTER` key.
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
+## 1.0.8
+- New feature for flashing firmware fool-proofing.
+- Added log output function (console & file)
+- Fixed issues with flashing online firmware
+- 
+## 1.0.7
+- Fixed issues with create directory and remove directory commands probability failed.
+- Added repl and flash firmware feature for supported module (support for all QuecPython modules).
+- supported module list : [	'EC600N', 'EC800N', 'EC200N', 'EG915N', 'EG912N', 'EC800K', 'EC600K','EG800M', 'EG810M', 'EC600M','EC600U',  'EC200U',  'EG915U', 'EG912U', 'EC600G', 'EC800G','EC600E', 'EC800E','EC200A','BC25','BG95', 'BG600L','FCM360W', 'FC41D'],
+- new feature for download and flash online firmware. burning firmware can be selected directly on vscode. The plugin will automatically download the correct firmware from the official QuecPython official website according to the selected module and firmware version.
+- new feature for display content of connect serial port. add `connect` button on status bar, and click `connect` button to open the serial port directly instead of selecting the module first.
+
+## 1.0.6
+- Fixed issues with repl
+- 
 ## 1.0.5
 - Improved stability for firmware operations
 
@@ -67,3 +81,13 @@ Steps for flashing are:
 
 ## 1.0.0
 - Initial version of QuecPython VSCode Extension
+
+
+new feature about directly burning online firmware
+
+According to the prompts, you can directly select the firmware provided by QuecPython on the vscode page.
+
+After selecting the module and firmware version you want to burn, You can directly burn the selected firmware.
+
+In addition, local firmware files can also be selected for burning.
+

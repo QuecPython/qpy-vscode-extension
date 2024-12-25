@@ -3,24 +3,26 @@ import * as fs from 'fs';
 import * as path from 'path';
 import getNonce from '../utils/getNonce';
 import { firmwareFlash } from '../sidebar/firmwareDownload';
-import {moduleList} from '../utils/constants';
 import axios from 'axios';
 import { sleep } from '../utils/utils';
-
+import { executeBatScript, log } from '../api/userInterface';
+import { moduleList, fwConfig } from '../utils/constants';
+import { SerialPort } from 'serialport';
 
 
 const fwJsonPath: string = path.join(__dirname, '..', '..', 'config');
-const fwConfig: string = fwJsonPath + '\\qpy_fw.json';
+const fwConfigFile: string = fwJsonPath + '\\qpy_fw.json';
 const newFwPath = {
 	path: "",
 	url: "",
+	module: "",
 	downloadflag: false
 };
 
 export default class FirmwareViewProvider
 	implements vscode.WebviewViewProvider
 {
-	public static readonly viewType = 'qpyFirmware';
+	public static readonly viewType = 'qpyProject';
 
 	private _view?: vscode.WebviewView;
 
@@ -36,19 +38,17 @@ export default class FirmwareViewProvider
 		webviewView.webview.options = {
 			// allow scripts in the webview
 			enableScripts: true,
-
 			localResourceRoots: [this._extensionUri],
 		};
-
 		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-
 		webviewView.webview.onDidReceiveMessage(async data => {
-			const rawFwConfig = fs.readFileSync(fwConfig);
+			const rawFwConfig = fs.readFileSync(fwConfigFile);
 			const parsedFwConfig = JSON.parse(rawFwConfig.toString());
 			const getFirmwareConfig = {action: "get_download_by_sec", title: ""};
 			let onlineUrl: string = "";
 			let selectVersionList: any = [];
 			let onlineUrlall: any = {};
+			let platform = undefined;
 			switch (data.type) {
 				case 'fwSelect': {
 					const options: vscode.OpenDialogOptions = {
@@ -66,7 +66,6 @@ export default class FirmwareViewProvider
 					};
 					if (downloadType === "Online Firmware") {
 						vscode.window.showInformationMessage('Select Online firmware...');
-						let platform = undefined;
 						platform = await vscode.window.showQuickPick(moduleList.all, {
 							placeHolder: 'Select Platform Type',
 						});
@@ -98,26 +97,22 @@ export default class FirmwareViewProvider
 							getFirmwareConfig["title"] = platform + "-" +  module.slice(6, 8);
 						}
 
-						console.info(moduleList.url[0], getFirmwareConfig);
+						// log(moduleList.url[0], getFirmwareConfig);
+
 						axios.postForm(moduleList.url[0], getFirmwareConfig).then(response => {
 							if (response.status !== 200) {
 								vscode.window.showErrorMessage('Unable to get online firmware!');
 								return;
 							} else {
-								console.log(response);
 								const firmwareConfig = response.data;
-								console.info(firmwareConfig);
 								let dwList = firmwareConfig['data']['download'];
-								console.log(dwList);
 								if (dwList.length === 0) {
 									vscode.window.showErrorMessage('No online firmware available!');
 									return;
 								}else {
 									dwList.forEach((item) => {
 										const platformStr = item['title'].toString().replaceAll("_", "");
-										console.info(platformStr, module);
 										if (platformStr.includes(module)){
-											// console.log(item['download_content']);
 											const versionList = item['download_content'];
 											versionList.forEach((version) => {
 												selectVersionList.push(version['version']);
@@ -134,27 +129,30 @@ export default class FirmwareViewProvider
 							console.error(error);
 						});
 						for (var i = 0; i < 50; i++) {
-							console.log(onlineUrlall);
+							log(JSON.stringify(onlineUrlall));
 							if (selectVersionList.length > 0) {
 								break;
 						  	} else{
 								await sleep(50);
 							}
 						  };
-						
+						if (selectVersionList.length === 0) {
+							vscode.window.showErrorMessage('No online firmware available!');
+							return;
+						  }
 						onlineUrl = await vscode.window.showQuickPick(selectVersionList, {
 							placeHolder: 'Select Firmware Version',
 						});
 
-						// console.log(onlineUrlall[onlineUrl]);
 						if (onlineUrl === undefined) {
 							return;
 						};
 
 						parsedFwConfig["path"] = "";
+						parsedFwConfig["module"] = module;
 						parsedFwConfig["url"] =  onlineUrlall[onlineUrl];
 						parsedFwConfig["downloadflag"] = false;
-						fs.writeFile(fwConfig, JSON.stringify(parsedFwConfig), err => {
+						fs.writeFile(fwConfigFile, JSON.stringify(parsedFwConfig), err => {
 							if (err) {
 								vscode.window.showErrorMessage(
 									'Unable to set selected online firmware!'
@@ -173,7 +171,8 @@ export default class FirmwareViewProvider
 								newFwPath["path"] =  fileUri[0].fsPath;
 								newFwPath["downloadflag"] = true;
 								newFwPath["url"] = "";
-								fs.writeFile(fwConfig, JSON.stringify(newFwPath), err => {
+								newFwPath["module"] = "";
+								fs.writeFile(fwConfigFile, JSON.stringify(newFwPath), err => {
 									if (err) {
 										vscode.window.showErrorMessage(
 											'Unable to set selected firmware!'
@@ -186,19 +185,143 @@ export default class FirmwareViewProvider
 							}
 						});
 					};
-
 					break;
 				}
 				case 'fwFlash': {
 					if (data.value === undefined) {
 						vscode.window.showErrorMessage('firmware not select!');
 						return;
-					}
-					firmwareFlash(data.value);
+					} else {
+						let downloadPort: string = undefined;
+						let atPort: string = undefined;
+						const portPaths = await executeBatScript();
+						if (portPaths.length < 1) {
+							vscode.window.showErrorMessage('No serial devices found');
+							return;
+						}
+						log(portPaths.join(" "));
+						portPaths.forEach(element => {
+							if (element.includes('Quectel USB AT Port')) {
+								downloadPort = element.split(' (')[1].slice(0, -1);
+								atPort = element.split(' (')[1].slice(0, -1);
+							}
+							if (element.includes('Quectel USB DM Port')) {
+								downloadPort = element.split(' (')[1].slice(0, -1);
+								portPaths.forEach(e => {
+									if (e.includes('Quectel USB Modem')) {
+										atPort = e.split(' (')[1].slice(0, -1);
+									}
+								});
+							}
+						});
+
+						if (downloadPort === undefined) {
+							downloadPort = await vscode.window.showQuickPick(portPaths, {
+								placeHolder: 'Select AT (firmware download) port',
+							});
+						};
+						if (downloadPort === undefined) {
+							vscode.window.showErrorMessage('Serial port abnormality. Please reset the Module.');
+							return;
+						};
+
+						log(JSON.stringify(parsedFwConfig));
+						// 发送AT 确认版本是否与固件一致
+						let matchVer = false;
+						let atRet: String = "";
+						let atGetVersion: SerialPort = new SerialPort(
+							{
+								path: atPort,
+								baudRate: 115200,
+								dataBits: 8,
+								parity: 'none',
+								stopBits: 1,
+								rtscts: true,
+								xon: true,
+								xoff: true,
+								xany: true,
+								highWaterMark: 1024,
+							}
+						);
+						atGetVersion.open(() => {
+							atGetVersion.write(fwConfig.atGetVer);
+						});
+						atGetVersion.on('data', (atData: Buffer) => {
+							const asciiData = atData.toString('ascii');
+							atRet +=  asciiData;
+							if (asciiData.includes('OK')) {
+								atGetVersion.close();
+								log(atRet);
+								// local firmware  需要弹窗供客户选择是否可继续下载
+								if (parsedFwConfig["module"] === ""){
+									//通过at返回版本信息再根据模组表匹配获取具体型号
+									atRet.split('\r\n').forEach((item) => {
+										if (item.includes('QPY')) {
+											moduleList.all.forEach((item1) => {
+												if (item.includes(item1)) {
+													if (['FCM360W', 'FC41D'].includes(item1)) {
+														parsedFwConfig["module"] = item1;
+													} else {
+														moduleList.platform[item1.toLowerCase()].forEach(item2 => {
+															if (item2 === "") {
+																if (item.includes("BC25PA")) {
+																	parsedFwConfig["module"] = item1;
+																}
+															} else {
+																if (item.includes(item2)) {
+																	parsedFwConfig["module"] = item1 + item2;
+																}
+															}
+														});
+													};
+												}
+											});
+											log(parsedFwConfig["module"]);
+										};
+									});
+									// TODO 新版本估计需要通过json解析模组平台和型号来判断是否支持
+									if (parsedFwConfig["module"] === ""){
+										matchVer = false;
+									} else {
+										if (data.value.replace(/_/g, "").includes(parsedFwConfig["module"])) {
+											matchVer = true;
+										} else {
+											matchVer = false;
+										}
+									};
+									if (matchVer) {
+										firmwareFlash(data.value, downloadPort);
+									} else {
+										log("matchVer:", matchVer);
+										vscode.window.showInformationMessage('Inconsistent firmware and module model, Do you want to continue?', { modal: true }, 'Yes', 'No').then((selection) => {
+											if (selection === 'Yes') {
+												firmwareFlash(data.value, downloadPort);
+												log('User chose to continue flash local firmware.');
+											} else {
+												log('User cancelled the operation (flash local firmware).');
+												return;
+											}
+										});
+									};
+								} else {
+								// online firmware
+									if (atRet.replace(/_/g, "").includes(parsedFwConfig["module"])) {
+										matchVer = true;
+									};
+									if (matchVer){
+										log('Firmware version match success');
+										firmwareFlash(data.value, downloadPort);
+									} else {
+										vscode.window.showErrorMessage('Please select the firmware that matches the module model!');
+									}
+								}
+							};
+						});
+					};
 					break;
 				}
 				case 'fwLoad': {
-					const rawFwConfig = fs.readFileSync(fwConfig);
+					const rawFwConfig = fs.readFileSync(fwConfigFile);
 					const parsedFwConfig = JSON.parse(rawFwConfig.toString());
 					if (parsedFwConfig['path'] === '') {
 						this.selectFirmware(parsedFwConfig['url']);
@@ -215,7 +338,7 @@ export default class FirmwareViewProvider
 	public clearFw() {
 		if (this._view) {
 			this.selectFirmware('');
-			fs.writeFileSync(fwConfig, JSON.stringify({ path: '', url: "", downloadflag: false }));
+			fs.writeFileSync(fwConfigFile, JSON.stringify({ path: '', module: '', url: "", downloadflag: false }));
 			this._view.webview.postMessage({ type: 'clearFw' });
 		}
 	}
@@ -283,12 +406,13 @@ export default class FirmwareViewProvider
 				<label class="fw-value"></label>
 				<button class="flash-fw">Flash</button>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
+				
 			</body>
 			</html>`;
 	}
 };
 
 export function activate() {
-
+	console.log("sideabr stat");
 };
  

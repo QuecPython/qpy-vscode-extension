@@ -20,6 +20,7 @@ import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { DownloadResponse } from '../types/types';
 import { cmd, status } from '../utils/constants';
 import { sleep } from '../utils/utils';
+import { log } from '../api/userInterface';
 
 let listBuffer: string;
 let remDirBuffer: string;
@@ -42,7 +43,6 @@ serialEmitter.on(status.disc, () => {
 
 serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
 	listBuffer += data;
-	console.info("list info : ", data);
 	try {
 		let stringToParse: string;
 		if (data === cmd.ilistdir) {
@@ -85,7 +85,7 @@ serialEmitter.on(`${cmd.createDir}`, async (data: string) => {
 			}
 			const parentPath = parsedData.slice(0, -1).join('/');
 			const newDirName = parsedData[parsedData.length - 1];
-			console.log(parentPath, newDirName);
+			log(parentPath, newDirName);
 			const newDir = new ModuleDocument(
 				newDirName,
 				'',
@@ -184,7 +184,6 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
 
 serialEmitter.on(`${cmd.downloadFile}`, async (data: DownloadResponse) => {
 	const st = getActiveSerial();
-	console.info(data);
 	try {
 		if (data.code.includes('0')) {
 			st.serial.open();

@@ -1,4 +1,6 @@
 out
+python_venv
+log
 dist
 node_modules
 .vscode-test/

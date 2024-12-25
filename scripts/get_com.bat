@@ -2,7 +2,7 @@
 setlocal
 
 :: wmic /format:list strips trailing spaces (at least for path win32_pnpentity)
-for /f "tokens=1* delims==" %%I in ('wmic path win32_pnpentity get caption /format:list ^| find "COM"') do (
+for /f "tokens=1* delims==" %%I in ('wmic path win32_pnpentity get caption /format:list ^| find "COM" ') do (
     call :setCOM "%%~J"
 )
 

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as utils from '../utils/utils';
 import { getActiveSerial, setTerminalFlag } from './terminal';
-import { moduleFsTreeProvider, executeBatScript } from './userInterface';
+import { moduleFsTreeProvider, executeBatScript, log } from './userInterface';
 import {
 	cmd,
 	supportedBaudRates,
@@ -59,7 +59,7 @@ export const openConnection = vscode.commands.registerCommand(
 			vscode.window.showErrorMessage('Device is already connected!');
 		} else {
 			const portPaths = await executeBatScript();
-			console.log(portPaths);
+			log(portPaths);
 			// resolve port path
 			let chosenPort: string | undefined = portPath;
 			let chosenPortPath: string | undefined;

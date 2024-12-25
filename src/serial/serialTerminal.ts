@@ -1,4 +1,4 @@
-import SerialPort from 'serialport';
+import { SerialPort } from 'serialport';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -24,7 +24,8 @@ export default class SerialTerminal extends CommandLineInterface {
 		translateHex = true,
 		lineEnd?: string
 	) {
-		const serial: SerialPort = new SerialPort(comPort, {
+		const serial: SerialPort = new SerialPort({
+			path:comPort,
 			autoOpen: false,
 			baudRate: baudRate,
 		});

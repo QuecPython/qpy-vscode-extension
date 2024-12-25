@@ -60,7 +60,7 @@ export const fwConfig = {
 		'VID_2C7C&PID_0700',
 		'VID_1A86&PID_55D2',
 	],
-
+	atGetVer: 'AT+CGMR\r\n',
 	download: '\\QuecPythonDownload.exe',
 };
 
@@ -83,13 +83,14 @@ export const scriptName = {
 	fileDownloadScript: '\\QuecPyComTools.exe',
 	initTreeScript: '\\q_init_fs.py',
 	activateBat: "\\set_pythonpath.bat",
-	portListBat: "\\get_com.bat",
+	portListBat: "\\get_com.exe",
+	logFile: "\\extension.log"
 };
 
 export const moduleList = {
 	all: [	'EC600N', 'EC800N', 'EC200N', 'EG915N', 'EG912N', 
 			'EC800K', 'EC600K',
-			'EG800M', 'EG810M', 'EC600M',
+			'EC800M', 'EG810M', 'EC600M',
 			'EC600U',  'EC200U',  'EG915U', 'EG912U', 
 			'EC600G', 'EC800G',
 			'EC600E', 'EC800E',
@@ -99,8 +100,10 @@ export const moduleList = {
 			'FCM360W', 'FC41D'],
 	platform: {
 		ec600n: ['CNLA', 'CNLC', 'CNLD', 'CNLE', 'CNLF'],
+		ec600m: ['CNCCEXT', 'CNLE', 'CNLF'],
 		ec800n: ['CNLA'],
-		ec200n: ['CNAC', 'CNAA', 'CNLA'],
+		ec800m: ['CNCC', 'CNGA', 'CNGB', 'CNGD', 'CNLE', 'CNLF'],
+		ec200n: ['CNAC', 'CNLA'],
 		eg915n: ['EUAC', 'EUAG', 'EAAC'],
 		eg912n: ['ENAA'],
 		ec800k: ['CNLC'],

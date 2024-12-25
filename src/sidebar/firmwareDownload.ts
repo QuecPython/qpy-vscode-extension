@@ -1,13 +1,12 @@
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import * as path from 'path';
-import { fwConfig, progLabel } from '../utils/constants';
+import { fwConfig, progLabel, status } from '../utils/constants';
 import { serialEmitter } from '../serial/serialBridge';
 import * as vscode from 'vscode';
-import { status } from '../utils/constants';
-import { executeBatScript } from '../api/userInterface';
 import * as fs from 'fs';
 import * as https from 'https';
 import { sleep } from '../utils/utils';
+import { log } from '../api/userInterface';
 
 
 const batScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
@@ -56,18 +55,51 @@ async function downloadFile(url: string, savePath: string) {
 };
 
 export async function firmwareFlash(
-	filePath: string
+	filePath: string, downloadPort: string,
 ): Promise<void> {
 	if (filePath.startsWith('http')){
 		const rawFwConfig = fs.readFileSync(fwConfigPath);
 		const parsedFwConfig = JSON.parse(rawFwConfig.toString());
+		//已下载过文件
 		if (parsedFwConfig['downloadflag'] === true) {
 			vscode.window.showWarningMessage('The online firmware has already been downloaded.');
 			// TODO 判断文件夹是否存在
 			let filename = filePath.split('/').pop();
+			log(filename);
 			let dirPath =  path.join(fwDirPath, filename.slice(0, filename.length - 4));
-			filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
-
+			if (	
+				filename.includes('EG915U') ||
+				filename.includes('EG912U') ||
+				filename.includes('EC600U') ||
+				filename.includes('EC200U') 
+				) {
+				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.pac');
+			} else if (
+				filename.includes('EC600N') ||
+				filename.includes('EC800N') ||
+				filename.includes('EC200N') ||
+				filename.includes('EG915N') ||
+				filename.includes('EG912N') ||
+				filename.includes('EC800M') ||
+				filename.includes('EC600M') ||
+				filename.includes('EC600G') ||
+				filename.includes('EC800G') ||
+				filename.includes('EC600K') ||
+				filename.includes('EC800K') ||
+				filename.includes('FCM360W') ||
+				filename.includes('FC41D')
+				) {
+				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
+			}else if (
+				filename.includes('EC600E') ||
+				filename.includes('EC800E') 
+				) {
+				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\at_command.binpkg');
+			} else if (filename.includes('EC200A')) {
+				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\Falcon_EVB_QSPI_Nor_LWG_Only_Nontrusted_PM802_LPDDR2.blf');	
+			} else if (filename.includes('BG95') || filename.includes('BG600L')) {
+				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\update\\firehose\\partition.mbn');
+			};
 		}else{
 			vscode.window.showInformationMessage('Start download online firmware...');
 			let filename = filePath.split('/').pop();
@@ -76,7 +108,7 @@ export async function firmwareFlash(
 				if (err) {
 					console.error(err);
 				} else {
-					console.log('Directory created successfully');
+					log('Temp firmware directory created successfully');
 				}
 			});
 			await sleep(100);
@@ -85,11 +117,9 @@ export async function firmwareFlash(
 				parsedFwConfig['downloadflag'] = true;
 				fs.writeFile(fwConfigPath, JSON.stringify(parsedFwConfig), err => {
 					if (err) {
-						vscode.window.showErrorMessage('File downloaded failed!');
 						console.error(err);
 						return;
 					}});
-				vscode.window.showInformationMessage('File downloaded successfully.');
 			};
 			// 解压文件夹
 			const { execFile } = require('node:child_process');
@@ -98,11 +128,45 @@ export async function firmwareFlash(
 					throw error;
 				}
 			});
+			// 新版本固件支持（bin固件）
 			childProcess.on('close', (code) => {
-				// console.log(`child process exited with code ${code}`);
+				log(`website firmware unzip child process exited with code ${code}`);
 				if (code === 0) {
 					// vscode.window.showInformationMessage('File decompressed successfully.');
-					filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
+					// filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
+					if (	
+						filename.includes('EG915U') ||
+						filename.includes('EG912U') ||
+						filename.includes('EC600U') ||
+						filename.includes('EC200U') 
+						) {
+						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.pac');
+					} else if (
+						filename.includes('EC600N') ||
+						filename.includes('EC800N') ||
+						filename.includes('EC200N') ||
+						filename.includes('EG915N') ||
+						filename.includes('EG912N') ||
+						filename.includes('EC800M') ||
+						filename.includes('EC600M') ||
+						filename.includes('EC600G') ||
+						filename.includes('EC800G') ||
+						filename.includes('EC600K') ||
+						filename.includes('EC800K') ||
+						filename.includes('FCM360W') ||
+						filename.includes('FC41D')
+						) {
+						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
+					}else if (
+						filename.includes('EC600E') ||
+						filename.includes('EC800E') 
+						) {
+						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\at_command.binpkg');
+					} else if (filename.includes('EC200A')) {
+						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\Falcon_EVB_QSPI_Nor_LWG_Only_Nontrusted_PM802_LPDDR2.blf');	
+					} else if (filename.includes('BG95') || filename.includes('BG600L')) {
+						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\update\\firehose\\partition.mbn');
+					};
 				} else {
 					vscode.window.showErrorMessage('File decompression failed.');
 					return;
@@ -110,49 +174,35 @@ export async function firmwareFlash(
 			});
 		};
 	};
-
-	let downloadPort: string = undefined;
-	const portPaths = await executeBatScript();
-	if (portPaths.length < 1) {
-		vscode.window.showErrorMessage('No serial devices found');
-		return;
-	}
-	portPaths.forEach(element => {
-		if (element.includes('Quectel USB AT Port')) {
-			downloadPort = element.split(' (')[1].slice(0, -1);
-		}
-		if (element.includes('Quectel USB DM Port')) {
-			downloadPort = element.split(' (')[1].slice(0, -1);
-		}
+	
+	await sleep(1000);
+	serialEmitter.emit(status.startProg, progLabel.flashFw);
+	const { exec } = require('child_process');
+	log(batScriptPath + fwConfig.download, " -d ", downloadPort, " -b ", "115200", " -f ", filePath);
+	// const download = spawn(batScriptPath + fwConfig.download, ["-d", downloadPort, "-b", "115200", "-f", filePath], {cwd: fwDirPath, stdio: 'pipe'});
+	const download = exec(batScriptPath + fwConfig.download + " -d " + downloadPort+" -b "+"115200"+" -f "+filePath, (error, stdout, stderr) => {
+		if (error) {
+		  console.error(`exec error: ${error}`);
+		  return;
+		};
 	});
-	
-	
-	if (downloadPort === undefined) {
-		downloadPort = await vscode.window.showQuickPick(portPaths, {
-			placeHolder: 'Select firmware download port',
-		});
-	}
-	if (downloadPort === undefined) {
-		vscode.window.showErrorMessage('Serial port abnormality. Please reset the Module.');
-		return;
-	} else {
-		serialEmitter.emit(status.startProg, progLabel.flashFw);
-	}
-
-	const download = spawn(batScriptPath + fwConfig.download, ["-d", downloadPort, "-b", "115200", "-f", filePath], {cwd: fwDirPath});
-	
+	log("download cmd run in child_process");
+	let line = '';
 	download.stdout.on('data', data => {
-		console.info(data.toString());
-		console.info(data.toString().length);
-		console.info(data.toString(10, data.toString().length));
-		// const result: string = data.toString(10, data.length);
-		// console.log(result);
-		// serialEmitter.emit(status.updateProg, result);
-		
+		line += data.toString();
+		let index = line.indexOf('\n');
+		while (index !== -1) {
+			log(line.slice(10, index));
+			serialEmitter.emit(status.updateProg, line.slice(10, index));
+			line = line.slice(index + 1);
+			index = line.indexOf('\n');
+		};
+		const result: string = data.toString(10, data.length);
+	
 	});
 
 	download.on('close', code => {
-		console.log(`child process exited with code ${code}`);
+		log(`firmware flash child process exited with code ${code}`);
 		if (code === 0) {
 			serialEmitter.emit(status.downFinish);
 		} else {
@@ -161,7 +211,7 @@ export async function firmwareFlash(
 	});
 
 	download.stderr.on('error', error => {
-		console.log(`stderr: ${error.message}`);
+		log(`firmware flash child process stderr: ${error.message}`);
 		serialEmitter.emit(status.downFail);
 	});
 };

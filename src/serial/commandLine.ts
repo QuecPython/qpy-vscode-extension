@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import * as Stream from 'stream';
 import { serialEmitter } from './serialBridge';
 import { chiregex, cmd } from '../utils/constants';
+import { log } from '../api/userInterface';
 
 
 export abstract class CommandLineInterface implements vscode.Pseudoterminal {
@@ -72,7 +73,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	protected handleData: (data: Buffer) => void = (data: Buffer) => {
 		// check for UI driven command
 		if (this.cmdFlag) {
-			console.log(`${this.cmdFlagLabel}`, `${data.toString()}`);
+			log(`${this.cmdFlagLabel}`, `${data.toString()}`);
 			serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
 			return;
 		}
@@ -103,7 +104,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			}
 		}
 		
-		console.info('串口内容 : ',stringRepr);
+		log('串口内容 : ',stringRepr);
 		this.writeEmitter.fire(stringRepr);
 	};
 
@@ -122,7 +123,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 		if (data.match(chiregex)) {
 			return;
 		}
-		// console.info('按键内容 : ', data);
+		log('按键内容 : ', data);
 		this.backendStream.write(data);
 	}
 

@@ -1,3 +1,11 @@
+## 1.0.7
+- Fixed issues with create directory and remove directory commands probability failed.
+- Added repl and flash firmware feature for supported module (support for all QuecPython modules).
+- supported module list : [	'EC600N', 'EC800N', 'EC200N', 'EG915N', 'EG912N', 'EC800K', 'EC600K','EG800M', 'EG810M', 'EC600M','EC600U',  'EC200U',  'EG915U', 'EG912U', 'EC600G', 'EC800G','EC600E', 'EC800E','EC200A','BC25','BG95', 'BG600L','FCM360W', 'FC41D'],
+- new feature for download and flash online firmware. burning firmware can be selected directly on vscode. The plugin will automatically download the correct firmware from the official QuecPython official website according to the selected module and firmware version.
+- new feature for display content of connect serial port. add `connect` button on status bar, and click `connect` button to open the serial port directly instead of selecting the module first.
+## 1.0.6
+- Fixed issues with repl
 ## 1.0.5
 - Improved stability for firmware operations
 ## 1.0.4
