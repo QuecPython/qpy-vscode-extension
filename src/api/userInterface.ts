@@ -107,11 +107,17 @@ export const moduleFsTreeProvider = new ModuleFileSystemProvider();
 
 export const initPythonPath = (): void => {
 	const { execFile } = require('node:child_process');
-	const childProcess = execFile(batScript, [path.join(__filename, '..', '..', '..', 'snippets', 'quecpython_stubs')], (error, stdout, stderr) => {
-		if (error) {
-			throw error;
+	const childProcess = execFile(
+		batScript, 
+		[path.join(__filename, '..', '..', '..', 'snippets', 'QuecPyhton.json')],
+		{ shell: true }, // run in shell, to avoid spawn EINVAL error
+
+		(error, stdout, stderr) => {
+			if (error) {
+				throw error;
+			}
 		}
-	});
+	);
 };
 
 export async function executeBatScript(): Promise<any> {
