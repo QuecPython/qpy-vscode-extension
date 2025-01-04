@@ -227,12 +227,12 @@
 			"editor/context": [
 				{
 					"command": "qpy-ide.downloadFile",
-					"when": "!inOutput && config.qpy-ide.showRunCommandInEditorContextMenu",
+					"when": "!inOutput && config.QuecPython.showRunCommandInEditorContextMenu",
 					"group": "QuecPython@1"
 				},
 				{
 					"command": "qpy-ide.selectiveDownloadFile",
-					"when": "!inOutput && config.qpy-ide.showRunCommandInEditorContextMenu",
+					"when": "!inOutput && config.QuecPython.showRunCommandInEditorContextMenu",
 					"group": "QuecPython@1"
 				}
 			]
@@ -262,7 +262,7 @@
 		"@vscode/test-electron": "^1.6.2",
 		"eslint": "^7.19.0",
 		"glob": "^7.1.6",
-		"mocha": "^8.2.1",
+		"mocha": "^11.0.1",
 		"prebuild-install": "^6.0.0",
 		"typescript": "^4.1.3"
 	},

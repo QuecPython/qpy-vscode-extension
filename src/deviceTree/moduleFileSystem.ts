@@ -54,10 +54,5 @@ export class ModuleDocument extends vscode.TreeItem {
         this.children = children;
 	}
 
-	iconPath = {
-		light: path.join(__filename, '..', '..', '..', 'resources', 'light', !this.children ? this.label.includes('.py') ? 'python.svg' : 'document.svg' : 'folder.svg'),
-		dark: path.join(__filename, '..', '..', '..', 'resources', 'dark', !this.children ? this.label.includes('.py') ? 'python.svg' : 'document.svg' : 'folder.svg')
-	};
-
 	contextValue = 'moduleDocument';
 }
