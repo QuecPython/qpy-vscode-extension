@@ -44,11 +44,16 @@ Steps for flashing are:
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
+## 1.0.10
+- Fixed issues with flashing online firmware
+- Fixed issues with autocomplete
+- Updated libraries
+
 ## 1.0.8
 - New feature for flashing firmware fool-proofing.
 - Added log output function (console & file)
 - Fixed issues with flashing online firmware
-- 
+
 ## 1.0.7
 - Fixed issues with create directory and remove directory commands probability failed.
 - Added repl and flash firmware feature for supported module (support for all QuecPython modules).
