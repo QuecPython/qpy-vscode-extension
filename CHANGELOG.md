@@ -1,3 +1,11 @@
+## 1.0.10
+- Fix issues with flashing online firmware
+- Fix issues with autocomplete
+- Update libraries
+## 1.0.8
+- New feature for flashing firmware fool-proofing.
+- Add log output function (console & file)
+- Fix issues with flashing online firmware
 ## 1.0.7
 - Fixed issues with create directory and remove directory commands probability failed.
 - Added repl and flash firmware feature for supported module (support for all QuecPython modules).
