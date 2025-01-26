@@ -45,14 +45,14 @@ Steps for flashing are:
 
 ## Release Notes
 ## 1.0.10
-- Fixed issues with flashing online firmware
-- Fixed issues with autocomplete
-- Updated libraries
+- Fix issues with flashing online firmware
+- Fix issues with autocomplete
+- Update libraries
 
 ## 1.0.8
 - New feature for flashing firmware fool-proofing.
-- Added log output function (console & file)
-- Fixed issues with flashing online firmware
+- Add log output function (console & file)
+- Fix issues with flashing online firmware
 
 ## 1.0.7
 - Fixed issues with create directory and remove directory commands probability failed.

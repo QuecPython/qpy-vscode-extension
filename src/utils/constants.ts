@@ -97,10 +97,11 @@ export const moduleList = {
 			'EC200A',
 			'BC25',
 			'BG95', 'BG600L',
-			'FCM360W', 'FC41D'],
+			'FCM360W', 'FC41D',
+		],
 	platform: {
 		ec600n: ['CNLA', 'CNLC', 'CNLD', 'CNLE', 'CNLF'],
-		ec600m: ['CNCCEXT', 'CNLE', 'CNLF'],
+		ec600m: ['EULA', 'CNCCEXT', 'CNLE', 'CNLF'],
 		ec800n: ['CNLA'],
 		ec800m: ['CNCC', 'CNGA', 'CNGB', 'CNGD', 'CNLE', 'CNLF'],
 		ec200n: ['CNAC', 'CNLA'],
