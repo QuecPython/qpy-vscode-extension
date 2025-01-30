@@ -61,6 +61,34 @@ export default class FirmwareViewProvider
 			let onlineUrlall: any = {};
 			let platform = undefined;
 			switch (data.type) {
+				case 'qpmCommands': {
+
+					let downloadType = undefined;
+					downloadType = await vscode.window.showQuickPick([
+						"New - Create a new project",
+						"Initi - Initialize the current directory as a QuecPython project",
+						"Import - Import the project",
+						"Add",
+						"remove",
+						"publish",
+						"ls",
+						"release",
+						"publish",
+						"version",
+						"config",
+						"help",
+					], {
+						placeHolder: 'QueckPythn Package Manager Commands',
+					});
+					if (downloadType === undefined) {
+						return;
+					};
+					break;
+				}
+				case 'qpmInfo': {
+					await vscode.window.showInformationMessage('This QuectPython Package manager is based on git repositories and provides access to github repositories in the QuecPython organization or other specified organizations.');
+					break;
+				}
 				case 'fwSelect': {
 					const options: vscode.OpenDialogOptions = {
 						canSelectMany: false,
@@ -409,12 +437,16 @@ export default class FirmwareViewProvider
 				<title>Firmware Manager</title>
 			</head>
 			<body>
+				<center>------- Flash Firmware -------<br></center>
 				<button class="select-fw">Select Firmware</button>
 				<label class="fw-label">Selected Firmware:</label>
 				<label class="fw-value"></label>
 				<button class="flash-fw">Flash</button>
+				<br><center>------- Package Manager - QPM -------</center>
+				<button class="qpm-commands">QPM commands</button><br>
+				<button class="qpm-info">QPM Help</button>
+				<!-- at the end of the body -->
 				<script nonce="${nonce}" src="${scriptUri}"></script>
-				
 			</body>
 			</html>`;
 	}

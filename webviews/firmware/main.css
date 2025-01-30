@@ -33,7 +33,7 @@ body {
 	padding: 0 0.6em;
 }
 
-.select-fw, .flash-fw {
+.select-fw, .flash-fw, .qpm-info, .qpm-commands {
 	display: block;
 	border: none;
 	margin: 0 auto;

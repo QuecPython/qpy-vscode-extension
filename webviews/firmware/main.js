@@ -8,6 +8,14 @@
     document.querySelector('.select-fw').addEventListener('click', () => {
         selectFirmware();
     });
+    
+    document.querySelector('.qpm-info').addEventListener('click', () => {
+        infoQPM();
+    });
+
+    document.querySelector('.qpm-commands').addEventListener('click', () => {
+        commandsQPM();
+    });
 
     document.querySelector('.flash-fw').addEventListener('click', () => {
         flashDevice();
@@ -36,6 +44,14 @@
 
     function selectFirmware() {
         vscode.postMessage({ type: 'fwSelect' });
+    }
+    
+    function infoQPM() {
+        vscode.postMessage({ type: 'qpmInfo' });
+    }
+
+    function commandsQPM() {
+        vscode.postMessage({ type: 'qpmCommands' });
     }
 
     function flashDevice() {
