@@ -62,31 +62,138 @@ export default class FirmwareViewProvider
 			let platform = undefined;
 			switch (data.type) {
 				case 'qpmCommands': {
-
 					let downloadType = undefined;
 					downloadType = await vscode.window.showQuickPick([
-						"New - Create a new project",
-						"Initi - Initialize the current directory as a QuecPython project",
-						"Import - Import the project",
-						"Add",
-						"remove",
-						"publish",
-						"ls",
-						"release",
-						"publish",
-						"version",
-						"config",
-						"help",
+						{ label: 'New', description: 'Create a new project' },
+						{ label: 'Init', description: 'Initialize the current directory as a QuecPython project' },
+						{ label: 'Import', description: 'Import the project', },
+						{ label: 'Add', description: 'Add dependencies' },
+						{ label: 'Remove', description: 'Remove dependencies' },
+						{ label: 'Publish', description: 'Publish the current package' },
+						{ label: 'ls', description: 'Lists local or remote package information' },
+						{ label: 'Release', description: 'Displays all versions of a local or remote package release' },
+						{ label: 'Deploy', description: 'View the package version' },
+						{ label: 'Version', description: 'Remove dependencies' },
+						{ label: 'Config', description: 'Configure the project' },
+						{ label: 'Help', description: 'Help Information about QPM' },
 					], {
 						placeHolder: 'QueckPythn Package Manager Commands',
 					});
-					if (downloadType === undefined) {
-						return;
-					};
-					break;
+					if (!downloadType) {
+						break;
+					}
+
+					switch (downloadType.label) {
+						case 'New':
+							await qpmNew();
+							break;
+						case 'Init':
+							await qpmInit();
+							break;
+						case 'Import':
+							await qpmImport();
+							break;
+						case 'Add':
+							await qpmAdd();
+							break;
+						case 'Remove':
+							await qpmRemove();
+							break;
+						case 'Publish':
+							await qpmPublish();
+							break;
+						case 'ls':
+							await qpmls();
+							break;
+						case 'Release':
+							await qpmRelease();
+							break;
+						case 'Deploy':
+							await qpmDeploy();
+							break;
+						case 'Version':
+							await qpmVersion();
+							break;
+						case 'Config':
+							await qpmConfig();
+							break;
+						case 'Help':
+							await qpmHelp();
+							break;
+						}
+					
+					if (downloadType) {
+						break;
+					}
 				}
 				case 'qpmInfo': {
-					await vscode.window.showInformationMessage('This QuectPython Package manager is based on git repositories and provides access to github repositories in the QuecPython organization or other specified organizations.');
+
+					const batScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
+					
+					const filePath = `${batScriptPath}\\qpm.exe`;
+					log('filePath ' + filePath);
+					const { exec } = require('child_process');
+
+					await exec(filePath, (error, stdout, stderr) => {
+						if (error) {
+							log(`error Error: ${error.message}`);
+							return;
+						}
+						if (stderr) {
+							log(`error Stderr: ${stderr}`);
+							return;
+						}
+						const outputChannel = vscode.window.createOutputChannel('Info tab');
+						outputChannel.show();
+						outputChannel.appendLine(stdout);
+	
+						// vscode.window.showInformationMessage(`Output: ${stdout}`);
+					});
+
+					break;
+
+					// const batScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
+					
+					// const filePath = `${batScriptPath}\\qpm.exe`;
+					log('filePath ' + filePath);
+					
+
+					// const { exec } = require('child_process');
+
+					// await exec(filePath, (error, stdout, stderr) => {
+					// 	if (error) {
+					// 		log(`error Error: ${error.message}`);
+					// 		return;
+					// 	}
+					// 	if (stderr) {
+					// 		log(`error Stderr: ${stderr}`);
+					// 		return;
+					// 	}
+					// 	vscode.window.showInformationMessage(`Output: ${stdout}`);
+					// });
+				
+					// const download = exec(filePath, (error, stdout, stderr) => {
+					// 	if (error) {
+					// 		console.error(`exec error: ${error}`);
+					// 		return;
+					// 	};
+					// });
+					// let line = '';
+
+					// download.stdout.on('data', data => {
+					// 	line += data.toString();
+					// 	let index = line.indexOf('\n');
+					// 	while (index !== -1) {
+					// 		log(line.slice(10, index));
+					// 		line = line.slice(index + 1);
+					// 		index = line.indexOf('\n');
+					// 	};
+					// 	const result: string = data.toString(10, data.length);
+					
+					// });
+				
+				
+					// await vscode.window.showInformationMessage('This QuectPython Package manager is based on git repositories and provides access to github repositories in the QuecPython organization or other specified organizations.');
 					break;
 				}
 				case 'fwSelect': {
@@ -455,4 +562,40 @@ export default class FirmwareViewProvider
 export function activate() {
 	console.log("sideabr stat");
 };
- 
+
+async function qpmNew() {
+	await vscode.window.showInformationMessage('You selected: qpmNew');
+};
+async function qpmInit() {
+	await vscode.window.showInformationMessage('You selected: qpmInit');
+};
+async function qpmImport() {
+	await vscode.window.showInformationMessage('You selected: qpmImport');
+};
+async function qpmAdd() {
+	await vscode.window.showInformationMessage('You selected: qpmAdd');
+};
+async function qpmRemove() {
+	await vscode.window.showInformationMessage('You selected: qpmRemove');
+};
+async function qpmls() {
+	await vscode.window.showInformationMessage('You selected: qpmRemove');
+};
+async function qpmRelease() {
+	await vscode.window.showInformationMessage('You selected: qpmRemove');
+};
+async function qpmDeploy() {
+	await vscode.window.showInformationMessage('You selected: qpmRemove');
+};
+async function qpmPublish() {
+	await vscode.window.showInformationMessage('You selected: qpmRemove');
+};
+async function qpmVersion() {
+	await vscode.window.showInformationMessage('You selected: qpmRemove');
+};
+async function qpmConfig() {
+	await vscode.window.showInformationMessage('You selected: qpmRemove');
+};
+async function qpmHelp() {
+	await vscode.window.showInformationMessage('You selected: qpmRemove');
+};
