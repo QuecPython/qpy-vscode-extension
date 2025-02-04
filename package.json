@@ -6,7 +6,8 @@
 	"icon": "images/quectel.png",
 	"version": "1.0.10",
 	"engines": {
-		"vscode": "^1.95.3"
+		"vscode": "^1.95.3",
+		"npm": ">=11.1.0"
 	},
 	"categories": [
 		"Other"
