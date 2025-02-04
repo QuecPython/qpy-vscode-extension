@@ -25,11 +25,11 @@ Notes:
     - Open any TypeScript file in VS Code.
     - In Command Palette: Type and select TypeScript: Select TypeScript Version....
     - Choose the workspace version of TypeScript.
-- update npm version in package.json
+- update npm version in `package.json`
 ```
 	"engines": {
 		"vscode": "^1.95.3",
 		"npm": ">=11.1.0"
 	},
 ```
-- in case of issues with new libs, delete `node_modules` and reinstall libs using `npm install`. In case issue not fixed, you'll need to update the code where error accord.
+- in case of issues with new libs, delete `node_modules` and reinstall libs using `npm install`. In case issue not fixed, update the code where error accord.
