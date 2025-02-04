@@ -9,5 +9,6 @@
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
     "typescript.tsc.autoDetect": "off",
     "cmake.sourceDirectory": "C:/Users/Q/Desktop/qpy-vscode-extension-release/node_modules/nan",
-    "RTT_Studio.Build.Parallel_Jobs": "8"
+    "RTT_Studio.Build.Parallel_Jobs": "8",
+    "typescript.tsdk": "node_modules\\typescript\\lib"
 }
