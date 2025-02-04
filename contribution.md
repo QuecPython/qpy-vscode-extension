@@ -12,6 +12,12 @@
 > npm update
 # update typescript
 > npm install typescript@latest --save-dev
+# check outdated libs, update them, fix issues
+> npm outdated
+# update the lib
+>  npm install <name of lib>@latest
+# install new lib and run extention
+> npm install
 ```
 
 Notes:
@@ -26,3 +32,4 @@ Notes:
 		"npm": ">=11.1.0"
 	},
 ```
+- in case of issues with new libs, delete `node_modules` and reinstall libs using `npm install`. In case issue not fixed, you'll need to update the code where error accord.
