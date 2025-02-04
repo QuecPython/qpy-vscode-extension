@@ -1,5 +1,6 @@
 # Contribution guide
 
+## semi monthly update for the extention:
 - update vs code to latest version.
 - Update librarires, vs code version, ts version twice a month
 - We use typescript for this extetion and file extetion.ts
@@ -20,7 +21,7 @@
 > npm install
 ```
 
-Notes:
+### Notes:
 - To check different verions of TS, use:
     - Open any TypeScript file in VS Code.
     - In Command Palette: Type and select TypeScript: Select TypeScript Version....
