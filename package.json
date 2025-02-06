@@ -64,12 +64,6 @@
 				"icon": "$(clear-all)"
 			},
 			{
-				"command": "qpy-ide.clearProject",
-				"category": "QuecPython",
-				"title": "Clear Firmware Path",
-				"icon": "$(clear-all)"
-			},
-			{
 				"command": "qpy-ide.openConnection",
 				"title": "Connect to COM Port",
 				"category": "QuecPython"
@@ -188,11 +182,6 @@
 				},
 				{
 					"command": "qpy-ide.clearFw",
-					"group": "navigation",
-					"when": "view == qpyProject"
-				},
-				{
-					"command": "qpy-ide.clearProject",
 					"group": "navigation",
 					"when": "view == qpyProject"
 				},
