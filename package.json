@@ -130,10 +130,24 @@
 					"id": "qpy",
 					"title": "QuecPython",
 					"icon": "media/dep.svg"
+				},
+				{
+						"id": "package-explorer",
+						"title": "Package Explorer",
+						"icon": "media/dep.svg"
 				}
-			]
+			]	
 		},
 		"views": {
+			"package-explorer": [
+				{
+					"id": "nodeDependenciestwo",
+					"name": "Part two",
+					"icon": "media/dep.svg",
+					"contextualTitle": "Package Explorer"
+				}
+
+			],
 			"explorer": [
 				{
 					"id": "qpyModuleFS",
@@ -142,10 +156,17 @@
 			],
 			"qpy": [
 				{
+					"id": "nodeDependencies",
+					"name": "Package Manager",
+					"icon": "media/dep.svg",
+					"contextualTitle": "Package Explorer"
+				},
+				{
 					"type": "webview",
 					"id": "qpyProject",
-					"name": "Project Manager"
+					"name": "Flash Firmware"
 				}
+
 			]
 		},
 		"menus": {
