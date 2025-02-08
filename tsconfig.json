@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"types": ["node"],
 		"module": "commonjs",
 		"target": "es2019",
 		"lib": ["ES2019"],

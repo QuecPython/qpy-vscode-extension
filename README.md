@@ -16,6 +16,8 @@ vsce package
 
 ## Usage
 
+- Check [User Guide](https://python.quectel.com/doc/Application_guide/en/dev-tools/VSCode-Plugin-quecpython/index.html) on our site.
+
 Open the serial connection by opening the commands palette the `CTRL+SHIFT+P` and running the command `QuecPython: Connect to COM Port`.
 or click statusbar button `Connect`.
 
@@ -44,6 +46,9 @@ Steps for flashing are:
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
+## 1.0.11
+- update dependecies
+- remove clear project button
 ## 1.0.10
 - Fix issues with flashing online firmware
 - Fix issues with autocomplete

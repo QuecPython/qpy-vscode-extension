@@ -1,3 +1,6 @@
+## 1.0.11
+- update dependecies
+- remove clear project button
 ## 1.0.10
 - Fix issues with flashing online firmware
 - Fix issues with autocomplete
