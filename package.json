@@ -122,7 +122,11 @@
 			{
 				"command": "qpy-ide.createDir",
 				"title": "Create Directory"
-			}
+			},
+			{
+				"command": "qpy-ide.homePage",
+				"title": "Quectel Home"
+			}			
 		],
 		"viewsContainers": {
 			"activitybar": [
@@ -139,15 +143,6 @@
 			]	
 		},
 		"views": {
-			"package-explorer": [
-				{
-					"id": "nodeDependenciestwo",
-					"name": "Part two",
-					"icon": "media/dep.svg",
-					"contextualTitle": "Package Explorer"
-				}
-
-			],
 			"explorer": [
 				{
 					"id": "qpyModuleFS",
@@ -158,15 +153,22 @@
 				{
 					"id": "nodeDependencies",
 					"name": "Package Manager",
-					"icon": "media/dep.svg",
 					"contextualTitle": "Package Explorer"
 				},
 				{
-					"type": "webview",
 					"id": "qpyProject",
-					"name": "Flash Firmware"
+					"name": "Flash Firmware",
+					"type": "webview"
+				},
+				{
+					"id": "quickAccess",
+					"name": "Quick Access",
+					"type": "tree"
+				},
+				{
+					"id": "commandsList",
+					"name": "Commands"
 				}
-
 			]
 		},
 		"menus": {

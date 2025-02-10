@@ -146,55 +146,10 @@ export default class FirmwareViewProvider
 						const outputChannel = vscode.window.createOutputChannel('Info tab');
 						outputChannel.show();
 						outputChannel.appendLine(stdout);
-	
-						// vscode.window.showInformationMessage(`Output: ${stdout}`);
 					});
 
 					break;
 
-					// const batScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
-					
-					// const filePath = `${batScriptPath}\\qpm.exe`;
-					log('filePath ' + filePath);
-					
-
-					// const { exec } = require('child_process');
-
-					// await exec(filePath, (error, stdout, stderr) => {
-					// 	if (error) {
-					// 		log(`error Error: ${error.message}`);
-					// 		return;
-					// 	}
-					// 	if (stderr) {
-					// 		log(`error Stderr: ${stderr}`);
-					// 		return;
-					// 	}
-					// 	vscode.window.showInformationMessage(`Output: ${stdout}`);
-					// });
-				
-					// const download = exec(filePath, (error, stdout, stderr) => {
-					// 	if (error) {
-					// 		console.error(`exec error: ${error}`);
-					// 		return;
-					// 	};
-					// });
-					// let line = '';
-
-					// download.stdout.on('data', data => {
-					// 	line += data.toString();
-					// 	let index = line.indexOf('\n');
-					// 	while (index !== -1) {
-					// 		log(line.slice(10, index));
-					// 		line = line.slice(index + 1);
-					// 		index = line.indexOf('\n');
-					// 	};
-					// 	const result: string = data.toString(10, data.length);
-					
-					// });
-				
-				
-					// await vscode.window.showInformationMessage('This QuectPython Package manager is based on git repositories and provides access to github repositories in the QuecPython organization or other specified organizations.');
-					break;
 				}
 				case 'fwSelect': {
 					const options: vscode.OpenDialogOptions = {

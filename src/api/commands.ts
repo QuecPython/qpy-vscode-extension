@@ -370,6 +370,64 @@ export const createDir = vscode.commands.registerCommand(
 	}
 );
 
+export const homePage = vscode.commands.registerCommand(
+	'qpy-ide.homePage',
+	async () => {
+		try {
+			const panel = vscode.window.createWebviewPanel(
+                'webview', // Identifies the type of the webview. Used internally
+                'My Webview', // Title of the panel displayed to the user
+                vscode.ViewColumn.One, // Editor column to show the new webview panel in
+                {} // Webview options. More on these later.
+            );
+
+            // And set its HTML content
+            panel.webview.html = getWebviewContent('https://www.google.com');
+
+		} catch {
+			vscode.window.showErrorMessage('Something went wrong.');
+			setTerminalFlag();
+		}
+	}
+);
+
+
+export function activate(context: vscode.ExtensionContext) {
+    context.subscriptions.push(
+        vscode.commands.registerCommand('extension.openUrl', () => {
+            const panel = vscode.window.createWebviewPanel(
+                'webview', // Identifies the type of the webview. Used internally
+                'My Webview', // Title of the panel displayed to the user
+                vscode.ViewColumn.One, // Editor column to show the new webview panel in
+                {} // Webview options. More on these later.
+            );
+
+            // And set its HTML content
+            panel.webview.html = getWebviewContent(url);
+        })
+    );
+}
+
+function getWebviewContent(url: string): string {
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Webview</title>
+        </head>
+        <body>
+		<br>
+		This is all projects page<br><br>
+		projct one <button>open</button><br><br>
+		projct two <button>import</button>
+            <iframe src="${url}" width="100%" height="100%" frameborder="0"></iframe>
+        </body>
+        </html>
+    `;
+}
+
 export const registerCommands = (context: vscode.ExtensionContext): void => {
 	context.subscriptions.push(
 		openConnection,
@@ -385,6 +443,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		removeFile,
 		removeDir,
 		createDir,
+		homePage,
 		vscode.window.registerWebviewViewProvider(
 			FirmwareViewProvider.viewType,
 			fwProvider
