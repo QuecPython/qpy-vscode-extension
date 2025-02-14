@@ -1,3 +1,7 @@
+## 1.0.12
+- fix issue with firmware zip files
+- update firmware download tool
+- fix issue with EC200A module
 ## 1.0.11
 - update dependecies
 - remove clear project button

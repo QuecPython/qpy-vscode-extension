@@ -62,6 +62,7 @@ export const fwConfig = {
 	],
 	atGetVer: 'AT+CGMR\r\n',
 	download: '\\QuecPythonDownload.exe',
+	tar: '\\tar.exe' // used to unzip files
 };
 
 export const status = {
