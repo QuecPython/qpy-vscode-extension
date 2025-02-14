@@ -1,4 +1,3 @@
-import { spawn, exec } from 'child_process';
 import * as path from 'path';
 import { fwConfig, progLabel, status } from '../utils/constants';
 import { serialEmitter } from '../serial/serialBridge';
@@ -60,47 +59,13 @@ export async function firmwareFlash(
 	if (filePath.startsWith('http')){
 		const rawFwConfig = fs.readFileSync(fwConfigPath);
 		const parsedFwConfig = JSON.parse(rawFwConfig.toString());
-		//已下载过文件
+		
+		// Files is already downloaded
 		if (parsedFwConfig['downloadflag'] === true) {
-			vscode.window.showWarningMessage('The online firmware has already been downloaded.');
-			// TODO 判断文件夹是否存在
-			let filename = filePath.split('/').pop();
-			log(filename);
-			let dirPath =  path.join(fwDirPath, filename.slice(0, filename.length - 4));
-			if (	
-				filename.includes('EG915U') ||
-				filename.includes('EG912U') ||
-				filename.includes('EC600U') ||
-				filename.includes('EC200U') 
-				) {
-				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.pac');
-			} else if (
-				filename.includes('EC600N') ||
-				filename.includes('EC800N') ||
-				filename.includes('EC200N') ||
-				filename.includes('EG915N') ||
-				filename.includes('EG912N') ||
-				filename.includes('EC800M') ||
-				filename.includes('EC600M') ||
-				filename.includes('EC600G') ||
-				filename.includes('EC800G') ||
-				filename.includes('EC600K') ||
-				filename.includes('EC800K') ||
-				filename.includes('FCM360W') ||
-				filename.includes('FC41D')
-				) {
-				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
-			}else if (
-				filename.includes('EC600E') ||
-				filename.includes('EC800E') 
-				) {
-				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\at_command.binpkg');
-			} else if (filename.includes('EC200A')) {
-				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\Falcon_EVB_QSPI_Nor_LWG_Only_Nontrusted_PM802_LPDDR2.blf');	
-			} else if (filename.includes('BG95') || filename.includes('BG600L')) {
-				filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\update\\firehose\\partition.mbn');
-			};
-		}else{
+			await getFileFromZip(filePath, 'The online firmware has already been downloaded.');
+		}
+		// download and unzip the file
+		else{
 			vscode.window.showInformationMessage('Start download online firmware...');
 			let filename = filePath.split('/').pop();
 			let dirPath =  path.join(fwDirPath, filename.slice(0, filename.length - 4));
@@ -108,11 +73,13 @@ export async function firmwareFlash(
 				if (err) {
 					console.error(err);
 				} else {
-					log('Temp firmware directory created successfully');
+					log('Temp firmware directory created successfully, please wait...');
 				}
 			});
 			await sleep(100);
 			let downloadresult = await downloadFile(filePath, dirPath);
+
+			// file is downloaded correctly
 			if (downloadresult === true) {
 				parsedFwConfig['downloadflag'] = true;
 				fs.writeFile(fwConfigPath, JSON.stringify(parsedFwConfig), err => {
@@ -121,71 +88,43 @@ export async function firmwareFlash(
 						return;
 					}});
 			};
-			// 解压文件夹
+
+			// using fwConfig.tar app unzip the file
 			const { execFile } = require('node:child_process');
-			const childProcess = execFile("tar", ["-zxf", path.join(dirPath, filename), "-C", dirPath], (error, stdout, stderr) => {
+			const childProcess = execFile(batScriptPath + fwConfig.tar, ["-zxf", path.join(dirPath, filename), "-C", dirPath], (error, stdout, stderr) => {
 				if (error) {
 					throw error;
 				}
 			});
-			// 新版本固件支持（bin固件）
+			
+			// check if there's an error with unzip
 			childProcess.on('close', (code) => {
-				log(`website firmware unzip child process exited with code ${code}`);
-				if (code === 0) {
-					// vscode.window.showInformationMessage('File decompressed successfully.');
-					// filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
-					if (	
-						filename.includes('EG915U') ||
-						filename.includes('EG912U') ||
-						filename.includes('EC600U') ||
-						filename.includes('EC200U') 
-						) {
-						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.pac');
-					} else if (
-						filename.includes('EC600N') ||
-						filename.includes('EC800N') ||
-						filename.includes('EC200N') ||
-						filename.includes('EG915N') ||
-						filename.includes('EG912N') ||
-						filename.includes('EC800M') ||
-						filename.includes('EC600M') ||
-						filename.includes('EC600G') ||
-						filename.includes('EC800G') ||
-						filename.includes('EC600K') ||
-						filename.includes('EC800K') ||
-						filename.includes('FCM360W') ||
-						filename.includes('FC41D')
-						) {
-						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
-					}else if (
-						filename.includes('EC600E') ||
-						filename.includes('EC800E') 
-						) {
-						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\at_command.binpkg');
-					} else if (filename.includes('EC200A')) {
-						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\Falcon_EVB_QSPI_Nor_LWG_Only_Nontrusted_PM802_LPDDR2.blf');	
-					} else if (filename.includes('BG95') || filename.includes('BG600L')) {
-						filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\update\\firehose\\partition.mbn');
-					};
-				} else {
+				if (code != 0) {
 					vscode.window.showErrorMessage('File decompression failed.');
 					return;
 				}
 			});
 		};
 	};
+
+	// after download and unzip, get correct file from unzip forlder
+	if (filePath.startsWith('http')){
+		filePath = await getFileFromZip(filePath, 'The online firmware has been downloaded.');
+	}
 	
 	await sleep(1000);
 	serialEmitter.emit(status.startProg, progLabel.flashFw);
 	const { exec } = require('child_process');
+	
+	// run this command to flash the fw 'QuecPythonDownload.exe -d COM -b rate -f file'
 	log(batScriptPath + fwConfig.download, " -d ", downloadPort, " -b ", "115200", " -f ", filePath);
-	// const download = spawn(batScriptPath + fwConfig.download, ["-d", downloadPort, "-b", "115200", "-f", filePath], {cwd: fwDirPath, stdio: 'pipe'});
-	const download = exec(batScriptPath + fwConfig.download + " -d " + downloadPort+" -b "+"115200"+" -f "+filePath, (error, stdout, stderr) => {
+	const download = exec(batScriptPath + fwConfig.download + " -d " + downloadPort+" -b "+"115200"+" -f "+ filePath, (error, stdout, stderr) => {
 		if (error) {
 		  console.error(`exec error: ${error}`);
 		  return;
 		};
 	});
+
 	log("download cmd run in child_process");
 	let line = '';
 	download.stdout.on('data', data => {
@@ -214,4 +153,48 @@ export async function firmwareFlash(
 		log(`firmware flash child process stderr: ${error.message}`);
 		serialEmitter.emit(status.downFail);
 	});
+};
+
+async function getFileFromZip(filePath, msg) {
+	// used with unziped files, using filepath get fw file based on module
+	// returns filepath to fw file
+
+	// TODO check if folder exist
+	vscode.window.showWarningMessage(msg);
+	let filename = filePath.split('/').pop();
+	let dirPath =  path.join(fwDirPath, filename.slice(0, filename.length - 4));
+	if (
+		filename.includes('EG915U') ||
+		filename.includes('EG912U') ||
+		filename.includes('EC600U') ||
+		filename.includes('EC200U') 
+		) {
+		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.pac');
+	} else if (
+		filename.includes('EC600N') ||
+		filename.includes('EC800N') ||
+		filename.includes('EC200N') ||
+		filename.includes('EG915N') ||
+		filename.includes('EG912N') ||
+		filename.includes('EC800M') ||
+		filename.includes('EC600M') ||
+		filename.includes('EC600G') ||
+		filename.includes('EC800G') ||
+		filename.includes('EC600K') ||
+		filename.includes('EC800K') ||
+		filename.includes('FCM360W') ||
+		filename.includes('FC41D')
+		) {
+		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
+	}else if (
+		filename.includes('EC600E') ||
+		filename.includes('EC800E') 
+		) {
+		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\at_command.binpkg');
+	} else if (filename.includes('EC200A')) {
+		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\Falcon_EVB_QSPI_Nor_LWG_Only_Nontrusted_PM802_LPDDR2.blf');	
+	} else if (filename.includes('BG95') || filename.includes('BG600L')) {
+		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\update\\firehose\\partition.mbn');
+	};
+	return filePath;
 };

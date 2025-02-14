@@ -35,7 +35,7 @@ const updateProgressBar = (
 		);
 
 		let childProcess = serialEmitter.on(status.downFinish, () => {
-			vscode.window.showInformationMessage('downloaded Successfully!');
+			vscode.window.showInformationMessage('Downloaded Successfully! Please restart the module!');
 			resolve();
 			clearInterval(interval);
 		});
