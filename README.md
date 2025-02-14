@@ -3,13 +3,15 @@
 Extension for handling interaction with QuecPython based modules. Communicate with Python based Quectel modules using the built-in REPL or AT CLI. Besides serial communication, extension provides out-of-the box module file system preview in a tree view. Users are free to opt using commands from the extension UI or execute raw commands via REPL.
 
 - Works with Windows only at the moment.
+- For any issues please report them on github: [extension issues](https://github.com/QuecPython/vscode-extension-issues).
 
-`compile`
-npm install -g vsce
-vsce package
+To compile:
+
+    npm install -g vsce
+    vsce package
 
 ## Requirements
-- **NodeJS installed on your system (12 or higher) -** [NodeJS](https://nodejs.org)
+- NodeJS installed on your system (12 or higher) - [NodeJS](https://nodejs.org)
 
 ## Supported Modules
 - Support all QuecPython modules.
