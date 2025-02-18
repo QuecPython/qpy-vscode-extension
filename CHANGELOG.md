@@ -1,5 +1,6 @@
 For any issues please report them on github: [extension issues](https://github.com/QuecPython/vscode-extension-issues).
-
+## 1.0.121
+- fix minor issue
 ## 1.0.12
 - fix issue with firmware zip files
 - update firmware download tool
