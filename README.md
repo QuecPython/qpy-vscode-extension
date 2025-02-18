@@ -48,6 +48,8 @@ Steps for flashing are:
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
+## 1.0.121
+- fix minor issue
 ## 1.0.12
 - fix issue with firmware zip files
 - update firmware download tool
