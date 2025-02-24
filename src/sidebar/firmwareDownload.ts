@@ -196,5 +196,12 @@ async function getFileFromZip(filePath, msg) {
 	} else if (filename.includes('BG95') || filename.includes('BG600L')) {
 		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\update\\firehose\\partition.mbn');
 	};
+
+	// for new fw file type is .bin, if file doesn't exist use .bin
+	if (!fs.existsSync(filePath)) {
+		const lastDotIndex = filePath.lastIndexOf('.');
+		filePath = filePath.substring(0, lastDotIndex + 1) + 'bin';
+	}
+
 	return filePath;
 };
