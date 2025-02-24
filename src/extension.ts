@@ -16,7 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	fwProvider = new FirmwareViewProvider(context.extensionUri);
 	openLog();
 	initStatusButtons();
-	initPythonPath(); // used for autocomplete 
+	// initPythonPath(); // used for autocomplete 
 	registerCommands(context);
 	// activateEnv();
 	console.log("QuecPyhton activate success");
