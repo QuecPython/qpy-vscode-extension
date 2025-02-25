@@ -25,13 +25,7 @@ export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
 	async () => {
 		try {
-			setTerminalFlag(true, cmd.ilistdir);
-			const st = getActiveSerial();
-			st.handleCmd(`example.exec('usr/q_init_fs.py')\r\n`);
-			await utils.sleep(400);
-			serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
-			moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
-			moduleFsTreeProvider.refresh();
+			await _refreshTree();
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
@@ -356,9 +350,16 @@ export const createDir = vscode.commands.registerCommand(
 
 			if (fullFilePath.startsWith('/usr/')) {
 				const st = getActiveSerial();
+				
+				// this flag is monitored by EventEmitter in serialBridge.ts
 				setTerminalFlag(true, cmd.createDir);
+				
 				newDirPath = fullFilePath;
-				st.handleCmd(`uos.mkdir('${fullFilePath}')\r\n`);
+				st.handleCmd(`import ql_fs\r\n`);
+				st.handleCmd(`ql_fs.mkdirs('${fullFilePath}')\r\n`);
+				await utils.sleep(400);
+				
+				await _refreshTree(); // refresh tree view after creating folder
 			} else {
 				vscode.window.showErrorMessage('Invalid directory path.');
 				return;
@@ -370,6 +371,19 @@ export const createDir = vscode.commands.registerCommand(
 	}
 );
 
+async function _refreshTree() {
+	// private func to refresh folder tree view
+
+	setTerminalFlag(true, cmd.ilistdir);
+    const st = getActiveSerial();
+    st.handleCmd(`example.exec('usr/q_init_fs.py')\r\n`);
+    await utils.sleep(400);
+    serialEmitter.emit(cmd.ilistdir, cmd.ilistdir);
+    moduleFsTreeProvider.data = sortTreeNodes(moduleFsTreeProvider.data);
+    moduleFsTreeProvider.refresh();
+};
+
+// register commands to the extension
 export const registerCommands = (context: vscode.ExtensionContext): void => {
 	context.subscriptions.push(
 		openConnection,
