@@ -48,8 +48,9 @@ Steps for flashing are:
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
-## 1.0.122
+## 1.0.13
 - fix minor issue
+- compatible with vs code 1.95.3 or higher
 ## 1.0.12
 - fix issue with firmware zip files
 - update firmware download tool

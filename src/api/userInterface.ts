@@ -111,11 +111,15 @@ export const initPythonPath = (): void => {
 		batScript, 
 		[path.join(__filename, '..', '..', '..', 'snippets', 'QuecPyhton.json')],
 		{ shell: true }, // run in shell, to avoid spawn EINVAL error
-
 		(error, stdout, stderr) => {
 			if (error) {
-				throw error;
+				log('error: ' + error);
 			}
+
+			if (stderr) {
+				log('error: ' + stderr);
+			}
+
 		}
 	);
 };
