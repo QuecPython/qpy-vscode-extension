@@ -49,8 +49,9 @@ Steps for flashing are:
 
 ## Release Notes
 ## 1.0.13
-- fix minor issue
 - compatible with vs code 1.95.3 or higher
+- fix create multiple dirs
+- fix minor issue
 ## 1.0.12
 - fix issue with firmware zip files
 - update firmware download tool

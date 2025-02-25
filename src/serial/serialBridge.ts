@@ -102,9 +102,6 @@ serialEmitter.on(`${cmd.createDir}`, async (data: string) => {
 				if (parentDir) {
 					parentDir.children.push(newDir);
 					moduleFsTreeProvider.refresh();
-				} else {
-					vscode.window.showErrorMessage('Unable to create directory.');
-					return;
 				}
 			}
 
