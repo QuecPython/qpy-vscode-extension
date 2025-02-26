@@ -34,8 +34,16 @@ const updateProgressBar = (
 			timerUpdate
 		);
 
+		// event when file downloaded
 		let childProcess = serialEmitter.on(status.downFinish, () => {
-			vscode.window.showInformationMessage('Downloaded Successfully! Please restart the module!');
+			vscode.window.showInformationMessage('Downloaded Successfully!');
+			resolve();
+			clearInterval(interval);
+		});
+
+		// event when fw flashed
+		childProcess.on(status.flashFinish, () => {
+			vscode.window.showInformationMessage('Flashed Successfully! Please restart the module!');
 			resolve();
 			clearInterval(interval);
 		});

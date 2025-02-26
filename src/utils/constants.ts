@@ -71,6 +71,7 @@ export const status = {
 	startProg: 'startProgress',
 	updateProg: 'updatePercentage',
 	downFinish: 'downloadFinished',
+	flashFinish: 'flashFinished',
 	downFail: 'download failed',
 };
 
