@@ -234,7 +234,7 @@ export default class FirmwareViewProvider
 						};
 
 						log(JSON.stringify(parsedFwConfig));
-						// 发送AT 确认版本是否与固件一致
+						// Using AT confirm version is consistent with firmware
 						let matchVer = false;
 						let atRet: String = "";
 						let atGetVersion: SerialPort = new SerialPort(
@@ -260,11 +260,12 @@ export default class FirmwareViewProvider
 							if (asciiData.includes('OK')) {
 								atGetVersion.close();
 								log(atRet);
-								// local firmware  需要弹窗供客户选择是否可继续下载
+								// local firmware needs a pop-up window for customers to choose whether to continue downloading
 								if (parsedFwConfig["module"] === ""){
-									//通过at返回版本信息再根据模组表匹配获取具体型号
+									// Return the version information using AT and match module to the model
 									atRet.split('\r\n').forEach((item) => {
-										if (item.includes('QPY')) {
+										// check for beta of qpy version
+										if (item.includes('QPY') || item.includes('BETA')) {
 											moduleList.all.forEach((item1) => {
 												if (item.includes(item1)) {
 													if (['FCM360W', 'FC41D'].includes(item1)) {
@@ -287,7 +288,7 @@ export default class FirmwareViewProvider
 											log(parsedFwConfig["module"]);
 										};
 									});
-									// TODO 新版本估计需要通过json解析模组平台和型号来判断是否支持
+									// TODO check with module json file to determine whether it is supported
 									if (parsedFwConfig["module"] === ""){
 										matchVer = false;
 									} else {
@@ -316,6 +317,7 @@ export default class FirmwareViewProvider
 									if (atRet.replace(/_/g, "").includes(parsedFwConfig["module"])) {
 										matchVer = true;
 									};
+									
 									if (matchVer){
 										log('Firmware version match success');
 										firmwareFlash(data.value, downloadPort);

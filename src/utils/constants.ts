@@ -122,6 +122,7 @@ export const moduleList = {
 		ec200a: ['CNDA', 'CNHA', 'AUHA', 'EUHA', ],
 		bc25: ['', 'B5', 'B8'],
 		bg95: ['M1', 'M3', 'M6', 'M8', 'M9'],
+		eg810m: ['EULA'],
 		bg600l: ['M3'],
 		fcm360w: [],
 		fc41d: []
