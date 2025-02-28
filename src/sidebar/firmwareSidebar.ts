@@ -81,14 +81,17 @@ export default class FirmwareViewProvider
 							placeHolder: 'Select Platform Type',
 						});
 						if (platform !== undefined) {
-							let model = moduleList['platform'][platform.toLowerCase()];
+							// get models for this platform
+							let platformModels = moduleList['platform'][platform.toLowerCase()];
 							let modelList = [];
 							let module = undefined;
-							if (model.length === 0) {
-								model = platform;
+
+							// platform doesn't have models
+							if (platformModels.length === 0) {
+								module = platform;
 							} else {
-								for (let i = 0; i < model.length; i++) {
-									modelList[i] = platform + model[i];
+								for (let i = 0; i < platformModels.length; i++) {
+									modelList[i] = platform + platformModels[i];
 								};
 								module = await vscode.window.showQuickPick(modelList, {
 									placeHolder: 'Select Model Type',
@@ -116,7 +119,7 @@ export default class FirmwareViewProvider
 									const firmwareConfig = response.data;
 									let dwList = firmwareConfig['data'].data;
 									if (dwList.length === 0) {
-										vscode.window.showErrorMessage('No online firmware available 1!');
+										vscode.window.showErrorMessage('No online firmware available!');
 										return;
 									}else {
 										dwList.forEach((item) => {
@@ -137,6 +140,7 @@ export default class FirmwareViewProvider
 								vscode.window.showErrorMessage('Unable to get online firmware!');
 								return;
 							});
+
 							for (var i = 0; i < 50; i++) {
 								if (selectVersionList.length > 0) {
 									break;
@@ -144,10 +148,12 @@ export default class FirmwareViewProvider
 									await sleep(50);
 								}
 							};
+
 							if (selectVersionList.length === 0) {
 								vscode.window.showErrorMessage('No online firmware available!');
 								return;
 							}
+							
 							onlineUrl = await vscode.window.showQuickPick(selectVersionList, {
 								placeHolder: 'Select Firmware Version',
 							});

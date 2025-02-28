@@ -99,7 +99,7 @@ export const moduleList = {
 			'EC200A',
 			'BC25',
 			'BG95', 'BG600L',
-			'FCM360W', 'FC41D',
+			'FCM360W'
 		],
 	platform: {
 		ec600n: ['CNLA', 'CNLC', 'CNLD', 'CNLE', 'CNLF'],
@@ -120,12 +120,10 @@ export const moduleList = {
 		ec600e: ['CNLC', 'CNLCAUDIO'],
 		ec800e: ['CNLC', 'CNLCAUDIO'],
 		ec200a: ['CNDA', 'CNHA', 'AUHA', 'EUHA', ],
-		bc25: ['', 'B5', 'B8'],
 		bg95: ['M1', 'M3', 'M6', 'M8', 'M9'],
 		eg810m: ['EULA'],
 		bg600l: ['M3'],
-		fcm360w: [],
-		fc41d: []
+		fcm360w: []
 		},
 	url: ["https://python.quectel.com/wp-admin/admin-ajax.php", "https://python.quectel.com/en/wp-admin/admin-ajax.php"]
 };
