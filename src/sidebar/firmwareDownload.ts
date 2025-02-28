@@ -142,8 +142,10 @@ export async function firmwareFlash(
 
 	download.on('close', code => {
 		log(`firmware flash child process exited with code ${code}`);
+		
+		// set proper event after fw flash
 		if (code === 0) {
-			serialEmitter.emit(status.downFinish);
+			serialEmitter.emit(status.flashFinish);
 		} else {
 			serialEmitter.emit(status.downFail);
 		}
@@ -199,8 +201,7 @@ async function getFileFromZip(filePath, msg) {
 
 	// for new fw file type is .bin, if file doesn't exist use .bin
 	if (!fs.existsSync(filePath)) {
-		const lastDotIndex = filePath.lastIndexOf('.');
-		filePath = filePath.substring(0, lastDotIndex + 1) + 'bin';
+		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
 	}
 
 	return filePath;

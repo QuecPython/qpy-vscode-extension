@@ -53,19 +53,19 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 		this.closeEmitter.dispose();
 	}
 
-	// 移动光标到指定位置
+	// Move the cursor to the specified position
 	public moveCursorTo(row: number, column: number): void {
 		const cursorMove = [row, column];
 		this.writeEmitter.fire(`\x1B[${cursorMove[0]}A`);
 		this.writeEmitter.fire(`\x1B[${cursorMove[1]}D`);
 	}
 
-	// 清除光标到行尾的所有字符
+	// Clear all characters from the cursor to the end of the line
 	public clearToEndOfLine(): void {
 		this.writeEmitter.fire("\x1B[0K");
 	}
 
-	// 清除光标到行首的所有字符
+	// Clear all characters from the cursor to the beginning of the line
 	public clearToBeginningOfLine(): void {
 		this.writeEmitter.fire("\x1B[0G");
 	}
@@ -90,7 +90,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 		}
 
 		if (this.translateHex) {
-			stringRepr = new TextDecoder('utf-8').decode(data);
+			stringRepr = new TextDecoder('utf-8', { ignoreBOM: true }).decode(data);
 		} else {
 			// HEX format
 			for (const byte of data) {
@@ -104,7 +104,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			}
 		}
 		
-		log('串口内容 : ',stringRepr);
+		log('Serial port content: ' + stringRepr);
 		this.writeEmitter.fire(stringRepr);
 	};
 
