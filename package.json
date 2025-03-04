@@ -121,6 +121,10 @@
 			{
 				"command": "qpy-ide.createDir",
 				"title": "Create Directory"
+			},
+			{
+				"command": "qpy-ide.homePage",
+				"title": "Quectel Home"
 			}
 		],
 		"viewsContainers": {
@@ -129,6 +133,11 @@
 					"id": "qpy",
 					"title": "QuecPython",
 					"icon": "media/dep.svg"
+				},
+				{
+						"id": "package-explorer",
+						"title": "Package Explorer",
+						"icon": "media/dep.svg"
 				}
 			]
 		},
@@ -139,11 +148,16 @@
 					"name": "QPY: File System (usr)"
 				}
 			],
-			"qpy": [
+		"qpy": [
 				{
-					"type": "webview",
 					"id": "qpyProject",
-					"name": "Project Manager"
+					"name": "Flash Firmware",
+					"type": "webview"
+				},
+				{
+					"id": "quickAccess",
+					"name": "Quick Access",
+					"type": "tree"
 				}
 			]
 		},
