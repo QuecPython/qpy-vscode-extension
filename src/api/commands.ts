@@ -17,13 +17,7 @@ import { portStatus } from '../serial/serialTerminal';
 import { sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 import { serialEmitter } from '../serial/serialBridge';
-
-const cats = {
-	'Coding Cat': 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',
-	'Compiling Cat': 'https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif',
-	'Testing Cat': 'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif'
-};
-
+import * as html from '../api/html';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
 	return {
@@ -38,11 +32,11 @@ function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
 /**
  * Manages cat coding webview panels
  */
-class CatCodingPanel {
+class HtmlPanel {
 	/**
 	 * Track the currently panel. Only allow a single panel to exist at a time.
 	 */
-	public static currentPanel: CatCodingPanel | undefined;
+	public static currentPanel: HtmlPanel | undefined;
 
 	public static readonly viewType = 'catCoding';
 
@@ -50,38 +44,38 @@ class CatCodingPanel {
 	private readonly _extensionUri: vscode.Uri;
 	private _disposables: vscode.Disposable[] = [];
 
-	public static createOrShow(extensionUri: vscode.Uri) {
+	public static createOrShow(extensionUri: vscode.Uri, page: string) {
 		const column = vscode.window.activeTextEditor
 			? vscode.window.activeTextEditor.viewColumn
 			: undefined;
 
 		// If we already have a panel, show it.
-		if (CatCodingPanel.currentPanel) {
-			CatCodingPanel.currentPanel._panel.reveal(column);
-			return;
-		}
+		// if (HtmlPanel.currentPanel) {
+		// 	HtmlPanel.currentPanel._panel.reveal(column);
+		// 	return;
+		// }
 
 		// Otherwise, create a new panel.
 		const panel = vscode.window.createWebviewPanel(
-			CatCodingPanel.viewType,
+			HtmlPanel.viewType,
 			'Cat Coding',
 			column || vscode.ViewColumn.One,
 			getWebviewOptions(extensionUri),
 		);
 
-		CatCodingPanel.currentPanel = new CatCodingPanel(panel, extensionUri);
+		HtmlPanel.currentPanel = new HtmlPanel(panel, extensionUri, page);
 	}
 
-	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-		CatCodingPanel.currentPanel = new CatCodingPanel(panel, extensionUri);
+	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, page: string) {
+		HtmlPanel.currentPanel = new HtmlPanel(panel, extensionUri, page);
 	}
 
-	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, page: string) {
 		this._panel = panel;
 		this._extensionUri = extensionUri;
 
 		// Set the webview's initial html content
-		this._update();
+		this._update(page);
 
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programmatically
@@ -91,7 +85,7 @@ class CatCodingPanel {
 		this._panel.onDidChangeViewState(
 			() => {
 				if (this._panel.visible) {
-					this._update();
+					this._update(page);
 				}
 			},
 			null,
@@ -119,7 +113,7 @@ class CatCodingPanel {
 	}
 
 	public dispose() {
-		CatCodingPanel.currentPanel = undefined;
+		HtmlPanel.currentPanel = undefined;
 
 		// Clean up our resources
 		this._panel.dispose();
@@ -132,17 +126,18 @@ class CatCodingPanel {
 		}
 	}
 
-	private _update() {
+	private _update(page) {
 		const webview = this._panel.webview;
+		log('this._panel.viewColumn ' + this._panel.viewColumn);
 
 		// Vary the webview's content based on where it is located in the editor.
-		switch (this._panel.viewColumn) {
-			case vscode.ViewColumn.Two:
-				this._updateForCat(webview, 'Compiling Cat');
+		switch (page) {
+			case 'projectsPage':
+				this._updateForCat(webview, page);
 				return;
 
-			case vscode.ViewColumn.Three:
-				this._updateForCat(webview, 'Testing Cat');
+			case 'packagesPage':
+				this._updateForCat(webview, page);
 				return;
 
 			case vscode.ViewColumn.One:
@@ -152,9 +147,20 @@ class CatCodingPanel {
 		}
 	}
 
-	private _updateForCat(webview: vscode.Webview, catName: keyof typeof cats) {
-		this._panel.title = catName;
-		this._panel.webview.html = this._getHtmlForWebview(webview, cats[catName]);
+	private _updateForCat(webview: vscode.Webview, page: string) {
+		switch (page) {
+			case 'projectsPage':
+		
+				this._panel.title = 'Projects + Components';		
+				this._panel.webview.html = html.projects;
+				break
+			case 'packagesPage':
+				this._panel.title = 'Packages';		
+				this._panel.webview.html = html.packages;
+				break
+
+		// this._panel.webview.html = this._getHtmlForWebview(webview, cats[catName]);
+		}
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview, catGifPath: string) {
@@ -171,45 +177,8 @@ class CatCodingPanel {
 		// Uri to load styles into webview
 		const stylesResetUri = webview.asWebviewUri(styleResetPath);
 		const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
-
-		// Use a nonce to only allow specific scripts to be run
-		const nonce = getNonce();
-
-		return `<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-
-				<!--
-					Use a content security policy to only allow loading images from https or from our extension directory,
-					and only allow scripts that have a specific nonce.
-				-->
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
-
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-				<link href="${stylesResetUri}" rel="stylesheet">
-				<link href="${stylesMainUri}" rel="stylesheet">
-
-				<title>Cat Coding</title>
-			</head>
-			<body>
-				<button>test</button></br>
-				<img src="${catGifPath}" width="300" />
-				<h1 id="lines-of-code-counter">0</h1>
-				<script nonce="${nonce}" src="${scriptUri}"></script>
-			</body>
-			</html>`;
+		return html.projects;
 	}
-}
-
-function getNonce() {
-	let text = '';
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	for (let i = 0; i < 32; i++) {
-		text += possible.charAt(Math.floor(Math.random() * possible.length));
-	}
-	return text;
 }
 
 export let chosenModule: string | undefined;
@@ -581,10 +550,17 @@ async function _refreshTree() {
 
 // register commands to the extension
 export const registerCommands = (context: vscode.ExtensionContext): void => {
-	const homePage = vscode.commands.registerCommand(
-		'qpy-ide.homePage',
+	const projectsPage = vscode.commands.registerCommand(
+		'qpy-ide.projectsPage',
 		async (extensionUri: vscode.Uri) => { 
-			CatCodingPanel.createOrShow(context.extensionUri);
+			HtmlPanel.createOrShow(context.extensionUri, 'projectsPage');
+		}
+	);
+
+	const packagesPage = vscode.commands.registerCommand(
+		'qpy-ide.packagesPage',
+		async (extensionUri: vscode.Uri) => { 
+			HtmlPanel.createOrShow(context.extensionUri, 'packagesPage');
 		}
 	);
 	
@@ -602,7 +578,8 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		removeFile,
 		removeDir,
 		createDir,
-		homePage,
+		projectsPage,
+		packagesPage,
 		vscode.window.registerWebviewViewProvider(
 			FirmwareViewProvider.viewType,
 			fwProvider
