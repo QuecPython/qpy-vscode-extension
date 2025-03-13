@@ -1,4 +1,6 @@
-For any issues please report them on github: [extension issues](https://github.com/QuecPython/vscode-extension-issues).
+## 1.1.0
+- compatible with vs code 1.98.1 or higher
+- fix minor issue
 ## 1.0.13
 - compatible with vs code 1.95.3 or higher
 - fix create multiple dirs

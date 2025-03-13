@@ -3,7 +3,6 @@
 Extension for handling interaction with QuecPython based modules. Communicate with Python based Quectel modules using the built-in REPL or AT CLI. Besides serial communication, extension provides out-of-the box module file system preview in a tree view. Users are free to opt using commands from the extension UI or execute raw commands via REPL.
 
 - Works with Windows only at the moment.
-- For any issues please report them on github: [extension issues](https://github.com/QuecPython/vscode-extension-issues).
 
 To compile:
 
@@ -48,6 +47,9 @@ Steps for flashing are:
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
 ## Release Notes
+## 1.1.0
+- compatible with vs code 1.98.1 or higher
+- fix minor issue
 ## 1.0.13
 - compatible with vs code 1.95.3 or higher
 - fix create multiple dirs
