@@ -108,7 +108,7 @@ export async function firmwareFlash(
 	};
 
 	// after download and unzip, get correct file from unzip forlder
-	if (filePath.startsWith('http')){
+	if (filePath.startsWith('http')){		
 		filePath = await getFileFromZip(filePath, 'The online firmware has been downloaded.');
 	}
 	
@@ -199,6 +199,7 @@ async function getFileFromZip(filePath, msg) {
 		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), '\\update\\firehose\\partition.mbn');
 	};
 
+	await sleep(3000);
 	// for new fw file type is .bin, if file doesn't exist use .bin
 	if (!fs.existsSync(filePath)) {
 		filePath = path.join(dirPath, filename.slice(0, filename.length - 4), filename.slice(0, filename.length - 4) + '.bin');
