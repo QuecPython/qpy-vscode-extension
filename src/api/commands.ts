@@ -18,6 +18,7 @@ import { sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 import { serialEmitter } from '../serial/serialBridge';
 import * as html from '../api/html';
+import * as path from 'path';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
 	return {
@@ -38,7 +39,7 @@ class HtmlPanel {
 	 */
 	public static currentPanel: HtmlPanel | undefined;
 
-	public static readonly viewType = 'catCoding';
+	public static readonly viewType = 'Applications';
 
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
@@ -95,14 +96,28 @@ class HtmlPanel {
 		// Handle messages from the webview
 		this._panel.webview.onDidReceiveMessage(
 			message => {
+				// log('_panel onDidReceiveMessage: ' + message.command);
+				// const editor = vscode.window.activeTextEditor;
+				// const filePath = editor.document.uri.fsPath;
+				// log(`Current file path: ${filePath}`);
+				// log(__dirname);
+
 				switch (message.command) {
+					case 'buttonClick':
+						const markdownContent = '# Hello World\nThis is a Markdown file created from a variable.';
+						
+					    const filePath = vscode.Uri.file(__dirname + '\\info.md');
+						log(filePath.fsPath);
+    					vscode.commands.executeCommand('markdown.showPreview', filePath.fsPath);
+						const webview = this._panel.webview;
+						this._updateForCat(webview, 'mdFile');
+						return;
+
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
 						return;
 				}
-			},
-			null,
-			this._disposables
+			}
 		);
 	}
 
@@ -128,7 +143,6 @@ class HtmlPanel {
 
 	private _update(page) {
 		const webview = this._panel.webview;
-		log('this._panel.viewColumn ' + this._panel.viewColumn);
 
 		// Vary the webview's content based on where it is located in the editor.
 		switch (page) {
@@ -150,16 +164,17 @@ class HtmlPanel {
 	private _updateForCat(webview: vscode.Webview, page: string) {
 		switch (page) {
 			case 'projectsPage':
-		
-				this._panel.title = 'Projects + Components';		
+				this._panel.title = 'Applications';		
 				this._panel.webview.html = html.projects;
 				break
-			case 'packagesPage':
-				this._panel.title = 'Packages';		
-				this._panel.webview.html = html.packages;
+			// case 'packagesPage':
+			// 	this._panel.title = 'Packages';		
+			// 	this._panel.webview.html = html.packages;
+			case 'mdFile':
+				this._panel.title = 'Readme.md';
+				this._panel.webview.html = html.mdFile;
 				break
-
-		// this._panel.webview.html = this._getHtmlForWebview(webview, cats[catName]);
+				// * Identifies the type of the webview panel, such as `'markdown.preview'`.
 		}
 	}
 
@@ -548,6 +563,13 @@ async function _refreshTree() {
     moduleFsTreeProvider.refresh();
 };
 
+const openViewerCommand = vscode.commands.registerCommand(
+    "qpy-ide.viewButton",
+    () => {
+      log('this is openViewerCommand');
+    }
+  );
+
 // register commands to the extension
 export const registerCommands = (context: vscode.ExtensionContext): void => {
 	const projectsPage = vscode.commands.registerCommand(
@@ -565,6 +587,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 	);
 	
 	context.subscriptions.push(
+		openViewerCommand,
 		openConnection,
 		closeConnection,
 		setLineEndCommand,
