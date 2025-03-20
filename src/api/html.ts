@@ -2,29 +2,6 @@ import { sleep } from '../utils/utils';
 import { log } from './userInterface';
 import axios from 'axios';
 
-function github_call(): any {
-    let items : string[][] = [];
-    let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:solution',
-        headers: { }
-    };
-    
-    axios.request(config)
-    .then((response) => {
-        for (let i of response.data.items){
-            items.push([i.name, i.description]);
-            // console.log([i.name, i.description]);
-        }
-        return items;
-    })
-    .catch((error) => {
-        console.log(error);
-        return items;
-    });
-}
-
 let projects_list: string[][] = [];
 let components_list: string[][] = [];
 let projects_list_string : string = '';
@@ -68,19 +45,45 @@ Promise.all([
     console.log('Error fetching projects:', error);
 });
 
-export const mdFile = `<!DOCTYPE html>
+export const mdFile = `
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown Preview</title>
+    <style>
+        body {
+            display: flex;
+        }
+        #left, #right {
+            width: 50%;
+            padding: 10px;
+        }
+        #left {
+            border-right: 1px solid #ccc;
+        }
+        .item-details, .item-buttons {
+            margin-bottom: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>Markdown Preview</h1>
-    <div id="content"></div>
+    <div id="left">
+        <h1>README</h1>
+        <div id="readme-content"></div>
+        <button id="show-more" class="hidden">Show More</button>
+    </div>
+    <div id="right">
+        <h1>List of Components</h1>
+        <div id="components-content"></div>
+    </div>
+
     <script src="https://unpkg.com/prettier@3.0.3/standalone.js"></script>
     <script src="https://unpkg.com/prettier@3.0.3/plugins/graphql.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moo/moo.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/json-loose/dist/index.umd.min.js"></script>
@@ -89,7 +92,7 @@ export const mdFile = `<!DOCTYPE html>
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             if (typeof marked !== 'undefined') {
-                const markdownContent = \`
+                const readmeContent = \`
 # QuecPython DTU Solution
 
 [中文](readme_zh.md) | English
@@ -129,37 +132,54 @@ QuecPython has launched a solution for DTU, including multi-protocol data transm
 Before you begin, ensure you have the following prerequisites:
 
 - **Hardware**:
-  - QuecPython development board kit or DTU device.
-    > Click for DTU EVB's [schematic](https://images.quectel.com/python/2024/10/DP-DTU-Q600-EVB-V1.3-SCH.pdf) and [silk screen](https://images.quectel.com/python/2024/10/DP-DTU-Q600-EVB-V1.3-SilkScreen.pdf) documents.
-  - USB Data Cable (USB-A to USB-C).
-  - PC (Windows 7, Windows 10, or Windows 11).
+                \`;
+                const readmeLines = readmeContent.split('\\n');
+                const initialContent = readmeLines.slice(0, 21).join('\\n');
+                const remainingContent = readmeLines.slice(21).join('\\n');
 
-- **Software**:
-  - USB driver for the QuecPython module.
-  - QPYcom debugging tool.
-  - QuecPython firmware and related software resources.
-  - Python text editor (e.g., [VSCode](https://code.visualstudio.com/), [Pycharm](https://www.jetbrains.com/pycharm/download/)).
+                document.getElementById('readme-content').innerHTML = marked.parse(initialContent);
 
-### Installation
+                if (remainingContent) {
+                    const showMoreButton = document.getElementById('show-more');
+                    showMoreButton.classList.remove('hidden');
+                    showMoreButton.addEventListener('click', () => {
+                        document.getElementById('readme-content').innerHTML += marked.parse(remainingContent);
+                        showMoreButton.classList.add('hidden');
+                    });
+                }
 
-1. **Clone the Repository**:
-   
-   git clone https://github.com/QuecPython/solution-DTU.git
-   cd solution-DTU
+                const components = ['Component 1', 'Component 2', 'Component 3'];
+                const components_description = ['Description 1', 'Description 2', 'Description 3'];
+                let componentsHTML = '';
 
-2. **Flash the Firmware**:
-   Follow the [instructions](https://python.quectel.com/doc/Application_guide/en/dev-tools/QPYcom/qpycom-dw.html#Download-Firmware) to flash the firmware to the development board.
+                components.forEach((component, index) => {
+                    componentsHTML += \`
+                        <div class="item-details">
+                            <h3>$\{component\}</h3>
+                            <p>$\{components_description[index]\}.</p>
+                        </div>
+                        <div class="item-buttons">
+                            <select id="versionSelect">
+                                <option value="1">Version 1</option>
+                                <option value="2">Version 2</option>
+                                <option value="3">Version 3</option>
+                            </select>
+                            <button disabled>Add to project</button>
+                            <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'buttonClick' });">View</button>
+                        </div>
+                    \`;
+                });
 
-   \`;
-
-                document.getElementById('content').innerHTML = marked.parse(markdownContent);
+                document.getElementById('components-content').innerHTML = componentsHTML;
             } else {
-                document.getElementById('content').innerHTML = '<p>Error loading Markdown parser.</p>';
+                document.getElementById('readme-content').innerHTML = '<p>Error loading Markdown parser.</p>';
+                document.getElementById('components-content').innerHTML = '<p>Error loading Markdown parser.</p>';
             }
         });
     </script>
 </body>
-</html>`;
+</html>
+`;
 
 export let projects = '';
 function set_projects(projects_list_string: string, description_list_string: string, components_list_string: string, components_description_list_string: string){
