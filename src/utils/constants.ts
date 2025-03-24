@@ -90,19 +90,17 @@ export const scriptName = {
 };
 
 export const moduleList = {
-	all: [	'EC600N', 'EC800N', 'EC200N', 'EG915N', 'EG912N', 
+	all: [ 'EC800N', 'EC200N', 'EG915N', 'EG912N', 
 			'EC800K', 'EC600K',
 			'EC800M', 'EG810M', 'EC600M',
-			'EC600U',  'EC200U',  'EG915U', 'EG912U', 
+			'EC600U', 'EG915U', 'EG912U', 
 			'EC600G', 'EC800G',
 			'EC600E', 'EC800E',
 			'EC200A',
 			'BC25',
-			'BG95', 'BG600L',
-			'FCM360W'
+			'BG95', 'BG600L'
 		],
 	platform: {
-		ec600n: ['CNLA', 'CNLC', 'CNLD', 'CNLE', 'CNLF'],
 		ec600m: ['EULA', 'CNCCEXT', 'CNLE', 'CNLF'],
 		ec800n: ['CNLA'],
 		ec800m: ['CNCC', 'CNGA', 'CNGB', 'CNGD', 'CNLE', 'CNLF'],
@@ -112,7 +110,6 @@ export const moduleList = {
 		ec800k: ['CNLC'],
 		ec600k: ['CNLC'],
 		ec600u: ['CNLB', 'CNLBBT', 'CNLBEXTFS8M', 'CNLC', 'CNLCEXTFS8M', 'EUAB'],
-		ec200u: ['CNLA', 'CNLB', 'CNAA', 'EUAA', 'EUAB', 'AUAA', 'AUAB'],
 		eg915u: ['EUAB', 'LAAB', 'EAAC'],
 		eg912u: ['GLAA', 'GLAC'],
 		ec600g: ['CNLD'],
@@ -123,7 +120,7 @@ export const moduleList = {
 		bg95: ['M1', 'M3', 'M6', 'M8', 'M9'],
 		eg810m: ['EULA'],
 		bg600l: ['M3'],
-		fcm360w: []
+		bc25: []
 		},
 	url: ["https://python.quectel.com/wp-admin/admin-ajax.php", "https://python.quectel.com/en/wp-admin/admin-ajax.php"]
 };
