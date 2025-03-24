@@ -4,11 +4,6 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 
 - Works with Windows only at the moment.
 
-To compile:
-
-    npm install -g vsce
-    vsce package
-
 ## Requirements
 - NodeJS installed on your system (12 or higher) - [NodeJS](https://nodejs.org)
 
@@ -46,7 +41,16 @@ Steps for flashing are:
 ## Known Issues
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
+To compile:
+
+    npm install -g vsce
+    vsce package
+
 ## Release Notes
+## 1.1.1
+- compatible with vs code 1.98.1 or higher
+- udpate list of modules
+- fix minor issues
 ## 1.1.0
 - compatible with vs code 1.98.1 or higher
 - fix minor issue
