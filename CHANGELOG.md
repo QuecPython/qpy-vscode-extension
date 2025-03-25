@@ -1,3 +1,7 @@
+## 1.1.1
+- compatible with vs code 1.98.2 or higher
+- udpate list of modules
+- fix minor issues
 ## 1.1.0
 - compatible with vs code 1.98.1 or higher
 - fix minor issue
