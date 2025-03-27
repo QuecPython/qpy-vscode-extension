@@ -96,7 +96,6 @@ export const moduleList = {
 			'EC600U', 'EG915U', 'EG912U', 
 			'EC600G', 'EC800G',
 			'EC600E', 'EC800E',
-			'EC200A',
 			'BC25',
 			'BG95', 'BG600L'
 		],
@@ -116,7 +115,6 @@ export const moduleList = {
 		ec800g: ['CNLD', 'CNLB'],
 		ec600e: ['CNLC', 'CNLCAUDIO'],
 		ec800e: ['CNLC', 'CNLCAUDIO'],
-		ec200a: ['CNDA', 'AUHA', 'EUHA', ],
 		bg95: ['M1', 'M3', 'M6', 'M8', 'M9'],
 		eg810m: ['EULA'],
 		bg600l: ['M3'],
