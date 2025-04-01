@@ -202,8 +202,8 @@ export default class FirmwareViewProvider
 					break;
 				}
 				case 'fwFlash': {
-					if (data.value === undefined) {
-						vscode.window.showErrorMessage('firmware not select!');
+					if (!data.value) {
+						vscode.window.showErrorMessage('firmware not selected!');
 						return;
 					} else {
 						let downloadPort: string = undefined;
@@ -244,6 +244,7 @@ export default class FirmwareViewProvider
 						let matchVer = false;
 						let atRet: String = "";
 
+						// for BG950S
 						if (downloadPort.includes('WCH')) {
 							const regex = /COM(\d+)/;
 							const match = downloadPort.match(regex);
@@ -254,23 +255,6 @@ export default class FirmwareViewProvider
 							return;
 						}
 
-						// SerialPort.list().then((ports) => {
-						// 	ports.forEach((port) => {
-						// 		log(port.path);
-						// 		if (port.manufacturer && port.manufacturer.includes('WCH')) {
-						// 			console.log(`Found WCH USB-SERIAL device on port: ${port.path}`);
-						// 		}
-						// 	});
-						// }).catch((err) => {
-						// 	console.error('Error listing ports:', err);
-						// });
-						// if () {
-						// 	'WCH USB-SERIAL Ch C  (COM14)'
-
-						// }
-						log(1);
-						log('atPort ' + atPort);
-						log('downloadPort ' + downloadPort);
 						let atGetVersion: SerialPort;
 						try {
 							atGetVersion = new SerialPort(
@@ -293,7 +277,6 @@ export default class FirmwareViewProvider
 							
 						}
 
-						log(2);
 						atGetVersion.open(() => {
 							atGetVersion.write(fwConfig.atGetVer);
 						});
