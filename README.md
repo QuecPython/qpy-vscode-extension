@@ -49,7 +49,7 @@ To compile:
 ## Release Notes
 ## 1.1.2
 - compatible with vs code 1.98.2 or higher
-- Add support for BETA BG950S fw
+- Add support for TEST BG950S fw
 ## 1.1.1
 - compatible with vs code 1.98.1 or higher
 - udpate list of modules
