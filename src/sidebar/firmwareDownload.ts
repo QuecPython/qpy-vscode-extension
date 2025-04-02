@@ -125,6 +125,12 @@ export async function firmwareFlash(
 		};
 	});
 
+	// for BG950S, we need manual restart
+	if (filePath.includes('BG950S')) {
+		vscode.window.showInformationMessage('Please restart the module, to start flashing...', { modal: true }, 'Ok');
+		vscode.window.showInformationMessage('Please restart the module, to start flashing...');
+	}
+
 	log("download cmd run in child_process");
 	let line = '';
 	download.stdout.on('data', data => {
@@ -137,7 +143,6 @@ export async function firmwareFlash(
 			index = line.indexOf('\n');
 		};
 		const result: string = data.toString(10, data.length);
-	
 	});
 
 	download.on('close', code => {
