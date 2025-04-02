@@ -47,6 +47,9 @@ To compile:
     vsce package
 
 ## Release Notes
+## 1.1.2
+- compatible with vs code 1.98.1 or higher
+- update packages and dependecies
 ## 1.1.1
 - compatible with vs code 1.98.1 or higher
 - udpate list of modules
@@ -69,7 +72,6 @@ To compile:
 - Fix issues with flashing online firmware
 - Fix issues with autocomplete
 - Update libraries
-
 ## 1.0.8
 - New feature for flashing firmware fool-proofing.
 - Add log output function (console & file)
