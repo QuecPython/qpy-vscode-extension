@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import SerialTerminal from './serial/serialTerminal';
-import { moduleFsTreeProvider, initStatusButtons, initPythonPath, log, openLog, closeLog, activateEnv } from './api/userInterface';
+import { moduleFsTreeProvider, initStatusButtons, log, openLog, closeLog } from './api/userInterface';
 import { registerCommands } from './api/commands';
 import FirmwareViewProvider from './sidebar/firmwareSidebar';
 import TreeDataProvider from './sidebar/quicAccess';
@@ -18,9 +18,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	fwProvider = new FirmwareViewProvider(context.extensionUri);
 	openLog();
 	initStatusButtons();
-	// initPythonPath(); // used for autocomplete 
 	registerCommands(context);
-	// activateEnv();
 	console.log("QuecPyhton activate success");
 
 }

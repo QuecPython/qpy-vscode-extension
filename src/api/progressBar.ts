@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { serialEmitter } from '../serial/serialBridge';
 import { status } from '../utils/constants';
+import { sleep } from '../utils/utils';
 
 export const progressBar = (title: string): void => {
 	vscode.window.withProgress(
@@ -44,6 +45,8 @@ const updateProgressBar = (
 		// event when fw flashed
 		childProcess.on(status.flashFinish, () => {
 			vscode.window.showInformationMessage('Flashed Successfully! Please restart the module!');
+			sleep(100); // in case of few events, mange the 1st one correctly, to avoid multiple msgs
+
 			resolve();
 			clearInterval(interval);
 		});

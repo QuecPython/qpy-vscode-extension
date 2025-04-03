@@ -130,7 +130,7 @@ export async function executeBatScript(): Promise<any> {
 	});
 	let stdout = '';
 	childProcess.stdout.on('data', (data) => {
-	  	stdout += new TextDecoder('gbk').decode(data);  // 解决驱动显示中文串口名称乱码问题
+	  	stdout += new TextDecoder('gbk').decode(data);  // fix the issue with Chinese serial port
 	});
   
 	return new Promise((resolve, reject) => {

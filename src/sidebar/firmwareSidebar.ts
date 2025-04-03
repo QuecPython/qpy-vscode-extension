@@ -202,8 +202,8 @@ export default class FirmwareViewProvider
 					break;
 				}
 				case 'fwFlash': {
-					if (data.value === undefined) {
-						vscode.window.showErrorMessage('firmware not select!');
+					if (!data.value) {
+						vscode.window.showErrorMessage('firmware not selected!');
 						return;
 					} else {
 						let downloadPort: string = undefined;
@@ -243,20 +243,40 @@ export default class FirmwareViewProvider
 						// Using AT confirm version is consistent with firmware
 						let matchVer = false;
 						let atRet: String = "";
-						let atGetVersion: SerialPort = new SerialPort(
-							{
-								path: atPort,
-								baudRate: 115200,
-								dataBits: 8,
-								parity: 'none',
-								stopBits: 1,
-								rtscts: true,
-								xon: true,
-								xoff: true,
-								xany: true,
-								highWaterMark: 1024,
-							}
-						);
+
+						// for BG950S
+						if (downloadPort.includes('WCH')) {
+							const regex = /COM(\d+)/;
+							const match = downloadPort.match(regex);
+							atPort = 'COM' + match[1];
+							downloadPort = 'COM' + match[1];
+							log('match ' + match[1]);
+							firmwareFlash(data.value, downloadPort);
+							return;
+						}
+
+						let atGetVersion: SerialPort;
+						try {
+							atGetVersion = new SerialPort(
+								{
+									path: atPort,
+									baudRate: 115200,
+									dataBits: 8,
+									parity: 'none',
+									stopBits: 1,
+									rtscts: true,
+									xon: true,
+									xoff: true,
+									xany: true,
+									highWaterMark: 1024,
+								}
+							);
+						} catch (error) {
+							log(error);
+							return;
+							
+						}
+
 						atGetVersion.open(() => {
 							atGetVersion.write(fwConfig.atGetVer);
 						});
@@ -294,6 +314,7 @@ export default class FirmwareViewProvider
 											log(parsedFwConfig["module"]);
 										};
 									});
+
 									// TODO check with module json file to determine whether it is supported
 									if (parsedFwConfig["module"] === ""){
 										matchVer = false;
@@ -304,6 +325,7 @@ export default class FirmwareViewProvider
 											matchVer = false;
 										}
 									};
+
 									if (matchVer) {
 										firmwareFlash(data.value, downloadPort);
 									} else {
