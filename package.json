@@ -49,11 +49,6 @@
 		},
 		"commands": [
 			{
-				"command": "qpy-ide.viewButton",
-				"title": "Open MDX Viewer",
-				"category": "MDX"
-			},
-			{
 				"command": "qpy-ide.refreshModuleFS",
 				"title": "Refresh",
 				"icon": {
@@ -286,6 +281,7 @@
 		"node-abi": "^4.2.0",
 		"request": "^2.88.2",
 		"serialport": "^13.0.0",
+		"simple-git": "^3.27.0",
 		"typescript": "^5.8.2"
 	}
 }

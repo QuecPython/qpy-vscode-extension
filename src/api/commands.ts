@@ -19,6 +19,8 @@ import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 import { serialEmitter } from '../serial/serialBridge';
 import * as html from '../api/html';
 import * as path from 'path';
+import axios from 'axios';
+import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
 	return {
@@ -103,16 +105,92 @@ class HtmlPanel {
 				// log(__dirname);
 
 				switch (message.command) {
-					case 'buttonClick':
-						const markdownContent = '# Hello World\nThis is a Markdown file created from a variable.';
-						
-					    const filePath = vscode.Uri.file(__dirname + '\\info.md');
-						log(filePath.fsPath);
-    					vscode.commands.executeCommand('markdown.showPreview', filePath.fsPath);
-						const webview = this._panel.webview;
-						this._updateForCat(webview, 'mdFile');
-						return;
+					case 'importClick':
+						log('m ' + JSON.stringify(message));
 
+						const options: Partial<SimpleGitOptions> = {
+							baseDir: process.cwd(),
+							binary: 'git',
+							maxConcurrentProcesses: 6,
+							trimmed: false,
+						 };
+						const git: SimpleGit = simpleGit(options);
+						// const fwDirPath: string = path.join(__dirname, '..', '..', 'myModules');
+						// log(fwDirPath);
+						const dialogOptions: vscode.OpenDialogOptions = {
+							canSelectMany: false,
+							openLabel: 'Select',
+							canSelectFiles: false,
+							canSelectFolders: true,
+						};
+						
+						let repoPath = ''
+						vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
+							let project = html.projects_info[message.value];
+							let repoPath = fileUri[0].fsPath + '\\' + project.name;
+							git.clone(project.clone_url, repoPath).then(() => {
+								try {
+									const uri = vscode.Uri.file(repoPath);
+									vscode.commands.executeCommand('vscode.openFolder', uri, true);
+								} catch (error) {
+									console.error('Error cloning repository:', error);
+								}
+							}).catch((error) => {
+								console.error('Error cloning repository:', error);
+							});
+						});
+						return;
+					case 'viewClick':
+						log(message.value);
+						let project = html.projects_info[message.value];
+						// this._updateForCat(webview, 'mdFile', html.mdFile);
+						let readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/readme.md';
+						log(readmeUrl);
+						let mdText = `
+# QuecPython DTU Solution
+
+[中文](readme_zh.md) | English
+
+Welcome to the QuecPython DTU Solution repository! This repository provides a comprehensive solution for developing DTU device applications using QuecPython.
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running the Application](#running-the-application)
+- [Directory Structure](#directory-structure)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+
+## Introduction
+
+QuecPython has launched a solution for DTU, including multi-protocol data transmission (TCP/UDP/MQTT/HTTP, etc.), integration with common cloud platforms, and support for parameter configuration of DTU using upper computer tools.
+
+![DTU](./docs/en/media/DP-DTU-Q600.png)
+
+## Features
+
+- **Multi-Protocol Data Transmission**: Supports data transmission via TCP/UDP/MQTT/HTTP protocols, configurable as command mode or transparent transmission mode.
+- **Integration with Common Cloud Platforms**: Supports integration with Alibaba Cloud, Tencent Cloud, Huawei Cloud, AWS, and other cloud platforms.
+- **Parameter Configuration and Storage**: Supports parameter configuration of the device using a dedicated DTU tool, with persistent storage on the device.
+
+## Getting Started
+
+### Prerequisites
+
+Before you begin, ensure you have the following prerequisites:
+
+- **Hardware**:
+						`;
+						let data = this._get_readme(readmeUrl);
+
+						mdText = 'this is text';
+						return;
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
 						return;
@@ -147,32 +225,54 @@ class HtmlPanel {
 		// Vary the webview's content based on where it is located in the editor.
 		switch (page) {
 			case 'projectsPage':
-				this._updateForCat(webview, page);
-				return;
-
-			case 'packagesPage':
-				this._updateForCat(webview, page);
-				return;
-
-			case vscode.ViewColumn.One:
-			default:
-				this._updateForCat(webview, 'Coding Cat');
+				this._updateForCat(webview, page, html.projects);
 				return;
 		}
 	}
 
-	private _updateForCat(webview: vscode.Webview, page: string) {
+	private _get_readme(url: string){
+		log('url ' + url);
+		let config = {
+			method: 'get',
+			maxBodyLength: Infinity,
+			url: url,
+			headers: { }
+		};
+		
+		axios.request(config)
+		.then((response) => {
+			let data: string = response.data;
+			// remove ` from text
+			data = data.split('`').join('');
+			
+			html.set_md(data);
+			let webview = this._panel.webview;
+			this._updateForCat(webview, 'mdFile', html.mdFile);
+		})
+		.catch((error) => {
+			console.log(error);
+			return error;
+		});
+	}
+
+	private _get_submodules(){
+		'https://raw.githubusercontent.com/QuecPython/solution-DTU/refs/heads/master/.gitmodules'
+	}
+	
+	private _updateForCat(webview: vscode.Webview, page: string, text: string) {
 		switch (page) {
 			case 'projectsPage':
 				this._panel.title = 'Applications';		
-				this._panel.webview.html = html.projects;
+				// this._panel.webview.html = html.projects;
+				this._panel.webview.html = text;
 				break
 			// case 'packagesPage':
 			// 	this._panel.title = 'Packages';		
 			// 	this._panel.webview.html = html.packages;
 			case 'mdFile':
 				this._panel.title = 'Readme.md';
-				this._panel.webview.html = html.mdFile;
+				// this._panel.webview.html = html.mdFile;
+				this._panel.webview.html = text;
 				break
 				// * Identifies the type of the webview panel, such as `'markdown.preview'`.
 		}
@@ -563,12 +663,6 @@ async function _refreshTree() {
     moduleFsTreeProvider.refresh();
 };
 
-const openViewerCommand = vscode.commands.registerCommand(
-    "qpy-ide.viewButton",
-    () => {
-      log('this is openViewerCommand');
-    }
-  );
 
 // register commands to the extension
 export const registerCommands = (context: vscode.ExtensionContext): void => {
@@ -587,7 +681,6 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 	);
 	
 	context.subscriptions.push(
-		openViewerCommand,
 		openConnection,
 		closeConnection,
 		setLineEndCommand,

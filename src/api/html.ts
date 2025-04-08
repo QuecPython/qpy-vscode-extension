@@ -3,8 +3,11 @@ import { log } from './userInterface';
 import axios from 'axios';
 
 let projects_list: string[][] = [];
+// save preojcts info to list of dicts
+export let projects_info = {};
 let components_list: string[][] = [];
 let projects_list_string : string = '';
+let ids_list_string : string = '';
 let components_list_string : string = '';
 let projects_description_list_string : string = '';
 let components_description_list_string : string = '';
@@ -27,162 +30,135 @@ Promise.all([
     axios.request(config1)
 ])
 .then(([response, response1]) => {
-    projects_list = response.data.items.map((item: any) => [item.name, item.description]);
+    const items = response.data.items;
+    // save projects to dict, keys are projects ids
+    items.map((item: any) => projects_info[item.id] = item);
+
+    projects_list = items.map((item: any) => [item.name, item.id, item.description]);
+
+    // build string from a list, and use it in js string
     projects_list_string = '\[' + projects_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-    projects_description_list_string = '\[' + projects_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+    ids_list_string = '\[' + projects_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+    projects_description_list_string = '\[' + projects_list.map(item => `\"${item[2]}\"`).join(', ') + '\]';
 
     components_list = response1.data.items.map((item: any) => [item.name, item.description]);
     components_list_string = '\[' + components_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
     components_description_list_string = '\[' + components_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
     set_projects(
         projects_list_string,
+        ids_list_string,
         projects_description_list_string,
         components_list_string,
-        components_description_list_string
+        components_description_list_string,
+
     );
 })
 .catch((error) => {
     console.log('Error fetching projects:', error);
 });
+let mdText = '';
+export let mdFile = '';
 
-export const mdFile = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Preview</title>
-    <style>
-        body {
-            display: flex;
-        }
-        #left, #right {
-            width: 50%;
-            padding: 10px;
-        }
-        #left {
-            border-right: 1px solid #ccc;
-        }
-        .item-details, .item-buttons {
-            margin-bottom: 10px;
-        }
-        .hidden {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div id="left">
-        <h1>README</h1>
-        <div id="readme-content"></div>
-        <button id="show-more" class="hidden">Show More</button>
-    </div>
-    <div id="right">
-        <h1>List of Components</h1>
-        <div id="components-content"></div>
-    </div>
-
-    <script src="https://unpkg.com/prettier@3.0.3/standalone.js"></script>
-    <script src="https://unpkg.com/prettier@3.0.3/plugins/graphql.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moo/moo.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/json-loose/dist/index.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/attributes-parser/dist/index.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked-code-format/dist/index.umd.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            if (typeof marked !== 'undefined') {
-                const readmeContent = \`
-# QuecPython DTU Solution
-
-[中文](readme_zh.md) | English
-
-Welcome to the QuecPython DTU Solution repository! This repository provides a comprehensive solution for developing DTU device applications using QuecPython.
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Features](#features)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the Application](#running-the-application)
-- [Directory Structure](#directory-structure)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Support](#support)
-
-## Introduction
-
-QuecPython has launched a solution for DTU, including multi-protocol data transmission (TCP/UDP/MQTT/HTTP, etc.), integration with common cloud platforms, and support for parameter configuration of DTU using upper computer tools.
-
-![DTU](./docs/en/media/DP-DTU-Q600.png)
-
-## Features
-
-- **Multi-Protocol Data Transmission**: Supports data transmission via TCP/UDP/MQTT/HTTP protocols, configurable as command mode or transparent transmission mode.
-- **Integration with Common Cloud Platforms**: Supports integration with Alibaba Cloud, Tencent Cloud, Huawei Cloud, AWS, and other cloud platforms.
-- **Parameter Configuration and Storage**: Supports parameter configuration of the device using a dedicated DTU tool, with persistent storage on the device.
-
-## Getting Started
-
-### Prerequisites
-
-Before you begin, ensure you have the following prerequisites:
-
-- **Hardware**:
-                \`;
-                const readmeLines = readmeContent.split('\\n');
-                const initialContent = readmeLines.slice(0, 21).join('\\n');
-                const remainingContent = readmeLines.slice(21).join('\\n');
-
-                document.getElementById('readme-content').innerHTML = marked.parse(initialContent);
-
-                if (remainingContent) {
-                    const showMoreButton = document.getElementById('show-more');
-                    showMoreButton.classList.remove('hidden');
-                    showMoreButton.addEventListener('click', () => {
-                        document.getElementById('readme-content').innerHTML += marked.parse(remainingContent);
-                        showMoreButton.classList.add('hidden');
-                    });
-                }
-
-                const components = ['Component 1', 'Component 2', 'Component 3'];
-                const components_description = ['Description 1', 'Description 2', 'Description 3'];
-                let componentsHTML = '';
-
-                components.forEach((component, index) => {
-                    componentsHTML += \`
-                        <div class="item-details">
-                            <h3>$\{component\}</h3>
-                            <p>$\{components_description[index]\}.</p>
-                        </div>
-                        <div class="item-buttons">
-                            <select id="versionSelect">
-                                <option value="1">Version 1</option>
-                                <option value="2">Version 2</option>
-                                <option value="3">Version 3</option>
-                            </select>
-                            <button disabled>Add to project</button>
-                            <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'buttonClick' });">View</button>
-                        </div>
-                    \`;
-                });
-
-                document.getElementById('components-content').innerHTML = componentsHTML;
-            } else {
-                document.getElementById('readme-content').innerHTML = '<p>Error loading Markdown parser.</p>';
-                document.getElementById('components-content').innerHTML = '<p>Error loading Markdown parser.</p>';
+export function set_md(text){
+    mdText = text;
+    mdFile = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Markdown Preview</title>
+        <style>
+            body {
+                display: flex;
             }
-        });
-    </script>
-</body>
-</html>
-`;
+            #left, #right {
+                width: 50%;
+                padding: 10px;
+            }
+            #left {
+                border-right: 1px solid #ccc;
+            }
+            .item-details, .item-buttons {
+                margin-bottom: 10px;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="left">
+            <h1>README</h1>
+            <div id="readme-content"></div>
+            <button id="show-more" class="hidden">Show More</button>
+        </div>
+        <div id="right">
+            <h1>List of Components</h1>
+            <div id="components-content"></div>
+        </div>
 
+        <script src="https://unpkg.com/prettier@3.0.3/standalone.js"></script>
+        <script src="https://unpkg.com/prettier@3.0.3/plugins/graphql.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/moo/moo.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/json-loose/dist/index.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/attributes-parser/dist/index.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked-code-format/dist/index.umd.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', (event) => {
+                if (typeof marked !== 'undefined') {
+                    const readmeContent = \`${mdText}\`;
+                    const readmeLines = readmeContent.split('\\n');
+                    const initialContent = readmeLines.slice(0, 21).join('\\n');
+                    const remainingContent = readmeLines.slice(21).join('\\n');
+
+                    document.getElementById('readme-content').innerHTML = marked.parse(initialContent);
+
+                    if (remainingContent) {
+                        const showMoreButton = document.getElementById('show-more');
+                        showMoreButton.classList.remove('hidden');
+                        showMoreButton.addEventListener('click', () => {
+                            document.getElementById('readme-content').innerHTML += marked.parse(remainingContent);
+                            showMoreButton.classList.add('hidden');
+                        });
+                    }
+
+                    const components = ['Component 1', 'Component 2', 'Component 3'];
+                    const components_description = ['Description 1', 'Description 2', 'Description 3'];
+                    let componentsHTML = '';
+
+                    components.forEach((component, index) => {
+                        componentsHTML += \`
+                            <div class="item-details">
+                                <h3>$\{component\}</h3>
+                                <p>$\{components_description[index]\}.</p>
+                            </div>
+                            <div class="item-buttons">
+                                <select id="versionSelect">
+                                    <option value="1">Version 1</option>
+                                    <option value="2">Version 2</option>
+                                    <option value="3">Version 3</option>
+                                </select>
+                                <button disabled>Add to project</button>
+                                <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'buttonClick' });">View</button>
+                            </div>
+                        \`;
+                    });
+
+                    document.getElementById('components-content').innerHTML = componentsHTML;
+                } else {
+                    document.getElementById('readme-content').innerHTML = '<p>Error loading Markdown parser.</p>';
+                    document.getElementById('components-content').innerHTML = '<p>Error loading Markdown parser.</p>';
+                }
+            });
+        </script>
+    </body>
+    </html>
+    `;
+}
 export let projects = '';
-function set_projects(projects_list_string: string, description_list_string: string, components_list_string: string, components_description_list_string: string){
+function set_projects(projects_list_string: string, ids_list_string: string, description_list_string: string, components_list_string: string, components_description_list_string: string){
     projects = `
     <!DOCTYPE html>
     <html lang="en">
@@ -268,6 +244,7 @@ function set_projects(projects_list_string: string, description_list_string: str
     </head>
     <body>
         <div class="sticky-buttons">
+            <button>New Project</button>
             <button id="showAll">Show All</button>
             <button id="hideAll">Hide All</button>
         </div>
@@ -284,8 +261,9 @@ function set_projects(projects_list_string: string, description_list_string: str
         <script>
             const vscode = acquireVsCodeApi();
             vscode.postMessage({ command: 'startup' });
-            
+
             const projects = ${projects_list_string};
+            const projects_ids = ${ids_list_string};
             const projects_description = ${description_list_string};
             const components = ${components_list_string};
             const components_description = ${components_description_list_string};
@@ -323,11 +301,11 @@ function set_projects(projects_list_string: string, description_list_string: str
                     projectItem.innerHTML = \`
                         <div class="item-details">
                             <h3>$\{project\}</h3>
-                            <p>$\{projects_description[index]\}.</p>
+                            <p>$\{projects_description[index]\}</p>
                         </div>
                         <div class="item-buttons">
-                            <button>Import</button>
-                            <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'buttonClick' });">View</button>
+                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projects_ids[index]\}'});">Import</button>
+                            <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projects_ids[index]\}'});">View</button>
                         </div>
                     \`;
                     projectList.appendChild(projectItem);
