@@ -12,15 +12,13 @@ export const terminalRegistry: { [key: string]: SerialTerminal } = {};
 export let fwProvider: FirmwareViewProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
-	log(`${new Date().toLocaleString()} - registerTreeDataProvider activated`);
 	vscode.window.registerTreeDataProvider('qpyModuleFS', moduleFsTreeProvider);
 	vscode.window.registerTreeDataProvider('quickAccess', new TreeDataProvider());
 	fwProvider = new FirmwareViewProvider(context.extensionUri);
-	openLog();
+	// openLog();
 	initStatusButtons();
 	registerCommands(context);
 	console.log("QuecPyhton activate success");
-
 }
 
 export function deactivate() {

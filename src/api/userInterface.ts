@@ -195,25 +195,3 @@ export function closeLog() {
         outputChannel.dispose(); // 当插件被禁用时，清理资源
     }
 }
-
-// export function activate(context: vscode.ExtensionContext) {
-//     outputChannel = vscode.window.createOutputChannel('My Extension Log');
-
-//     // 示例：写入一条初始化消息到日志
-//     outputChannel.appendLine(`Extension activated at ${new Date().toLocaleString()}`);
-
-//     // 注册命令或其他事件处理程序，在需要的地方写入日志
-//     context.subscriptions.push(vscode.commands.registerCommand('myExtension.logSomething', () => {
-//         outputChannel.appendLine('Some event occurred.');
-//     }));
-
-//     // 显示日志面板
-//     outputChannel.show();
-// }
-
-// export function deactivate() {
-//     if (outputChannel) {
-//         outputChannel.dispose(); // 当插件被禁用时，清理资源
-//     }
-// }
-

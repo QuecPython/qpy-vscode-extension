@@ -11,6 +11,8 @@ let ids_list_string : string = '';
 let components_list_string : string = '';
 let projects_description_list_string : string = '';
 let components_description_list_string : string = '';
+
+// solution repos config
 let config = {
     method: 'get',
     maxBodyLength: Infinity,
@@ -18,6 +20,7 @@ let config = {
     headers: {}
 };
 
+// component repos config
 let config1 = {
     method: 'get',
     maxBodyLength: Infinity,
@@ -50,7 +53,6 @@ Promise.all([
         projects_description_list_string,
         components_list_string,
         components_description_list_string,
-
     );
 })
 .catch((error) => {
@@ -59,7 +61,8 @@ Promise.all([
 let mdText = '';
 export let mdFile = '';
 
-export function set_md(text){
+export async function set_md(text: string, submodulesData: string){
+    log('set_md ' + submodulesData);
     mdText = text;
     mdFile = `
     <!DOCTYPE html>
@@ -110,8 +113,10 @@ export function set_md(text){
                 if (typeof marked !== 'undefined') {
                     const readmeContent = \`${mdText}\`;
                     const readmeLines = readmeContent.split('\\n');
-                    const initialContent = readmeLines.slice(0, 21).join('\\n');
-                    const remainingContent = readmeLines.slice(21).join('\\n');
+
+                    // show 40 lines before show more button
+                    const initialContent = readmeLines.slice(0, 31).join('\\n');
+                    const remainingContent = readmeLines.slice(31).join('\\n');
 
                     document.getElementById('readme-content').innerHTML = marked.parse(initialContent);
 
@@ -124,27 +129,28 @@ export function set_md(text){
                         });
                     }
 
-                    const components = ['Component 1', 'Component 2', 'Component 3'];
+                    const components = ${submodulesData};
+                    const vscode = acquireVsCodeApi();
+                    vscode.postMessage({ command: 'logData' , value: components });
+
                     const components_description = ['Description 1', 'Description 2', 'Description 3'];
                     let componentsHTML = '';
 
-                    components.forEach((component, index) => {
-                        componentsHTML += \`
-                            <div class="item-details">
-                                <h3>$\{component\}</h3>
-                                <p>$\{components_description[index]\}.</p>
-                            </div>
-                            <div class="item-buttons">
-                                <select id="versionSelect">
-                                    <option value="1">Version 1</option>
-                                    <option value="2">Version 2</option>
-                                    <option value="3">Version 3</option>
-                                </select>
-                                <button disabled>Add to project</button>
-                                <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'buttonClick' });">View</button>
-                            </div>
-                        \`;
-                    });
+                    if (components.length == 0) {
+                        componentsHTML += '<p>No components found</p>';
+                    } else {
+                        components.forEach((component, index) => {
+                            componentsHTML += \`
+                                <div class="item-details">
+                                    <h3>$\{component\}</h3>
+                                </div>
+                                <div class="item-buttons">
+                                    <button disabled>Remove from project</button>
+                                    <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'buttonClick' });">View</button>
+                                </div>
+                            \`;
+                        });
+                    }
 
                     document.getElementById('components-content').innerHTML = componentsHTML;
                 } else {
@@ -244,7 +250,7 @@ function set_projects(projects_list_string: string, ids_list_string: string, des
     </head>
     <body>
         <div class="sticky-buttons">
-            <button>New Project</button>
+            <button id="newProejct" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
             <button id="showAll">Show All</button>
             <button id="hideAll">Hide All</button>
         </div>
@@ -304,6 +310,11 @@ function set_projects(projects_list_string: string, ids_list_string: string, des
                             <p>$\{projects_description[index]\}</p>
                         </div>
                         <div class="item-buttons">
+                            <select id="versionSelect">
+                                <option value="1">Version 1</option>
+                                <option value="2">Version 2</option>
+                                <option value="3">Version 3</option>
+                            </select>
                             <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projects_ids[index]\}'});">Import</button>
                             <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projects_ids[index]\}'});">View</button>
                         </div>

@@ -104,27 +104,42 @@ class HtmlPanel {
 				// log(`Current file path: ${filePath}`);
 				// log(__dirname);
 
+				log(JSON.stringify(message));
+				const dialogOptions: vscode.OpenDialogOptions = {
+					canSelectMany: false,
+					openLabel: 'Select',
+					canSelectFiles: false,
+					canSelectFolders: true,
+				};
 				switch (message.command) {
-					case 'importClick':
-						log('m ' + JSON.stringify(message));
+					case 'newProjectClick':
+						log('this is newProjectClick');
 
+						vscode.window.showOpenDialog(dialogOptions).then(fileUri => {							
+							const uri = vscode.Uri.file(fileUri[0].fsPath);
+							vscode.commands.executeCommand('vscode.openFolder', uri, true);
+							// git.clone(project.clone_url, repoPath).then(() => {
+							// 	try {
+							// 		const uri = vscode.Uri.file(repoPath);
+							// 		vscode.commands.executeCommand('vscode.openFolder', uri, true);
+							// 	} catch (error) {
+							// 		console.error('Error cloning repository:', error);
+							// 	}
+							// }).catch((error) => {
+							// 	console.error('Error cloning repository:', error);
+							// });
+						});
+
+						return
+					case 'importClick':
 						const options: Partial<SimpleGitOptions> = {
 							baseDir: process.cwd(),
 							binary: 'git',
 							maxConcurrentProcesses: 6,
 							trimmed: false,
 						 };
-						const git: SimpleGit = simpleGit(options);
-						// const fwDirPath: string = path.join(__dirname, '..', '..', 'myModules');
-						// log(fwDirPath);
-						const dialogOptions: vscode.OpenDialogOptions = {
-							canSelectMany: false,
-							openLabel: 'Select',
-							canSelectFiles: false,
-							canSelectFolders: true,
-						};
 						
-						let repoPath = ''
+						const git: SimpleGit = simpleGit(options);						
 						vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
 							let project = html.projects_info[message.value];
 							let repoPath = fileUri[0].fsPath + '\\' + project.name;
@@ -144,52 +159,11 @@ class HtmlPanel {
 						log(message.value);
 						let project = html.projects_info[message.value];
 						// this._updateForCat(webview, 'mdFile', html.mdFile);
-						let readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/readme.md';
+						let readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.md';
+						let submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
 						log(readmeUrl);
-						let mdText = `
-# QuecPython DTU Solution
-
-[中文](readme_zh.md) | English
-
-Welcome to the QuecPython DTU Solution repository! This repository provides a comprehensive solution for developing DTU device applications using QuecPython.
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Features](#features)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the Application](#running-the-application)
-- [Directory Structure](#directory-structure)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Support](#support)
-
-## Introduction
-
-QuecPython has launched a solution for DTU, including multi-protocol data transmission (TCP/UDP/MQTT/HTTP, etc.), integration with common cloud platforms, and support for parameter configuration of DTU using upper computer tools.
-
-![DTU](./docs/en/media/DP-DTU-Q600.png)
-
-## Features
-
-- **Multi-Protocol Data Transmission**: Supports data transmission via TCP/UDP/MQTT/HTTP protocols, configurable as command mode or transparent transmission mode.
-- **Integration with Common Cloud Platforms**: Supports integration with Alibaba Cloud, Tencent Cloud, Huawei Cloud, AWS, and other cloud platforms.
-- **Parameter Configuration and Storage**: Supports parameter configuration of the device using a dedicated DTU tool, with persistent storage on the device.
-
-## Getting Started
-
-### Prerequisites
-
-Before you begin, ensure you have the following prerequisites:
-
-- **Hardware**:
-						`;
-						let data = this._get_readme(readmeUrl);
-
-						mdText = 'this is text';
+						log(submodulesUrl);
+						let data = this._get_readme(readmeUrl, submodulesUrl);
 						return;
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
@@ -230,8 +204,99 @@ Before you begin, ensure you have the following prerequisites:
 		}
 	}
 
-	private _get_readme(url: string){
-		log('url ' + url);
+	private _get_readme(readmeUrl: string, submodulesUrl: string){
+		let config = {
+			method: 'get',
+			maxBodyLength: Infinity,
+			url: readmeUrl,
+			headers: { }
+		};
+
+		let config1 = {
+			method: 'get',
+			maxBodyLength: Infinity,
+			url: submodulesUrl,
+			headers: { }
+		};
+
+		Promise.allSettled([
+			axios.request(config),
+			axios.request(config1)
+		])
+		.then(results => {
+			let readmeData: string, submodulesData: string = '[]';
+			results.forEach((result, index) => {
+				log(result.status);
+				if (result.status == 'fulfilled') {
+					if (index == 0){
+						readmeData = result.value.data;
+						// remove ` from text
+						readmeData = readmeData.split('`').join('');							
+						log(readmeData.length);
+					} else {
+						submodulesData = this._extractComponents(result.value.data);
+						log(submodulesData);
+					}
+				}
+			})
+			html.set_md(readmeData, submodulesData);
+			let webview = this._panel.webview;
+			this._updateForCat(webview, 'mdFile', html.mdFile);				
+		});
+
+		return;
+		Promise.all([
+			axios.request(config),
+			axios.request(config1)
+		])
+		.then(([response, response1]) => {
+			let readmeData: string = response.data;
+			// remove ` from text
+			readmeData = readmeData.split('`').join('');
+			log(response1.status);
+
+			
+			// log(submodulesData);
+			html.set_md(readmeData, '');
+			let webview = this._panel.webview;
+			this._updateForCat(webview, 'mdFile', html.mdFile);
+
+		})
+		.catch((error) => {
+			log('Error fetching projects:', error);
+		});
+		return
+		
+		axios.request(config)
+		.then((response) => {
+			this._get_submodules(submodulesUrl);
+			let readmeData: string = response.data;
+			// remove ` from text
+			readmeData = readmeData.split('`').join('');
+			
+			// html.set_md(readmeData);
+			let webview = this._panel.webview;
+			this._updateForCat(webview, 'mdFile', html.mdFile);
+		})
+		.catch((error) => {
+			console.log(error);
+			return error;
+		});
+	}
+	private _extractComponents(text: string): string {
+		const urlRegex = /url = (https:\/\/github\.com\/[^\s]+)/g;
+		const components: string[] = [];
+		let match;
+	
+		while ((match = urlRegex.exec(text)) !== null) {
+			const repoName = match[1].replace('.git', '').split('/').pop();
+			components.push(repoName);
+		}
+		let components_string = '\[' + components.map(item => `\"${item}\"`).join(', ') + '\]';
+		return components_string;
+	}
+	
+	private _get_submodules(url: string){
 		let config = {
 			method: 'get',
 			maxBodyLength: Infinity,
@@ -241,22 +306,14 @@ Before you begin, ensure you have the following prerequisites:
 		
 		axios.request(config)
 		.then((response) => {
-			let data: string = response.data;
-			// remove ` from text
-			data = data.split('`').join('');
-			
-			html.set_md(data);
-			let webview = this._panel.webview;
-			this._updateForCat(webview, 'mdFile', html.mdFile);
+			let data = this._extractComponents(response.data);
+			log(data);
+			return data;
 		})
 		.catch((error) => {
-			console.log(error);
-			return error;
+			log('no Modules');
+			return;
 		});
-	}
-
-	private _get_submodules(){
-		'https://raw.githubusercontent.com/QuecPython/solution-DTU/refs/heads/master/.gitmodules'
 	}
 	
 	private _updateForCat(webview: vscode.Webview, page: string, text: string) {
