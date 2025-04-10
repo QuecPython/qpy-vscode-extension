@@ -42,6 +42,7 @@ class HtmlPanel {
 	public static currentPanel: HtmlPanel | undefined;
 
 	public static readonly viewType = 'Applications';
+	private subModules: string; // used for project subModules
 
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
@@ -98,11 +99,9 @@ class HtmlPanel {
 		// Handle messages from the webview
 		this._panel.webview.onDidReceiveMessage(
 			message => {
-				// log('_panel onDidReceiveMessage: ' + message.command);
 				// const editor = vscode.window.activeTextEditor;
 				// const filePath = editor.document.uri.fsPath;
 				// log(`Current file path: ${filePath}`);
-				// log(__dirname);
 
 				log(JSON.stringify(message));
 				const dialogOptions: vscode.OpenDialogOptions = {
@@ -111,23 +110,13 @@ class HtmlPanel {
 					canSelectFiles: false,
 					canSelectFolders: true,
 				};
+				let readmeUrl: string;
+				let submodulesUrl: string;
 				switch (message.command) {
 					case 'newProjectClick':
-						log('this is newProjectClick');
-
 						vscode.window.showOpenDialog(dialogOptions).then(fileUri => {							
 							const uri = vscode.Uri.file(fileUri[0].fsPath);
 							vscode.commands.executeCommand('vscode.openFolder', uri, true);
-							// git.clone(project.clone_url, repoPath).then(() => {
-							// 	try {
-							// 		const uri = vscode.Uri.file(repoPath);
-							// 		vscode.commands.executeCommand('vscode.openFolder', uri, true);
-							// 	} catch (error) {
-							// 		console.error('Error cloning repository:', error);
-							// 	}
-							// }).catch((error) => {
-							// 	console.error('Error cloning repository:', error);
-							// });
 						});
 
 						return
@@ -155,24 +144,68 @@ class HtmlPanel {
 							});
 						});
 						return;
+					case 'viewComponentClick':
+						log('viewComponentClick');
+						this._viewSubmodule(message.value);
+						return;
 					case 'viewClick':
-						log(message.value);
 						let project = html.projects_info[message.value];
-						// this._updateForCat(webview, 'mdFile', html.mdFile);
-						let readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.md';
-						let submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
+						readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.md';
+						submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
+
+						// build readme file for a project
+						this._get_readme(readmeUrl, submodulesUrl);
+						return;
+					case 'viewComponent':
+						log('this is viewComponent');
+						let component = html.components_info[message.value];
+						readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + component.name + '/' + component.default_branch + '/README.md';
+						submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + component.name + '/refs/heads/' + component.default_branch + '/.gitmodules';
 						log(readmeUrl);
-						log(submodulesUrl);
-						let data = this._get_readme(readmeUrl, submodulesUrl);
+						log(submodulesUrl);						
+
+						// build readme file for a project
+						this._get_readme(readmeUrl, submodulesUrl);
 						return;
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
 						return;
+					return;
 				}
 			}
 		);
 	}
 
+	private _viewSubmodule(repoUrl: string) {
+		log('subModules ' + this.subModules);
+
+		// get default_branch for repo
+		const start = repoUrl.indexOf('.com/') + 5; // Find the position after '.com/'
+		const end = repoUrl.indexOf('.git'); // Find the position of '.git'
+		const repoName = repoUrl.substring(start, end);
+
+		let url = `https://api.github.com/repos/${repoName}` ;
+		let config = {
+			method: 'get',
+			maxBodyLength: Infinity,
+			url: url,
+			headers: {}
+		};
+
+		axios.request(config).then((response) =>{
+			let project = response.data
+			log(project.default_branch);
+
+			let readmeUrl = 'https://raw.githubusercontent.com/' + repoName + '/' + project.default_branch + '/README.md';
+			let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + project.default_branch + '/.gitmodules';
+
+			// build readme file for a project
+			this._get_readme(readmeUrl, submodulesUrl);
+		}).catch((error) =>{
+			log(`Error fetching subModule info: ${error}`);
+		});
+	}
+	
 	public doRefactor() {
 		// Send a message to the webview webview.
 		// You can send any JSON serializable data.
@@ -232,67 +265,31 @@ class HtmlPanel {
 						readmeData = result.value.data;
 						// remove ` from text
 						readmeData = readmeData.split('`').join('');							
-						log(readmeData.length);
 					} else {
 						submodulesData = this._extractComponents(result.value.data);
 						log(submodulesData);
 					}
 				}
 			})
-			html.set_md(readmeData, submodulesData);
+			html.set_md(readmeData, submodulesData, this.subModules);
 			let webview = this._panel.webview;
 			this._updateForCat(webview, 'mdFile', html.mdFile);				
 		});
-
-		return;
-		Promise.all([
-			axios.request(config),
-			axios.request(config1)
-		])
-		.then(([response, response1]) => {
-			let readmeData: string = response.data;
-			// remove ` from text
-			readmeData = readmeData.split('`').join('');
-			log(response1.status);
-
-			
-			// log(submodulesData);
-			html.set_md(readmeData, '');
-			let webview = this._panel.webview;
-			this._updateForCat(webview, 'mdFile', html.mdFile);
-
-		})
-		.catch((error) => {
-			log('Error fetching projects:', error);
-		});
-		return
-		
-		axios.request(config)
-		.then((response) => {
-			this._get_submodules(submodulesUrl);
-			let readmeData: string = response.data;
-			// remove ` from text
-			readmeData = readmeData.split('`').join('');
-			
-			// html.set_md(readmeData);
-			let webview = this._panel.webview;
-			this._updateForCat(webview, 'mdFile', html.mdFile);
-		})
-		.catch((error) => {
-			console.log(error);
-			return error;
-		});
 	}
+
 	private _extractComponents(text: string): string {
 		const urlRegex = /url = (https:\/\/github\.com\/[^\s]+)/g;
 		const components: string[] = [];
+		const subModules: string[] = [];
 		let match;
 	
 		while ((match = urlRegex.exec(text)) !== null) {
+			subModules.push(match[1]);
 			const repoName = match[1].replace('.git', '').split('/').pop();
 			components.push(repoName);
 		}
 		let components_string = '\[' + components.map(item => `\"${item}\"`).join(', ') + '\]';
+		this.subModules = '\[' + subModules.map(item => `\"${item}\"`).join(', ') + '\]';
 		return components_string;
 	}
 	
@@ -705,8 +702,6 @@ export const createDir = vscode.commands.registerCommand(
 		}
 	}
 );
-
-
 
 async function _refreshTree() {
 	// private func to refresh folder tree view
