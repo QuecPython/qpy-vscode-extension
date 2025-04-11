@@ -1,5 +1,3 @@
-import { sleep } from '../utils/utils';
-import { log } from './userInterface';
 import axios from 'axios';
 
 let projects_list: string[][] = [];
@@ -14,55 +12,63 @@ let components_list_string : string = '';
 let projects_description_list_string : string = '';
 let components_description_list_string : string = '';
 
-// solution repos config
-let config = {
-    method: 'get',
-    maxBodyLength: Infinity,
-    url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:solution',
-    headers: {}
-};
+export async function getProjects(htmlPanel, webview, page): Promise<void> {
+    return new Promise((resolve) => {
+        // solution repos config
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:solution',
+            headers: {}
+        };
+    
+        // component repos config
+        let config1 = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:component',
+            headers: {}
+        };
+    
+        Promise.all([
+            axios.request(config),
+            axios.request(config1)
+        ])
+        .then(([response, response1]) => {
+            const items = response.data.items;
+            // save projects to dict, keys are projects ids
+            items.map((item: any) => projects_info[item.id] = item);
+    
+            // build string from a list, and use it in js string
+            projects_list = items.map((item: any) => [item.name, item.id, item.description]);
+            projects_list_string = '\[' + projects_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
+            projects_ids_list_string = '\[' + projects_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+            projects_description_list_string = '\[' + projects_list.map(item => `\"${item[2]}\"`).join(', ') + '\]';
+    
+            const items1 = response1.data.items;
+            items1.map((item: any) => components_info[item.id] = item);
+            components_list = response1.data.items.map((item: any) => [item.name, item.id, item.description]);
+            components_list_string = '\[' + components_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
+            components_ids_list_string = '\[' + components_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+            components_description_list_string = '\[' + components_list.map(item => `\"${item[2]}\"`).join(', ') + '\]';
+            set_projects(
+                projects_list_string,
+                projects_ids_list_string,
+                projects_description_list_string,
+                components_list_string,
+                components_description_list_string,
+                components_ids_list_string
+            );
+            htmlPanel._updatePanel(webview, page, projects);
+        })
+        .catch((error) => {
+            console.log('Error fetching projects:', error);
+        });
+    
+        resolve();
+    });
+}
 
-// component repos config
-let config1 = {
-    method: 'get',
-    maxBodyLength: Infinity,
-    url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:component',
-    headers: {}
-};
-
-Promise.all([
-    axios.request(config),
-    axios.request(config1)
-])
-.then(([response, response1]) => {
-    const items = response.data.items;
-    // save projects to dict, keys are projects ids
-    items.map((item: any) => projects_info[item.id] = item);
-
-    // build string from a list, and use it in js string
-    projects_list = items.map((item: any) => [item.name, item.id, item.description]);
-    projects_list_string = '\[' + projects_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-    projects_ids_list_string = '\[' + projects_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-    projects_description_list_string = '\[' + projects_list.map(item => `\"${item[2]}\"`).join(', ') + '\]';
-
-    const items1 = response1.data.items;
-    items1.map((item: any) => components_info[item.id] = item);
-    components_list = response1.data.items.map((item: any) => [item.name, item.id, item.description]);
-    components_list_string = '\[' + components_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-    components_ids_list_string = '\[' + components_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-    components_description_list_string = '\[' + components_list.map(item => `\"${item[2]}\"`).join(', ') + '\]';
-    set_projects(
-        projects_list_string,
-        projects_ids_list_string,
-        projects_description_list_string,
-        components_list_string,
-        components_description_list_string,
-        components_ids_list_string
-    );
-})
-.catch((error) => {
-    console.log('Error fetching projects:', error);
-});
 let mdText = '';
 export let mdFile = '';
 

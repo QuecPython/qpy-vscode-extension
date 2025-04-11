@@ -33,7 +33,7 @@ function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
 }
 
 /**
- * Manages cat coding webview panels
+ * Manages webview html panels
  */
 class HtmlPanel {
 	/**
@@ -41,7 +41,7 @@ class HtmlPanel {
 	 */
 	public static currentPanel: HtmlPanel | undefined;
 
-	public static readonly viewType = 'Applications';
+	public static readonly viewType = 'Projects';
 	private subModules: string; // used for project subModules
 
 	private readonly _panel: vscode.WebviewPanel;
@@ -62,7 +62,7 @@ class HtmlPanel {
 		// Otherwise, create a new panel.
 		const panel = vscode.window.createWebviewPanel(
 			HtmlPanel.viewType,
-			'Cat Coding',
+			'Proejcts',
 			column || vscode.ViewColumn.One,
 			getWebviewOptions(extensionUri),
 		);
@@ -87,9 +87,9 @@ class HtmlPanel {
 
 		// Update the content based on view changes
 		this._panel.onDidChangeViewState(
-			() => {
+			async () => {
 				if (this._panel.visible) {
-					this._update(page);
+					await this._update(page);
 				}
 			},
 			null,
@@ -103,7 +103,6 @@ class HtmlPanel {
 				// const filePath = editor.document.uri.fsPath;
 				// log(`Current file path: ${filePath}`);
 
-				log(JSON.stringify(message));
 				const dialogOptions: vscode.OpenDialogOptions = {
 					canSelectMany: false,
 					openLabel: 'Select',
@@ -145,7 +144,6 @@ class HtmlPanel {
 						});
 						return;
 					case 'viewComponentClick':
-						log('viewComponentClick');
 						this._viewSubmodule(message.value);
 						return;
 					case 'viewClick':
@@ -157,12 +155,9 @@ class HtmlPanel {
 						this._get_readme(readmeUrl, submodulesUrl);
 						return;
 					case 'viewComponent':
-						log('this is viewComponent');
 						let component = html.components_info[message.value];
 						readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + component.name + '/' + component.default_branch + '/README.md';
 						submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + component.name + '/refs/heads/' + component.default_branch + '/.gitmodules';
-						log(readmeUrl);
-						log(submodulesUrl);						
 
 						// build readme file for a project
 						this._get_readme(readmeUrl, submodulesUrl);
@@ -177,8 +172,6 @@ class HtmlPanel {
 	}
 
 	private _viewSubmodule(repoUrl: string) {
-		log('subModules ' + this.subModules);
-
 		// get default_branch for repo
 		const start = repoUrl.indexOf('.com/') + 5; // Find the position after '.com/'
 		const end = repoUrl.indexOf('.git'); // Find the position of '.git'
@@ -194,7 +187,6 @@ class HtmlPanel {
 
 		axios.request(config).then((response) =>{
 			let project = response.data
-			log(project.default_branch);
 
 			let readmeUrl = 'https://raw.githubusercontent.com/' + repoName + '/' + project.default_branch + '/README.md';
 			let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + project.default_branch + '/.gitmodules';
@@ -213,6 +205,7 @@ class HtmlPanel {
 	}
 
 	public dispose() {
+		/* when closing the panel */
 		HtmlPanel.currentPanel = undefined;
 
 		// Clean up our resources
@@ -226,18 +219,20 @@ class HtmlPanel {
 		}
 	}
 
-	private _update(page) {
+	private async _update(page) {
 		const webview = this._panel.webview;
 
 		// Vary the webview's content based on where it is located in the editor.
 		switch (page) {
 			case 'projectsPage':
-				this._updateForCat(webview, page, html.projects);
+				vscode.window.showInformationMessage('Loading projects...');
+				html.getProjects(this, webview, page);
 				return;
 		}
 	}
 
 	private _get_readme(readmeUrl: string, submodulesUrl: string){
+		vscode.window.showInformationMessage('Loading readme...');
 		let config = {
 			method: 'get',
 			maxBodyLength: Infinity,
@@ -259,21 +254,19 @@ class HtmlPanel {
 		.then(results => {
 			let readmeData: string, submodulesData: string = '[]';
 			results.forEach((result, index) => {
-				log(result.status);
 				if (result.status == 'fulfilled') {
 					if (index == 0){
 						readmeData = result.value.data;
 						// remove ` from text
-						readmeData = readmeData.split('`').join('');							
+						readmeData = readmeData.split('`').join('');
 					} else {
 						submodulesData = this._extractComponents(result.value.data);
-						log(submodulesData);
 					}
 				}
 			})
 			html.set_md(readmeData, submodulesData, this.subModules);
 			let webview = this._panel.webview;
-			this._updateForCat(webview, 'mdFile', html.mdFile);				
+			this._updatePanel(webview, 'mdFile', html.mdFile);				
 		});
 	}
 
@@ -304,19 +297,17 @@ class HtmlPanel {
 		axios.request(config)
 		.then((response) => {
 			let data = this._extractComponents(response.data);
-			log(data);
 			return data;
 		})
 		.catch((error) => {
-			log('no Modules');
 			return;
 		});
 	}
 	
-	private _updateForCat(webview: vscode.Webview, page: string, text: string) {
+	private async _updatePanel(webview: vscode.Webview, page: string, text: string) {
 		switch (page) {
 			case 'projectsPage':
-				this._panel.title = 'Applications';		
+				this._panel.title = 'Projects + Components';		
 				// this._panel.webview.html = html.projects;
 				this._panel.webview.html = text;
 				break
@@ -330,23 +321,6 @@ class HtmlPanel {
 				break
 				// * Identifies the type of the webview panel, such as `'markdown.preview'`.
 		}
-	}
-
-	private _getHtmlForWebview(webview: vscode.Webview, catGifPath: string) {
-		// Local path to main script run in the webview
-		const scriptPathOnDisk = vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js');
-
-		// And the uri we use to load this script in the webview
-		const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
-
-		// Local path to css styles
-		const styleResetPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css');
-		const stylesPathMainPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css');
-
-		// Uri to load styles into webview
-		const stylesResetUri = webview.asWebviewUri(styleResetPath);
-		const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
-		return html.projects;
 	}
 }
 
@@ -385,7 +359,6 @@ export const openConnection = vscode.commands.registerCommand(
 			vscode.window.showErrorMessage('Device is already connected!');
 		} else {
 			const portPaths = await executeBatScript();
-			log(portPaths);
 			// resolve port path
 			let chosenPort: string | undefined = portPath;
 			let chosenPortPath: string | undefined;
@@ -721,7 +694,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 	const projectsPage = vscode.commands.registerCommand(
 		'qpy-ide.projectsPage',
 		async (extensionUri: vscode.Uri) => { 
-			HtmlPanel.createOrShow(context.extensionUri, 'projectsPage');
+			await HtmlPanel.createOrShow(context.extensionUri, 'projectsPage');
 		}
 	);
 
