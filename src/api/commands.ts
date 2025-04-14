@@ -263,17 +263,43 @@ class HtmlPanel {
 			let readmeData: string, submodulesData: string = '[]';
 			results.forEach((result, index) => {
 				if (result.status == 'fulfilled') {
+					// get project
+					let project = html.projects_info[projectId];
+					
 					// first item is readme
 					if (index == 0){
 						readmeData = result.value.data;
 
-						// fix files tree
+						// files tree
 						let regex = /```plaintext\s([\s\S]*?)```/g;
 						readmeData = readmeData.replace(regex, (match, p1, p2) => {
-							match = match.replace('```plaintext', '')
+							match = match.replace('```plaintext', '');
+							return match.split('\n').join('<br>');
+						});
+
+						// bash text
+						regex = /```bash\s([\s\S]*?)```/g;
+						readmeData = readmeData.replace(regex, (match, p1, p2) => {
+							match = match.replace('```bash', '')
 							return match.split('\n').join('<br>')
 						});
-					  
+						
+						// python text
+						regex = /```python\s([\s\S]*?)```/g;
+						readmeData = readmeData.replace(regex, (match, p1, p2) => {
+							match = match.replace('```python', '')
+							return match.split('\n').join('<br>')
+						});
+
+						// img urls
+						regex = /!\[\]\((.*?)\)/g;
+						readmeData = readmeData.replace(regex, (match, p1, p2) => {
+						  p1 = p1.replace('./','');
+						  p1 = p1.replace('../','');
+						  let imgUrl = `https://raw.githubusercontent.com/QuecPython/${project.name}/${project.default_branch}/${p1}`;
+						  return `<img src="${imgUrl}" style="zoom:67%;" /><br>`;
+						});
+
 						// remove ` from text
 						readmeData = readmeData.split('`').join('');
 
