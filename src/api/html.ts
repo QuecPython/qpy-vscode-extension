@@ -51,7 +51,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
             components_list_string = '\[' + components_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
             components_ids_list_string = '\[' + components_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
             components_description_list_string = '\[' + components_list.map(item => `\"${item[2]}\"`).join(', ') + '\]';
-            set_projects(
+            setProjects(
                 projects_list_string,
                 projects_ids_list_string,
                 projects_description_list_string,
@@ -72,7 +72,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
 let mdText = '';
 export let mdFile = '';
 
-export async function set_md(text: string, submodulesData: string, subModulesUrls: string){
+export async function setMd(text: string, submodulesData: string, subModulesUrls: string){
     mdText = text;
     mdFile = `
     <!DOCTYPE html>
@@ -175,7 +175,7 @@ export async function set_md(text: string, submodulesData: string, subModulesUrl
     `;
 }
 export let projects = '';
-function set_projects(
+function setProjects(
     projects_list_string: string,
     projects_ids_list_string: string,
     description_list_string: string,

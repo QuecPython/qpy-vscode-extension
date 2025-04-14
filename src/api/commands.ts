@@ -109,8 +109,7 @@ class HtmlPanel {
 					canSelectFiles: false,
 					canSelectFolders: true,
 				};
-				let readmeUrl: string;
-				let submodulesUrl: string;
+				let readmeUrl: string, submodulesUrl: string, project: any;
 				switch (message.command) {
 					case 'newProjectClick':
 						vscode.window.showOpenDialog(dialogOptions).then(fileUri => {							
@@ -129,7 +128,7 @@ class HtmlPanel {
 						
 						const git: SimpleGit = simpleGit(options);						
 						vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
-							let project = html.projects_info[message.value];
+							project = html.projects_info[message.value];
 							let repoPath = fileUri[0].fsPath + '\\' + project.name;
 							git.clone(project.clone_url, repoPath).then(() => {
 								try {
@@ -146,13 +145,21 @@ class HtmlPanel {
 					case 'viewComponentClick':
 						this._viewSubmodule(message.value);
 						return;
+					case 'viewChineseClick':
+						project = html.projects_info[message.value];
+						readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.zh.md';
+						submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
+
+						// build readme file for a project
+						this._getReadme(readmeUrl, submodulesUrl, message.value);
+						return;
 					case 'viewClick':
-						let project = html.projects_info[message.value];
+						project = html.projects_info[message.value];
 						readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.md';
 						submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
 
 						// build readme file for a project
-						this._get_readme(readmeUrl, submodulesUrl);
+						this._getReadme(readmeUrl, submodulesUrl, message.value);
 						return;
 					case 'viewComponent':
 						let component = html.components_info[message.value];
@@ -160,7 +167,7 @@ class HtmlPanel {
 						submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + component.name + '/refs/heads/' + component.default_branch + '/.gitmodules';
 
 						// build readme file for a project
-						this._get_readme(readmeUrl, submodulesUrl);
+						this._getReadme(readmeUrl, submodulesUrl);
 						return;
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
@@ -192,7 +199,7 @@ class HtmlPanel {
 			let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + project.default_branch + '/.gitmodules';
 
 			// build readme file for a project
-			this._get_readme(readmeUrl, submodulesUrl);
+			this._getReadme(readmeUrl, submodulesUrl);
 		}).catch((error) =>{
 			log(`Error fetching subModule info: ${error}`);
 		});
@@ -226,12 +233,13 @@ class HtmlPanel {
 		switch (page) {
 			case 'projectsPage':
 				vscode.window.showInformationMessage('Loading projects...');
+				// vscode.env.openExternal(vscode.Uri.parse('https://www.google.com'));
 				html.getProjects(this, webview, page);
 				return;
 		}
 	}
 
-	private _get_readme(readmeUrl: string, submodulesUrl: string){
+	private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = ''){
 		vscode.window.showInformationMessage('Loading readme...');
 		let config = {
 			method: 'get',
@@ -255,18 +263,54 @@ class HtmlPanel {
 			let readmeData: string, submodulesData: string = '[]';
 			results.forEach((result, index) => {
 				if (result.status == 'fulfilled') {
+					// first item is readme
 					if (index == 0){
 						readmeData = result.value.data;
+
+						// fix files tree
+						let regex = /```plaintext\s([\s\S]*?)```/g;
+						readmeData = readmeData.replace(regex, (match, p1, p2) => {
+							match = match.replace('```plaintext', '')
+							return match.split('\n').join('<br>')
+						});
+					  
 						// remove ` from text
 						readmeData = readmeData.split('`').join('');
-					} else {
+
+						// url for zh readme
+						readmeData = readmeData.replace(
+							'[中文](README.zh.md) | English',
+							`<a href="" onclick="vscode.postMessage({ command: 'viewChineseClick' , value: '${projectId}' });">中文</a> | English`
+						);
+
+						// url for en readme
+						readmeData = readmeData.replace(
+							'中文 | [English](README.md)',
+							`中文 | <a href="" onclick="vscode.postMessage({ command: 'viewClick' , value: '${projectId}' });">English</a>`
+						);
+
+						// Replace links with HTML anchor tags
+						regex = /- \[(.*?)\]\(#(.*?)\)/g;
+						readmeData = readmeData.replace(regex, (match, title, anchor) => {
+							return `- <a href='#${anchor.toLowerCase()}'>${title}</a>`;
+						});
+
+						// Replace headers HTML paragraph tags
+						regex = /(# )(.*)/g;
+						readmeData = readmeData.replace(regex, (match, p1, p2) => {
+							return `${p1}<p id="${p2.toLowerCase()}">${p2}</p>`;
+						});
+					}
+					// second item is components
+					else {
 						submodulesData = this._extractComponents(result.value.data);
 					}
 				}
 			})
-			html.set_md(readmeData, submodulesData, this.subModules);
+
+			html.setMd(readmeData, submodulesData, this.subModules);
 			let webview = this._panel.webview;
-			this._updatePanel(webview, 'mdFile', html.mdFile);				
+			this._updatePanel(webview, 'mdFile', html.mdFile);
 		});
 	}
 
