@@ -172,7 +172,7 @@ class HtmlPanel {
 						submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + component.name + '/refs/heads/' + component.default_branch + '/.gitmodules';
 
 						// build readme file for a project
-						this._getReadme(readmeUrl, submodulesUrl);
+						this._getReadme(readmeUrl, submodulesUrl, message.value);
 						return;
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
@@ -219,7 +219,7 @@ class HtmlPanel {
 			let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + project.default_branch + '/.gitmodules';
 
 			// build readme file for a project
-			this._getReadme(readmeUrl, submodulesUrl);
+			this._getReadme(readmeUrl, submodulesUrl, project.id);
 		}).catch((error) =>{
 			log(`Error fetching subModule info: ${error}`);
 		});
@@ -285,6 +285,11 @@ class HtmlPanel {
 				if (result.status == 'fulfilled') {
 					// get project
 					let project = html.projects_info[projectId];
+
+					// if we have a component, not a proejct
+					if (project == undefined) {
+						project = html.componentsInfo[projectId];
+					}
 					
 					// first item is readme
 					if (index == 0){

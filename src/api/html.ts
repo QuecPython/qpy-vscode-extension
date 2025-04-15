@@ -7,11 +7,11 @@ let projects_list: string[][] = [];
 // save preojcts info to list of dicts
 export let projects_info = {};
 export let componentsInfo = {};
-let components_list: string[][] = [];
+let componentsList: string[][] = [];
 let projects_list_string : string = '';
 let projects_ids_list_string : string = '';
 let components_ids_list_string : string = '';
-let components_list_string : string = '';
+let componentsListString : string = '';
 let projects_description_list_string : string = '';
 let components_description_list_string : string = '';
 
@@ -50,10 +50,10 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
     
             const items1 = response1.data.items;
             items1.map((item: any) => componentsInfo[item.id] = item);
-            components_list = response1.data.items.map((item: any) => [item.name, item.id, item.description]);
-            components_list_string = '\[' + components_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-            components_ids_list_string = '\[' + components_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-            components_description_list_string = '\[' + components_list.map(item => `\"${item[2]}\"`).join(', ') + '\]';
+            componentsList = response1.data.items.map((item: any) => [item.name, item.id, item.description]);
+            componentsListString = '\[' + componentsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
+            components_ids_list_string = '\[' + componentsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+            components_description_list_string = '\[' + componentsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
             
             // if folder is open, for add submodule
             let workspaceOpen = 'disabled';
@@ -64,7 +64,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                 projects_list_string,
                 projects_ids_list_string,
                 projects_description_list_string,
-                components_list_string,
+                componentsListString,
                 components_description_list_string,
                 components_ids_list_string,
                 workspaceOpen
@@ -189,7 +189,7 @@ function setProjects(
     projects_list_string: string,
     projects_ids_list_string: string,
     description_list_string: string,
-    components_list_string: string,
+    componentsListString: string,
     components_description_list_string: string,
     components_ids_list_string: string,
     workspaceOpen: string = 'disabled'
@@ -303,7 +303,7 @@ function setProjects(
             const projects_description = ${description_list_string};
 
             // components
-            const components = ${components_list_string};
+            const components = ${componentsListString};
             const components_ids = ${components_ids_list_string};
             const components_description = ${components_description_list_string};
 
