@@ -18,9 +18,8 @@ import { sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 import { serialEmitter } from '../serial/serialBridge';
 import * as html from '../api/html';
-import * as path from 'path';
 import axios from 'axios';
-import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
+import { simpleGit, SimpleGit, SimpleGitOptions, TaskOptions, CleanOptions } from 'simple-git';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
 	return {
@@ -110,6 +109,16 @@ class HtmlPanel {
 					canSelectFolders: true,
 				};
 				let readmeUrl: string, submodulesUrl: string, project: any;
+
+				const gitOptions: Partial<SimpleGitOptions> = {
+					baseDir: process.cwd(),
+					binary: 'git',
+					maxConcurrentProcesses: 6,
+					trimmed: false,
+				 };
+				
+				const git: SimpleGit = simpleGit(gitOptions);
+
 				switch (message.command) {
 					case 'newProjectClick':
 						vscode.window.showOpenDialog(dialogOptions).then(fileUri => {							
@@ -119,15 +128,8 @@ class HtmlPanel {
 
 						return
 					case 'importClick':
-						const options: Partial<SimpleGitOptions> = {
-							baseDir: process.cwd(),
-							binary: 'git',
-							maxConcurrentProcesses: 6,
-							trimmed: false,
-						 };
-						
-						const git: SimpleGit = simpleGit(options);						
 						vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
+							vscode.window.showInformationMessage('Cloning project...');
 							project = html.projects_info[message.value];
 							let repoPath = fileUri[0].fsPath + '\\' + project.name;
 							git.clone(project.clone_url, repoPath).then(() => {
@@ -161,8 +163,11 @@ class HtmlPanel {
 						// build readme file for a project
 						this._getReadme(readmeUrl, submodulesUrl, message.value);
 						return;
+					case 'addToProject':
+						this._addToProject(message.value);
+						return;
 					case 'viewComponent':
-						let component = html.components_info[message.value];
+						let component = html.componentsInfo[message.value];
 						readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + component.name + '/' + component.default_branch + '/README.md';
 						submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + component.name + '/refs/heads/' + component.default_branch + '/.gitmodules';
 
@@ -172,10 +177,25 @@ class HtmlPanel {
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
 						return;
-					return;
 				}
+				return;
 			}
 		);
+	}
+
+	private async _addToProject(componentId: string) {
+		let component = html.componentsInfo[componentId];
+
+		// create git with workspace folder
+		const git = simpleGit({ baseDir:  vscode.workspace.workspaceFolders[0].uri.fsPath});
+		await git.init();
+		vscode.window.showInformationMessage('Cloning component...');
+		await git.subModule(['add', '-f', component.clone_url]).then((response) => {
+			vscode.window.showInformationMessage('Cloning completed!');
+		}).catch((error) => {
+			vscode.window.showErrorMessage('Cloning error, please try again later!');
+			console.error('Error adding submodule repository:', error);
+		});
 	}
 
 	private _viewSubmodule(repoUrl: string) {
