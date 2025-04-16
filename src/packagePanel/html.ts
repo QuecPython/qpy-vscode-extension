@@ -91,34 +91,67 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Markdown Preview</title>
-        <style>
-            body {
-                display: flex;
-            }
-            #left, #right {
-                width: 50%;
-                padding: 10px;
-            }
-            #left {
-                border-right: 1px solid #ccc;
-            }
-            .item-details, .item-buttons {
-                margin-bottom: 10px;
-            }
-            .hidden {
-                display: none;
-            }
-        </style>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sticky-buttons {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid #ddd;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .sticky-buttons button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        #container {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        #left, #right {
+            width: 50%;
+            padding: 10px;
+        }
+        #left {
+            border-right: 1px solid #ccc;
+        }
+        .item-details, .item-buttons {
+            margin-bottom: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
     </head>
     <body>
-        <div id="left">
-            <h1>README</h1>
-            <div id="readme-content"></div>
-            <button id="show-more" class="hidden">Show More</button>
+        <div class="sticky-buttons">
+            <button onclick="history.back()">Go Back</button>
+            <button id="newProject" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
+            <button id="showAll">Show All</button>
+            <button id="hideAll">Hide All</button>
         </div>
-        <div id="right">
-            <h1>List of Components</h1>
-            <div id="components-content"></div>
+        <div id="container">
+            <div id="left">
+                <h1>README</h1>
+                <div id="readme-content"></div>
+                <button id="show-more" class="hidden">Show More</button>
+            </div>
+            <div id="right">
+                <h1>List of Components</h1>
+                <div id="components-content"></div>
+            </div>
         </div>
 
         <script src="https://unpkg.com/prettier@3.0.3/standalone.js"></script>
@@ -210,7 +243,6 @@ function setProjects(
                 align-items: center;
                 background-color: #f0f0f0;
             }
-
             .sticky-buttons {
                 position: sticky;
                 top: 0;
@@ -279,12 +311,15 @@ function setProjects(
     </head>
     <body>
         <div class="sticky-buttons">
+        
+             <button onclick="history.back()">Go Back</button>
+
             <button id="newProejct" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
             <button id="showAll">Show All</button>
             <button id="hideAll">Hide All</button>
         </div>
         <div class="container">
-            <h2>Solutions</h2>
+            <h2>Projects</h2>
             <input type="text" class="search-bar" id="projectSearchBar" placeholder="Search Solutions..." onkeyup="filterProjects()">
             <ul class="item-list" id="projectList"></ul>
             <button id="projectToggle" onclick="toggleItems('project')">Show More</button>
@@ -343,7 +378,7 @@ function setProjects(
                             <p>$\{projects_description[index]\}</p>
                         </div>
                         <div class="item-buttons">
-                            <select id="versionSelect">
+                            <select id="versionSelect" disabled>
                                 <option value="1">Version 1</option>
                                 <option value="2">Version 2</option>
                                 <option value="3">Version 3</option>
@@ -368,7 +403,7 @@ function setProjects(
                             <p>$\{components_description[index]\}.</p>
                         </div>
                         <div class="item-buttons">
-                            <select id="versionSelect">
+                            <select id="versionSelect" disabled>
                                 <option value="1">Version 1</option>
                                 <option value="2">Version 2</option>
                                 <option value="3">Version 3</option>
