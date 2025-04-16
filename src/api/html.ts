@@ -358,7 +358,6 @@ function setProjects(
 
                 let projectOpen = true;
                 let buttonState = projectOpen ? 'enabled' : 'disabled';
-                vscode.postMessage({ command: 'logData' , value: 'this is log' });
                 components.forEach((component, index) => {
                     const componentItem = document.createElement('li');
                     componentItem.className = 'item';
@@ -392,6 +391,7 @@ function setProjects(
                     
                     if (title.includes(searchInput) || description.includes(searchInput)) {
                         item.style.display = '';
+                        item.classList.remove('hidden');
                     } else {
                         item.style.display = 'none';
                     }
@@ -407,6 +407,7 @@ function setProjects(
                     
                     if (title.includes(searchInput) || description.includes(searchInput)) {
                         item.style.display = '';
+                        item.classList.remove('hidden');
                     } else {
                         item.style.display = 'none';
                     }
@@ -428,25 +429,10 @@ function setProjects(
                 }
             }
 
-            // function toggleItems(section) {
-            //     const items = document.querySelectorAll(\`#$\{section\}List .item.hidden\`);
-            //     const button = document.getElementById(\`$\{section}Toggle\`);
-            //     if (items.length > 0) {
-            //         items.forEach(item => item.classList.remove('hidden'));
-            //         button.textContent = 'Show Less';
-            //     } else {
-            //         const allItems = document.querySelectorAll(\`#$\{section\}List .item\`);
-            //         allItems.forEach((item, index) => {
-            //             if (index >= 2) item.classList.add('hidden');
-            //         });
-            //         button.textContent = 'Show More';
-            //     }
-            // }
-
             // Generate the item lists on page load
             window.onload = generateItemList;
         </script>
     </body>
     </html>
-    `
+    `;
 }
