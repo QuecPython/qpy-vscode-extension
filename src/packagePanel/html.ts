@@ -1,16 +1,15 @@
 import * as vscode from 'vscode';
 import axios from 'axios';
 import { log } from '../api/userInterface';
+import * as history from '../packagePanel/panelHistory';
 
-
-let projects_list: string[][] = [];
-// save preojcts info to list of dicts
-export let projects_info = {};
+let projectsList: string[][] = [];
+export let projectsInfo = {}; // save preojcts info to list of dicts
 export let componentsInfo = {};
 let componentsList: string[][] = [];
-let projects_list_string : string = '';
-let projects_ids_list_string : string = '';
-let components_ids_list_string : string = '';
+let projectsListString : string = '';
+let projectsIdsListString : string = '';
+let componentsIdsListString : string = '';
 let componentsListString : string = '';
 let projects_description_list_string : string = '';
 let components_description_list_string : string = '';
@@ -40,19 +39,19 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
         .then(([response, response1]) => {
             const items = response.data.items;
             // save projects to dict, keys are projects ids
-            items.map((item: any) => projects_info[item.id] = item);
+            items.map((item: any) => projectsInfo[item.id] = item);
     
             // build string from a list, and use it in js string
-            projects_list = items.map((item: any) => [item.name, item.id, item.description]);
-            projects_list_string = '\[' + projects_list.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-            projects_ids_list_string = '\[' + projects_list.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-            projects_description_list_string = '\[' + projects_list.map(item => `\"${item[2]}\"`).join(', ') + '\]';
+            projectsList = items.map((item: any) => [item.name, item.id, item.description]);
+            projectsListString = '\[' + projectsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
+            projectsIdsListString = '\[' + projectsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+            projects_description_list_string = '\[' + projectsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
     
             const items1 = response1.data.items;
             items1.map((item: any) => componentsInfo[item.id] = item);
             componentsList = response1.data.items.map((item: any) => [item.name, item.id, item.description]);
             componentsListString = '\[' + componentsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-            components_ids_list_string = '\[' + componentsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+            componentsIdsListString = '\[' + componentsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
             components_description_list_string = '\[' + componentsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
             
             // if folder is open, for add submodule
@@ -61,12 +60,12 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                 workspaceOpen = 'enabled';
             }
             setProjects(
-                projects_list_string,
-                projects_ids_list_string,
+                projectsListString,
+                projectsIdsListString,
                 projects_description_list_string,
                 componentsListString,
                 components_description_list_string,
-                components_ids_list_string,
+                componentsIdsListString,
                 workspaceOpen
             );
             htmlPanel._updatePanel(webview, page, projects);
@@ -83,6 +82,9 @@ let mdText = '';
 export let mdFile = '';
 
 export async function setMd(text: string, submodulesData: string, subModulesUrls: string){
+    let homeButton = 'enabled';
+    let backButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
+    let showButton = 'disabled';
     mdText = text;
     mdFile = `
     <!DOCTYPE html>
@@ -137,10 +139,11 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
     </head>
     <body>
         <div class="sticky-buttons">
-            <button onclick="history.back()">Go Back</button>
+            <button ${homeButton} onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
+            <button ${backButton} onclick="vscode.postMessage({ command: 'backButton'});">Back</button>
             <button id="newProject" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
-            <button id="showAll">Show All</button>
-            <button id="hideAll">Hide All</button>
+            <button ${showButton} id="showAll">Show All</button>
+            <button ${showButton} id="hideAll">Hide All</button>
         </div>
         <div id="container">
             <div id="left">
@@ -219,14 +222,18 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
 }
 export let projects = '';
 function setProjects(
-    projects_list_string: string,
-    projects_ids_list_string: string,
+    projectsListString: string,
+    projectsIdsListString: string,
     description_list_string: string,
     componentsListString: string,
     components_description_list_string: string,
-    components_ids_list_string: string,
+    componentsIdsListString: string,
     workspaceOpen: string = 'disabled'
 ){
+    let homeButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
+    let backButton = homeButton;
+    let showButton = 'enabled';
+
     projects = `
     <!DOCTYPE html>
     <html lang="en">
@@ -311,12 +318,11 @@ function setProjects(
     </head>
     <body>
         <div class="sticky-buttons">
-        
-             <button onclick="history.back()">Go Back</button>
-
+            <button ${homeButton} onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
+            <button ${backButton} onclick="vscode.postMessage({ command: 'backButton'});">Back</button>
             <button id="newProejct" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
-            <button id="showAll">Show All</button>
-            <button id="hideAll">Hide All</button>
+            <button ${showButton} id="showAll">Show All</button>
+            <button ${showButton} id="hideAll">Hide All</button>
         </div>
         <div class="container">
             <h2>Projects</h2>
@@ -330,16 +336,14 @@ function setProjects(
         </div>
         <script>
             const vscode = acquireVsCodeApi();
-            vscode.postMessage({ command: 'startup' });
-
             // projects data
-            const projects = ${projects_list_string};
-            const projects_ids = ${projects_ids_list_string};
+            const projects = ${projectsListString};
+            const projectsIds = ${projectsIdsListString};
             const projects_description = ${description_list_string};
 
             // components
             const components = ${componentsListString};
-            const components_ids = ${components_ids_list_string};
+            const components_ids = ${componentsIdsListString};
             const components_description = ${components_description_list_string};
 
             document.getElementById('showAll').addEventListener('click', function() {
@@ -383,8 +387,8 @@ function setProjects(
                                 <option value="2">Version 2</option>
                                 <option value="3">Version 3</option>
                             </select>
-                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projects_ids[index]\}'});">Import</button>
-                            <button id="viewProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projects_ids[index]\}'});">View</button>
+                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projectsIds[index]\}'});">Import</button>
+                            <button id="viewProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projectsIds[index]\}'});">View</button>
                         </div>
                     \`;
                     projectList.appendChild(projectItem);

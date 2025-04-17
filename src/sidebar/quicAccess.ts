@@ -81,20 +81,9 @@ export default class TreeDataProvider {
           undefined,
           vscode.TreeItemCollapsibleState.Expanded,
           [
-            new QuickItem('Applications + Components', 'qpy-ide.projectsPage'),
-            // new QuickItem('Packages', 'qpy-ide.packagesPage'),
-            // new QuickItem('Docs', 'platformio-ide.showHome'),
+            new QuickItem('Projects + Components', 'qpy-ide.projectsPage'),
           ],
         ),
-        // new QuickItem(
-        //   'Tools',
-        //   undefined,
-        //   undefined,
-        //   vscode.TreeItemCollapsibleState.Expanded,
-        //   [
-        //     new QuickItem('Terminal', 'platformio-ide.showHome'),
-        //   ],
-        // ),
       ];
     }
 

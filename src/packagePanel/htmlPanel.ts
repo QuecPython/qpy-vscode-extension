@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { log } from '../api/userInterface';
 
 import * as html from '../packagePanel/html';
+import * as history from '../packagePanel/panelHistory';
 import axios from 'axios';
 import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
 
@@ -104,17 +105,31 @@ export class HtmlPanel {
                 const git: SimpleGit = simpleGit(gitOptions);
 
                 switch (message.command) {
+                    case 'homeButton':
+                        // return to home page
+                        this._update(page, 'homeButton');
+                        return
+                    case 'backButton':
+                        // return to home page
+                        history.getLastStep();
+                        let lastStep = history.getLastStep();
+
+                        if (lastStep.page == 'projectsPage') {
+                            this._update(lastStep.page, 'homeButton');
+                        } else {
+                            this._getReadme(lastStep.page, lastStep.submodulesUrl, lastStep.projectId);
+                        }
+                        return
                     case 'newProjectClick':
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {							
                             const uri = vscode.Uri.file(fileUri[0].fsPath);
                             vscode.commands.executeCommand('vscode.openFolder', uri, true);
                         });
-
                         return
                     case 'importClick':
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
                             vscode.window.showInformationMessage('Cloning project...');
-                            project = html.projects_info[message.value];
+                            project = html.projectsInfo[message.value];
                             let repoPath = fileUri[0].fsPath + '\\' + project.name;
                             git.clone(project.clone_url, repoPath).then(() => {
                                 try {
@@ -132,7 +147,7 @@ export class HtmlPanel {
                         this._viewSubmodule(message.value);
                         return;
                     case 'viewChineseClick':
-                        project = html.projects_info[message.value];
+                        project = html.projectsInfo[message.value];
                         readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.zh.md';
                         submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
 
@@ -140,7 +155,7 @@ export class HtmlPanel {
                         this._getReadme(readmeUrl, submodulesUrl, message.value);
                         return;
                     case 'viewClick':
-                        project = html.projects_info[message.value];
+                        project = html.projectsInfo[message.value];
                         readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.md';
                         submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
 
@@ -230,12 +245,18 @@ export class HtmlPanel {
         }
     }
 
-    private async _update(page) {
+    private async _update(page, source?: string) {
         const webview = this._panel.webview;
 
         // Vary the webview's content based on where it is located in the editor.
         switch (page) {
             case 'projectsPage':
+                // for new panel we clear steps
+                if (source != 'homeButton') {
+                    history.clearSteps();
+                }
+                history.addStep('projectsPage');
+
                 vscode.window.showInformationMessage('Loading projects...');
                 // vscode.env.openExternal(vscode.Uri.parse('https://www.google.com'));
                 html.getProjects(this, webview, page);
@@ -243,7 +264,8 @@ export class HtmlPanel {
         }
     }
 
-    private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = ''){
+    private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = '') {
+        history.addStep(readmeUrl, submodulesUrl, projectId);
         vscode.window.showInformationMessage('Loading readme...');
         let config = {
             method: 'get',
@@ -268,7 +290,7 @@ export class HtmlPanel {
             results.forEach((result, index) => {
                 if (result.status == 'fulfilled') {
                     // get project
-                    let project = html.projects_info[projectId];
+                    let project = html.projectsInfo[projectId];
 
                     // if we have a component, not a proejct
                     if (project == undefined) {
@@ -276,7 +298,7 @@ export class HtmlPanel {
                     }
                     
                     // first item is readme
-                    if (index == 0){
+                    if (index == 0) {
                         readmeData = result.value.data;
 
                         // files tree
@@ -364,25 +386,7 @@ export class HtmlPanel {
         this.subModules = '\[' + subModules.map(item => `\"${item}\"`).join(', ') + '\]';
         return components_string;
     }
-    
-    private _get_submodules(url: string){
-        let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: url,
-            headers: { }
-        };
         
-        axios.request(config)
-        .then((response) => {
-            let data = this._extractComponents(response.data);
-            return data;
-        })
-        .catch((error) => {
-            return;
-        });
-    }
-    
     private async _updatePanel(webview: vscode.Webview, page: string, text: string) {
         switch (page) {
             case 'projectsPage':
