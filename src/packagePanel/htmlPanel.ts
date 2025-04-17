@@ -105,6 +105,9 @@ export class HtmlPanel {
                 const git: SimpleGit = simpleGit(gitOptions);
 
                 switch (message.command) {
+                    case 'openUrl':
+                        vscode.env.openExternal(vscode.Uri.parse(message.value));
+                        return;
                     case 'homeButton':
                         // return to home page
                         this._update(page, 'homeButton');
@@ -258,7 +261,6 @@ export class HtmlPanel {
                 history.addStep('projectsPage');
 
                 vscode.window.showInformationMessage('Loading projects...');
-                // vscode.env.openExternal(vscode.Uri.parse('https://www.google.com'));
                 html.getProjects(this, webview, page);
                 return;
         }
@@ -330,6 +332,16 @@ export class HtmlPanel {
                           let imgUrl = `https://raw.githubusercontent.com/QuecPython/${project.name}/${project.default_branch}/${p1}`;
                           return `<img src="${imgUrl}" style="zoom:67%;" /><br>`;
                         });
+
+                        // other urls
+                        regex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+                        let match;
+                        while ((match = regex.exec(readmeData)) !== null) {
+                            const phrase = readmeData.substring(match.index, regex.lastIndex);
+                            const wordInBrackets = match[1];
+                            const url = match[2];
+                            readmeData.replace(phrase,`<a href="" onclick="vscode.postMessage({ command: 'openUrl' , value: '${url}' });">${wordInBrackets}</a>`);
+                        }
 
                         // remove ` from text
                         readmeData = readmeData.split('`').join('');
