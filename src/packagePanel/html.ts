@@ -15,50 +15,15 @@ let projects_description_list_string : string = '';
 let components_description_list_string : string = '';
 
 export async function getProjects(htmlPanel, webview, page): Promise<void> {
-    return new Promise((resolve) => {
-        // solution repos config
-        let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:solution',
-            headers: {}
-        };
-    
-        // component repos config
-        let config1 = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:component',
-            headers: {}
-        };
-    
-        Promise.all([
-            axios.request(config),
-            axios.request(config1)
-        ])
-        .then(([response, response1]) => {
-            const items = response.data.items;
-            // save projects to dict, keys are projects ids
-            items.map((item: any) => projectsInfo[item.id] = item);
-    
-            // build string from a list, and use it in js string
-            projectsList = items.map((item: any) => [item.name, item.id, item.description]);
-            projectsListString = '\[' + projectsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-            projectsIdsListString = '\[' + projectsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-            projects_description_list_string = '\[' + projectsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
-    
-            const items1 = response1.data.items;
-            items1.map((item: any) => componentsInfo[item.id] = item);
-            componentsList = response1.data.items.map((item: any) => [item.name, item.id, item.description]);
-            componentsListString = '\[' + componentsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-            componentsIdsListString = '\[' + componentsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-            components_description_list_string = '\[' + componentsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
-            
-            // if folder is open, for add submodule
-            let workspaceOpen = 'disabled';
-            if (vscode.workspace.workspaceFolders) {
-                workspaceOpen = 'enabled';
-            }
+    return new Promise(async (resolve) => {
+        // if folder is open, for add submodule
+        let workspaceOpen = 'disabled';
+        if (vscode.workspace.workspaceFolders) {
+            workspaceOpen = 'enabled';
+        }
+
+        // if we have data already from github api
+        if (Object.keys(projectsInfo).length > 0) {
             setProjects(
                 projectsListString,
                 projectsIdsListString,
@@ -69,11 +34,92 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                 workspaceOpen
             );
             htmlPanel._updatePanel(webview, page, projects);
-        })
-        .catch((error) => {
-            console.log('Error fetching projects:', error);
-        });
-    
+        } else {
+            // solution repos config
+            let config = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:solution',
+                headers: {}
+            };
+        
+            // component repos config
+            let config1 = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:component',
+                headers: {}
+            };
+        
+            Promise.all([
+                axios.request(config),
+                axios.request(config1)
+            ])
+            .then( async ([response, response1]) => {
+                const items = response.data.items;
+                // save projects to dict, keys are projects ids
+                let requests = [];
+
+                items.map(async (item: any) => {
+                    projectsInfo[item.id] = item;
+                    // build string from a list, and use it in js string
+                    projectsList = items.map((item: any) => {
+                        return [item.name, item.id, item.description]
+                    });
+                    projectsListString = '\[' + projectsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
+                    projectsIdsListString = '\[' + projectsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+                    projects_description_list_string = '\[' + projectsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
+                    
+                    let releasesUrl = `https://api.github.com/repos/QuecPython/${item.name}/releases`;
+                    let config2 = {
+                        id: '',
+                        method: 'get',
+                        maxBodyLength: Infinity,
+                        url: releasesUrl,
+                        headers: {}
+                    };
+                    
+                    config2.id = item.id;
+                    requests.push(axios.request(config2));
+                });
+
+                await Promise.allSettled(requests).then(async (results) => {
+                    // get releases for projects
+                    results.forEach((result, index) => {
+                        if (result.status == 'fulfilled') {
+                            let data = result.value.data;
+                            let releases = [];
+                            for (let i of data){
+                                releases.push(i.tag_name);
+                            }
+                            let id = result.value.config.id;
+                            projectsInfo[id].releases = releases;
+                        }
+                    });                    
+                });
+                const items1 = response1.data.items;
+                items1.map((item: any) => componentsInfo[item.id] = item);
+                componentsList = response1.data.items.map((item: any) => [item.name, item.id, item.description]);
+                componentsListString = '\[' + componentsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
+                componentsIdsListString = '\[' + componentsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+                components_description_list_string = '\[' + componentsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
+                            
+                await setProjects(
+                    projectsListString,
+                    projectsIdsListString,
+                    projects_description_list_string,
+                    componentsListString,
+                    components_description_list_string,
+                    componentsIdsListString,
+                    workspaceOpen
+                );
+                await htmlPanel._updatePanel(webview, page, projects);
+            })
+            .catch((error) => {
+                log(error);
+                vscode.window.showErrorMessage('Error fetching projects, please try again later.');
+            });
+        }
         resolve();
     });
 }
@@ -221,7 +267,7 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
     `;
 }
 export let projects = '';
-function setProjects(
+async function setProjects(
     projectsListString: string,
     projectsIdsListString: string,
     description_list_string: string,
@@ -233,6 +279,23 @@ function setProjects(
     let homeButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
     let backButton = homeButton;
     let showButton = 'enabled';
+
+    let proejectsReleases = [];
+    
+    // for (let i of Object.keys(projectsInfo)) {
+    for (let i of projectsList) {
+        let id = i[1];
+        if (projectsInfo[id].releases.length > 0){
+            let releases = ''; // for one project
+            for (let y in projectsInfo[id].releases) {
+                releases += `<option>${projectsInfo[id].releases[y]}</option>`;
+            }
+            proejectsReleases.push(releases);
+        } else {
+            proejectsReleases.push('<option>v1.0.0</option>');
+        }
+    }
+    let proejectsReleasesString = '\[' + proejectsReleases.map(item => `\'${item}\'`).join(', ') + '\]';
 
     projects = `
     <!DOCTYPE html>
@@ -340,6 +403,7 @@ function setProjects(
             const projects = ${projectsListString};
             const projectsIds = ${projectsIdsListString};
             const projects_description = ${description_list_string};
+            const proejectsReleases = ${proejectsReleasesString};
 
             // components
             const components = ${componentsListString};
@@ -369,9 +433,15 @@ function setProjects(
                 });
             });
 
+            function getRelease(option) {
+                // from select get selected option
+                return document.getElementById(option).value;
+            }
+
             function generateItemList() {
                 const projectList = document.getElementById('projectList');
 
+                // create project items with button, and releases
                 projects.forEach((project, index) => {
                     const projectItem = document.createElement('li');
                     projectItem.className = 'item';
@@ -382,12 +452,11 @@ function setProjects(
                             <p>$\{projects_description[index]\}</p>
                         </div>
                         <div class="item-buttons">
-                            <select id="versionSelect" disabled>
-                                <option value="1">Version 1</option>
-                                <option value="2">Version 2</option>
-                                <option value="3">Version 3</option>
+                            <select id="$\{projectsIds[index]\}">
+                                <option selected hidden>Releases</option>
+                                $\{proejectsReleases[index]\}
                             </select>
-                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projectsIds[index]\}'});">Import</button>
+                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projectsIds[index]\}', release: getRelease($\{projectsIds[index]\}) });">Import</button>
                             <button id="viewProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projectsIds[index]\}'});">View</button>
                         </div>
                     \`;
@@ -407,10 +476,9 @@ function setProjects(
                             <p>$\{components_description[index]\}.</p>
                         </div>
                         <div class="item-buttons">
-                            <select id="versionSelect" disabled>
-                                <option value="1">Version 1</option>
-                                <option value="2">Version 2</option>
-                                <option value="3">Version 3</option>
+                            <select id="componentReleaseSelect">
+                                <option selected hidden>Releases</option>
+                                <option value="1"> 1.0.0</option>
                             </select>
                             <button ${workspaceOpen} id="addToProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'addToProject', value: '$\{components_ids[index]\}'});">Add to project</button>
                             <button id="viewComponentButton" class="view-button" onclick="vscode.postMessage({ command: 'viewComponent', value: '$\{components_ids[index]\}'});">View</button>
@@ -474,4 +542,29 @@ function setProjects(
     </body>
     </html>
     `;
+}
+
+async function getRleases(url: string): Promise<string[]> {
+    let config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: url,
+        headers: {
+            Authorization: `Bearer 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`
+        }
+    };
+
+    let releases: string[] = [];
+    
+    axios.request(config)
+    .then((response) => {
+        for (let i of response.data){
+            releases.push(i.tag_name);
+        }
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+
+    return releases;
 }

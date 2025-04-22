@@ -5,6 +5,8 @@ import * as html from '../packagePanel/html';
 import * as history from '../packagePanel/panelHistory';
 import axios from 'axios';
 import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
+import { JsxEmit } from 'typescript';
+import { options } from 'marked';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
     return {
@@ -105,6 +107,9 @@ export class HtmlPanel {
                 const git: SimpleGit = simpleGit(gitOptions);
 
                 switch (message.command) {
+                    case 'logData':
+                        log(`logData: ${JSON.stringify(message)}`);
+                        return;
                     case 'openUrl':
                         vscode.env.openExternal(vscode.Uri.parse(message.value));
                         return;
@@ -130,11 +135,23 @@ export class HtmlPanel {
                         });
                         return
                     case 'importClick':
+                        // git clone https://github.com/QuecPython/AIChatBot-Volcengine-webRTC.git --branch v1.0.1
+
+                        log(`importClick: ${JSON.stringify(message)}`);
+                        
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
                             vscode.window.showInformationMessage('Cloning project...');
                             project = html.projectsInfo[message.value];
                             let repoPath = fileUri[0].fsPath + '\\' + project.name;
-                            git.clone(project.clone_url, repoPath).then(() => {
+                            let options = [];
+                            if (message.release == 'Releases' || message.release ==  'v1.0.0') {
+                                log(`if ${message.release}`);
+                                options = [];
+                            } else {
+                                log(`else ${message.release}`);
+                                options = ['--branch', message.release];
+                            }
+                            git.clone(project.clone_url, repoPath, options).then(() => {
                                 try {
                                     const uri = vscode.Uri.file(repoPath);
                                     vscode.commands.executeCommand('vscode.openFolder', uri, true);
@@ -261,7 +278,7 @@ export class HtmlPanel {
                 history.addStep('projectsPage');
 
                 vscode.window.showInformationMessage('Loading projects...');
-                html.getProjects(this, webview, page);
+                await html.getProjects(this, webview, page);
                 return;
         }
     }
