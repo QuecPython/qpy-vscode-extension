@@ -44,7 +44,7 @@ export class HtmlPanel {
         // Otherwise, create a new panel.
         const panel = vscode.window.createWebviewPanel(
             HtmlPanel.viewType,
-            'Proejcts',
+            'Projects',
             column || vscode.ViewColumn.One,
             getWebviewOptions(extensionUri),
         );
@@ -298,7 +298,7 @@ export class HtmlPanel {
                     // get project
                     let project = html.projectsInfo[projectId];
 
-                    // if we have a component, not a proejct
+                    // if we have a component, not a project
                     if (project == undefined) {
                         project = html.componentsInfo[projectId];
                     }

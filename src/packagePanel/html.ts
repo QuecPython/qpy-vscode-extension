@@ -1,24 +1,37 @@
+/* create html script for projects page + readme page */
+
 import * as vscode from 'vscode';
 import axios from 'axios';
 import { log } from '../api/userInterface';
 import * as history from '../packagePanel/panelHistory';
 
-// for projects
+// for projects in home page
+export let projects = ''; // projects html page
 let projectsList: string[][] = [];
-export let projectsInfo = {}; // save preojcts info to list of dicts
+export let projectsInfo = {}; // save projects info to list of dicts
 let projectsListString : string = '';
 let projectsIdsListString : string = '';
 let projectsDescriptionListString : string = '';
-let proejectsReleasesString: string = '';
+let projectsReleasesString: string = '';
 
-// for components
-export let componentsInfo = {};
+// for components in home page
+export let componentsInfo = {}; // save components info to list of dicts
 let componentsList: string[][] = [];
 let componentsIdsListString : string = '';
 let componentsListString : string = '';
 let componentsDescriptionListString : string = '';
 let componentsReleasesString : string = '';
 
+// for readme page
+let mdText = '';
+export let mdFile = '';
+
+/* make several requests to github
+- get list of repos from solution topic (projects)
+- get list of repos from component topic
+- build list of projects and components  and their detils to be used in html page
+- send all the data to the html page using setProjects(...)
+ */
 export async function getProjects(htmlPanel, webview, page): Promise<void> {
     return new Promise(async (resolve) => {
         // if folder is open, for add submodule
@@ -33,7 +46,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                 projectsListString,
                 projectsIdsListString,
                 projectsDescriptionListString,
-                proejectsReleasesString,
+                projectsReleasesString,
                 componentsListString,
                 componentsIdsListString,
                 componentsDescriptionListString,
@@ -73,6 +86,8 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                     projectsList = items.map((item: any) => {
                         return [item.name, item.id, item.description]
                     });
+
+                    // build list in string form, used inside js
                     projectsListString = '\[' + projectsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
                     projectsIdsListString = '\[' + projectsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
                     projectsDescriptionListString = '\[' + projectsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
@@ -121,7 +136,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                         projectsReleases.push('');
                     }
                 }
-                proejectsReleasesString = '\[' + projectsReleases.map(item => `\'${item}\'`).join(', ') + '\]';
+                projectsReleasesString = '\[' + projectsReleases.map(item => `\'${item}\'`).join(', ') + '\]';
             
                 const items1 = response1.data.items;
                 requests = [];
@@ -132,6 +147,8 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                     componentsList = items1.map((item: any) => {
                         return [item.name, item.id, item.description]
                     });
+
+                    // build list in string form, used inside js
                     componentsListString = '\[' + componentsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
                     componentsIdsListString = '\[' + componentsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
                     componentsDescriptionListString = '\[' + componentsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
@@ -182,7 +199,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                     projectsListString,
                     projectsIdsListString,
                     projectsDescriptionListString,
-                    proejectsReleasesString,
+                    projectsReleasesString,
                     componentsListString,
                     componentsIdsListString,
                     componentsDescriptionListString,
@@ -200,13 +217,298 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
     });
 }
 
-let mdText = '';
-export let mdFile = '';
+/* using list of data from getProjects, create html page with list of item for projects + components
+- the page has top banner with few buttons 
+- the page 2 sections, for projects + components
+- each section has a search field
+- each section shows 2 items + show button
+- based on the release certain version will be imported
+- view button will open readme page
+*/
+async function setProjects(
+    projectsListString: string,
+    projectsIdsListString: string,
+    projectsDescriptionListString: string,
+    projectsReleasesString: string, 
+    componentsListString: string,
+    componentsIdsListString: string,
+    componentsDescriptionListString: string,
+    componentsReleasesString: string,
+    workspaceOpen: string = 'disabled'
+) {
+    // banner buttons acitve or not
+    let homeButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
+    let backButton = homeButton;
+    let showButton = 'enabled';
 
+    projects = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Projects + Components</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                background-color: #f0f0f0;
+            }
+            .sticky-buttons {
+                position: sticky;
+                top: 0;
+                background-color: #f8f9fa;
+                padding: 10px;
+                display: flex;
+                justify-content: center;
+                border-bottom: 1px solid #ddd;
+                width: 100%;
+                z-index: 1000;
+            }
+
+            .sticky-buttons button {
+                margin: 0 10px;
+                padding: 10px 20px;
+                cursor: pointer;
+            }
+
+            .container {
+                padding: 20px;
+                background-color: #fff;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                width: 80%;
+                max-width: 800px;
+                margin: 20px 0;
+            }
+
+            .item-list {
+                list-style-type: none;
+                padding: 0;
+            }
+
+            .item-list li {
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+            }
+            .search-bar {
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 20px;
+                box-sizing: border-box;
+            }
+            .item {
+                border: 1px solid #ccc;
+                padding: 20px;
+                margin-bottom: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .item-details {
+                flex-grow: 1;
+            }
+            .item-buttons {
+                display: flex;
+                gap: 10px;
+            }
+            .item-buttons button {
+                padding: 10px 20px;
+                cursor: pointer;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- top banner -->
+        <div class="sticky-buttons">
+            <button ${homeButton} onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
+            <button ${backButton} onclick="vscode.postMessage({ command: 'backButton'});">Back</button>
+            <button id="newProject" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
+            <button ${showButton} id="showAll">Show All</button>
+            <button ${showButton} id="hideAll">Hide All</button>
+        </div>
+
+        <!-- Projects and sections -->
+        <div class="container">
+            <h2>Projects</h2>
+            <input type="text" class="search-bar" id="projectSearchBar" placeholder="Search Projects..." onkeyup="filterProjects()">
+            <ul class="item-list" id="projectList"></ul>
+            <button id="projectToggle" onclick="toggleItems('project')">Show More</button>
+            <h2>Components</h2>
+            <input type="text" class="search-bar" id="componentSearchBar" placeholder="Search Components..." onkeyup="filterComponents()">
+            <ul class="item-list" id="componentList"></ul>
+            <button id="componentToggle" onclick="toggleItems('component')">Show More</button>
+        </div>
+        <script>
+            const vscode = acquireVsCodeApi(); // used to send event to exention
+            
+            // projects data
+            const projects = ${projectsListString};
+            const projectsIds = ${projectsIdsListString};
+            const projectsDescription = ${projectsDescriptionListString};
+            const projectsReleases = ${projectsReleasesString};
+
+            // components data
+            const components = ${componentsListString};
+            const componentsIds = ${componentsIdsListString};
+            const componentsDescription = ${componentsDescriptionListString};
+            const componentsReleases = ${componentsReleasesString};
+
+            // show all button event
+            document.getElementById('showAll').addEventListener('click', function() {
+                document.querySelectorAll('.item-list').forEach(function(element) {
+                    element.querySelectorAll('li').forEach(function(item) {
+                        item.style.display = 'block';
+                    });
+                });
+                document.querySelectorAll('button[id$="Toggle"]').forEach(function(button) {
+                    button.textContent = 'Show Less';
+                });
+            });
+
+            // hide all button event
+            document.getElementById('hideAll').addEventListener('click', function() {
+                document.querySelectorAll('.item-list').forEach(function(element) {
+                    const items = element.querySelectorAll('li');
+                    items.forEach((item, index) => {
+                        item.style.display = index < 2 ? 'block' : 'none';
+                    });
+                });
+                document.querySelectorAll('button[id$="Toggle"]').forEach(function(button) {
+                    button.textContent = 'Show More';
+                });
+            });
+
+            function getRelease(option) {
+                // from select get selected option
+                return document.getElementById(option).value;
+            }
+
+            function generateItemList() {
+                // generate list of projects and componenets with buttons + release
+
+                const projectList = document.getElementById('projectList');
+
+                // create project items with button, and releases
+                projects.forEach((project, index) => {
+                    const projectItem = document.createElement('li');
+                    projectItem.className = 'item';
+                    if (index >= 2) projectItem.classList.add('hidden');
+                    projectItem.innerHTML = \`
+                        <div class="item-details">
+                            <h3>$\{project\}</h3>
+                            <p>$\{projectsDescription[index]\}</p>
+                        </div>
+                        <div class="item-buttons">
+                            <select id="$\{projectsIds[index]\}">
+                                <option selected>Releases</option>
+                                $\{projectsReleases[index]\}
+                            </select>
+                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projectsIds[index]\}', release: getRelease($\{projectsIds[index]\}) });">Import</button>
+                            <button id="viewProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projectsIds[index]\}'});">View</button>
+                        </div>
+                    \`;
+                    projectList.appendChild(projectItem);
+                });
+                const componentList = document.getElementById('componentList');
+
+                // create components items with button, and releases
+                components.forEach((component, index) => {
+                    const componentItem = document.createElement('li');
+                    componentItem.className = 'item';
+                    if (index >= 2) componentItem.classList.add('hidden');
+                    componentItem.innerHTML = \`
+                        <div class="item-details">
+                            <h3>$\{component\}</h3>
+                            <p>$\{componentsDescription[index]\}.</p>
+                        </div>
+                        <div class="item-buttons">
+                            <select id="$\{componentsIds[index]\}">
+                                <option selected>Releases</option>
+                                $\{componentsReleases[index]\}
+                            </select>
+                            <button ${workspaceOpen} id="addToProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'addToProject', value: '$\{componentsIds[index]\}'});">Add to project</button>
+                            <button id="viewComponentButton" class="view-button" onclick="vscode.postMessage({ command: 'viewComponent', value: '$\{componentsIds[index]\}'});">View</button>
+                        </div>
+                    \`;
+                    componentList.appendChild(componentItem);
+                });
+            }
+
+            function filterProjects() {
+                // search field for projects
+
+                const searchInput = document.getElementById('projectSearchBar').value.toLowerCase();
+                const projectItems = document.querySelectorAll('#projectList .item');
+                
+                projectItems.forEach(item => {
+                    const title = item.querySelector('h3').textContent.toLowerCase();
+                    const description = item.querySelector('p').textContent.toLowerCase();
+                    
+                    if (title.includes(searchInput) || description.includes(searchInput)) {
+                        item.style.display = '';
+                        item.classList.remove('hidden');
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            function filterComponents() {
+                // search field for projects
+
+                const searchInput = document.getElementById('componentSearchBar').value.toLowerCase();
+                const componentItems = document.querySelectorAll('#componentList .item');
+                
+                componentItems.forEach(item => {
+                    const title = item.querySelector('h3').textContent.toLowerCase();
+                    const description = item.querySelector('p').textContent.toLowerCase();
+                    
+                    if (title.includes(searchInput) || description.includes(searchInput)) {
+                        item.style.display = '';
+                        item.classList.remove('hidden');
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            // show all and hide all action
+            function toggleItems(type) {
+                const list = document.getElementById(type + 'List');
+                const button = document.getElementById(type + 'Toggle');
+                const items = list.querySelectorAll('li');
+                if (button.textContent === 'Show More') {
+                    items.forEach(item => item.style.display = 'block');
+                    button.textContent = 'Show Less';
+                } else {
+                    items.forEach((item, index) => {
+                        item.style.display = index < 2 ? 'block' : 'none';
+                    });
+                    button.textContent = 'Show More';
+                }
+            }
+
+            // Generate the item lists on page load
+            window.onload = generateItemList;
+        </script>
+    </body>
+    </html>
+    `;
+}
+
+/* using marked lib, create readme page to show it in vs code */
 export async function setMd(text: string, submodulesData: string, subModulesUrls: string){
+    // banner buttons
     let homeButton = 'enabled';
     let backButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
-    let showButton = 'disabled';
+    let showButton = 'disabled'; // hide all, show all buttons are disabled with md page
+
     mdText = text;
     mdFile = `
     <!DOCTYPE html>
@@ -290,6 +592,7 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
             const vscode = acquireVsCodeApi();
             // vscode.postMessage({ command: 'logData' , value: components });
 
+            // load readme content
             document.addEventListener('DOMContentLoaded', (event) => {
                 if (typeof marked !== 'undefined') {
                     const readmeContent = \`${mdText}\`;
@@ -335,270 +638,6 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
                     document.getElementById('components-content').innerHTML = '<p>Error loading Markdown parser.</p>';
                 }
             });
-        </script>
-    </body>
-    </html>
-    `;
-}
-
-export let projects = '';
-async function setProjects(
-    projectsListString: string,
-    projectsIdsListString: string,
-    projectsDescriptionListString: string,
-    proejectsReleasesString: string, 
-    componentsListString: string,
-    componentsIdsListString: string,
-    componentsDescriptionListString: string,
-    componentsReleasesString: string,
-    workspaceOpen: string = 'disabled'
-) {
-    let homeButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
-    let backButton = homeButton;
-    let showButton = 'enabled';
-
-    projects = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Solutions + Components</title>
-        <style>
-            body {
-                margin: 0;
-                font-family: Arial, sans-serif;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                background-color: #f0f0f0;
-            }
-            .sticky-buttons {
-                position: sticky;
-                top: 0;
-                background-color: #f8f9fa;
-                padding: 10px;
-                display: flex;
-                justify-content: center;
-                border-bottom: 1px solid #ddd;
-                width: 100%;
-                z-index: 1000;
-            }
-
-            .sticky-buttons button {
-                margin: 0 10px;
-                padding: 10px 20px;
-                cursor: pointer;
-            }
-
-            .container {
-                padding: 20px;
-                background-color: #fff;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                width: 80%;
-                max-width: 800px;
-                margin: 20px 0;
-            }
-
-            .item-list {
-                list-style-type: none;
-                padding: 0;
-            }
-
-            .item-list li {
-                padding: 10px;
-                border-bottom: 1px solid #ddd;
-            }
-            .search-bar {
-                width: 100%;
-                padding: 10px;
-                margin-bottom: 20px;
-                box-sizing: border-box;
-            }
-            .item {
-                border: 1px solid #ccc;
-                padding: 20px;
-                margin-bottom: 10px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .item-details {
-                flex-grow: 1;
-            }
-            .item-buttons {
-                display: flex;
-                gap: 10px;
-            }
-            .item-buttons button {
-                padding: 10px 20px;
-                cursor: pointer;
-            }
-            .hidden {
-                display: none;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="sticky-buttons">
-            <button ${homeButton} onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
-            <button ${backButton} onclick="vscode.postMessage({ command: 'backButton'});">Back</button>
-            <button id="newProejct" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
-            <button ${showButton} id="showAll">Show All</button>
-            <button ${showButton} id="hideAll">Hide All</button>
-        </div>
-        <div class="container">
-            <h2>Projects</h2>
-            <input type="text" class="search-bar" id="projectSearchBar" placeholder="Search Solutions..." onkeyup="filterProjects()">
-            <ul class="item-list" id="projectList"></ul>
-            <button id="projectToggle" onclick="toggleItems('project')">Show More</button>
-            <h2>Components</h2>
-            <input type="text" class="search-bar" id="componentSearchBar" placeholder="Search components..." onkeyup="filterComponents()">
-            <ul class="item-list" id="componentList"></ul>
-            <button id="componentToggle" onclick="toggleItems('component')">Show More</button>
-        </div>
-        <script>
-            const vscode = acquireVsCodeApi();
-            // projects data
-            const projects = ${projectsListString};
-            const projectsIds = ${projectsIdsListString};
-            const projectsDescription = ${projectsDescriptionListString};
-            const proejectsReleases = ${proejectsReleasesString};
-
-            // components
-            const components = ${componentsListString};
-            const componentsIds = ${componentsIdsListString};
-            const componentsDescription = ${componentsDescriptionListString};
-            const componentsReleases = ${componentsReleasesString};
-
-            document.getElementById('showAll').addEventListener('click', function() {
-                document.querySelectorAll('.item-list').forEach(function(element) {
-                    element.querySelectorAll('li').forEach(function(item) {
-                        item.style.display = 'block';
-                    });
-                });
-                document.querySelectorAll('button[id$="Toggle"]').forEach(function(button) {
-                    button.textContent = 'Show Less';
-                });
-            });
-
-            document.getElementById('hideAll').addEventListener('click', function() {
-                document.querySelectorAll('.item-list').forEach(function(element) {
-                    const items = element.querySelectorAll('li');
-                    items.forEach((item, index) => {
-                        item.style.display = index < 2 ? 'block' : 'none';
-                    });
-                });
-                document.querySelectorAll('button[id$="Toggle"]').forEach(function(button) {
-                    button.textContent = 'Show More';
-                });
-            });
-
-            function getRelease(option) {
-                // from select get selected option
-                return document.getElementById(option).value;
-            }
-
-            function generateItemList() {
-                const projectList = document.getElementById('projectList');
-
-                // create project items with button, and releases
-                projects.forEach((project, index) => {
-                    const projectItem = document.createElement('li');
-                    projectItem.className = 'item';
-                    if (index >= 2) projectItem.classList.add('hidden');
-                    projectItem.innerHTML = \`
-                        <div class="item-details">
-                            <h3>$\{project\}</h3>
-                            <p>$\{projectsDescription[index]\}</p>
-                        </div>
-                        <div class="item-buttons">
-                            <select id="$\{projectsIds[index]\}">
-                                <option selected>Releases</option>
-                                $\{proejectsReleases[index]\}
-                            </select>
-                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projectsIds[index]\}', release: getRelease($\{projectsIds[index]\}) });">Import</button>
-                            <button id="viewProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projectsIds[index]\}'});">View</button>
-                        </div>
-                    \`;
-                    projectList.appendChild(projectItem);
-                });
-                const componentList = document.getElementById('componentList');
-
-                let projectOpen = true;
-                let buttonState = projectOpen ? 'enabled' : 'disabled';
-                components.forEach((component, index) => {
-                    const componentItem = document.createElement('li');
-                    componentItem.className = 'item';
-                    if (index >= 2) componentItem.classList.add('hidden');
-                    componentItem.innerHTML = \`
-                        <div class="item-details">
-                            <h3>$\{component\}</h3>
-                            <p>$\{componentsDescription[index]\}.</p>
-                        </div>
-                        <div class="item-buttons">
-                            <select id="$\{componentsIds[index]\}">
-                                <option selected>Releases</option>
-                                $\{componentsReleases[index]\}
-                            </select>
-                            <button ${workspaceOpen} id="addToProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'addToProject', value: '$\{componentsIds[index]\}'});">Add to project</button>
-                            <button id="viewComponentButton" class="view-button" onclick="vscode.postMessage({ command: 'viewComponent', value: '$\{componentsIds[index]\}'});">View</button>
-                        </div>
-                    \`;
-                    componentList.appendChild(componentItem);
-                });
-            }
-
-            function filterProjects() {
-                const searchInput = document.getElementById('projectSearchBar').value.toLowerCase();
-                const projectItems = document.querySelectorAll('#projectList .item');
-                
-                projectItems.forEach(item => {
-                    const title = item.querySelector('h3').textContent.toLowerCase();
-                    const description = item.querySelector('p').textContent.toLowerCase();
-                    
-                    if (title.includes(searchInput) || description.includes(searchInput)) {
-                        item.style.display = '';
-                        item.classList.remove('hidden');
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            }
-            function filterComponents() {
-                const searchInput = document.getElementById('componentSearchBar').value.toLowerCase();
-                const componentItems = document.querySelectorAll('#componentList .item');
-                
-                componentItems.forEach(item => {
-                    const title = item.querySelector('h3').textContent.toLowerCase();
-                    const description = item.querySelector('p').textContent.toLowerCase();
-                    
-                    if (title.includes(searchInput) || description.includes(searchInput)) {
-                        item.style.display = '';
-                        item.classList.remove('hidden');
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            }
-
-            function toggleItems(type) {
-                const list = document.getElementById(type + 'List');
-                const button = document.getElementById(type + 'Toggle');
-                const items = list.querySelectorAll('li');
-                if (button.textContent === 'Show More') {
-                    items.forEach(item => item.style.display = 'block');
-                    button.textContent = 'Show Less';
-                } else {
-                    items.forEach((item, index) => {
-                        item.style.display = index < 2 ? 'block' : 'none';
-                    });
-                    button.textContent = 'Show More';
-                }
-            }
-
-            // Generate the item lists on page load
-            window.onload = generateItemList;
         </script>
     </body>
     </html>
