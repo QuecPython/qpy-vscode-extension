@@ -135,30 +135,24 @@ export class HtmlPanel {
                         });
                         return
                     case 'importClick':
-                        // git clone https://github.com/QuecPython/AIChatBot-Volcengine-webRTC.git --branch v1.0.1
-
-                        log(`importClick: ${JSON.stringify(message)}`);
-                        
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
-                            vscode.window.showInformationMessage('Cloning project...');
                             project = html.projectsInfo[message.value];
                             let repoPath = fileUri[0].fsPath + '\\' + project.name;
                             let options = [];
-                            if (message.release == 'Releases' || message.release ==  'v1.0.0') {
-                                log(`if ${message.release}`);
-                                options = [];
-                            } else {
-                                log(`else ${message.release}`);
+                            if (message.release != 'Releases') {
                                 options = ['--branch', message.release];
                             }
                             git.clone(project.clone_url, repoPath, options).then(() => {
+                                vscode.window.showInformationMessage('Cloning project...');
                                 try {
                                     const uri = vscode.Uri.file(repoPath);
                                     vscode.commands.executeCommand('vscode.openFolder', uri, true);
                                 } catch (error) {
+                                    vscode.window.showErrorMessage('Error cloning repository');
                                     console.error('Error cloning repository:', error);
                                 }
                             }).catch((error) => {
+                                vscode.window.showErrorMessage('Error cloning repository');
                                 console.error('Error cloning repository:', error);
                             });
                         });
@@ -209,6 +203,7 @@ export class HtmlPanel {
         const git = simpleGit({ baseDir:  vscode.workspace.workspaceFolders[0].uri.fsPath});
         await git.init();
         vscode.window.showInformationMessage('Cloning component...');
+        
         await git.subModule(['add', '-f', component.clone_url]).then((response) => {
             vscode.window.showInformationMessage('Cloning completed!');
         }).catch((error) => {
