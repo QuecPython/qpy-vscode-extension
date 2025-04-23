@@ -1,3 +1,9 @@
+## 1.1.3
+- compatible with vs code 1.99.3 or higher
+- add quick access menu with projects + components
+- import quectel project
+- add quectel component to current project
+- view project or component readme
 ## 1.1.2
 - compatible with vs code 1.98.2 or higher
 - update packages and dependecies
