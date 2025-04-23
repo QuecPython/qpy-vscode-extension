@@ -5,8 +5,6 @@ import * as html from '../packagePanel/html';
 import * as history from '../packagePanel/panelHistory';
 import axios from 'axios';
 import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
-import { JsxEmit } from 'typescript';
-import { options } from 'marked';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
     return {
@@ -18,11 +16,9 @@ function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
     };
 }
 
-/**
- * Manages webview html panels
- */
+// Manages webview html panels
 export class HtmlPanel {
-    /**
+    /*
      * Track the currently panel. Only allow a single panel to exist at a time.
      */
     public static currentPanel: HtmlPanel | undefined;
@@ -82,13 +78,9 @@ export class HtmlPanel {
             this._disposables
         );
 
-        // Handle messages from the webview
+        // Handle messages from the html panel
         this._panel.webview.onDidReceiveMessage(
             message => {
-                // const editor = vscode.window.activeTextEditor;
-                // const filePath = editor.document.uri.fsPath;
-                // log(`Current file path: ${filePath}`);
-
                 const dialogOptions: vscode.OpenDialogOptions = {
                     canSelectMany: false,
                     openLabel: 'Select',
@@ -197,6 +189,8 @@ export class HtmlPanel {
     }
 
     private async _addToProject(componentId: string) {
+        // import submodule to current project
+
         let component = html.componentsInfo[componentId];
 
         // create git with workspace folder
@@ -236,13 +230,8 @@ export class HtmlPanel {
             this._getReadme(readmeUrl, submodulesUrl, project.id);
         }).catch((error) =>{
             log(`Error fetching subModule info: ${error}`);
+            vscode.window.showErrorMessage('Error fetching subModule, please try again later.');
         });
-    }
-    
-    public doRefactor() {
-        // Send a message to the webview webview.
-        // You can send any JSON serializable data.
-        this._panel.webview.postMessage({ command: 'refactor' });
     }
 
     public dispose() {
@@ -261,9 +250,10 @@ export class HtmlPanel {
     }
 
     private async _update(page, source?: string) {
+        // update html panel home page
+
         const webview = this._panel.webview;
 
-        // Vary the webview's content based on where it is located in the editor.
         switch (page) {
             case 'projectsPage':
                 // for new panel we clear steps
@@ -279,6 +269,8 @@ export class HtmlPanel {
     }
 
     private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = '') {
+        // get readme page from git using url, with submodules list
+
         history.addStep(readmeUrl, submodulesUrl, projectId);
         vscode.window.showInformationMessage('Loading readme...');
         let config = {
@@ -396,6 +388,8 @@ export class HtmlPanel {
     }
 
     private _extractComponents(text: string): string {
+        /* return list of submodules to show them as a list in readme page  */
+
         const urlRegex = /url = (https:\/\/github\.com\/[^\s]+)/g;
         const components: string[] = [];
         const subModules: string[] = [];
@@ -412,21 +406,17 @@ export class HtmlPanel {
     }
         
     private async _updatePanel(webview: vscode.Webview, page: string, text: string) {
+        /* update html panel with project page or readme page */
+
         switch (page) {
             case 'projectsPage':
                 this._panel.title = 'Projects + Components';		
-                // this._panel.webview.html = html.projects;
                 this._panel.webview.html = text;
                 break
-            // case 'packagesPage':
-            // 	this._panel.title = 'Packages';		
-            // 	this._panel.webview.html = html.packages;
             case 'mdFile':
-                this._panel.title = 'Readme.md';
-                // this._panel.webview.html = html.mdFile;
+                this._panel.title = 'README.md';
                 this._panel.webview.html = text;
                 break
-                // * Identifies the type of the webview panel, such as `'markdown.preview'`.
         }
     }
 }
