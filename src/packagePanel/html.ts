@@ -98,9 +98,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                         method: 'get',
                         maxBodyLength: Infinity,
                         url: releasesUrl,
-                        headers: {
-                            Authorization: `Bearer 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`
-                        }
+                        headers: {} // if limit reached, use git token
                     };
 
                     config2.id = item.id;
@@ -159,7 +157,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                         method: 'get',
                         maxBodyLength: Infinity,
                         url: releasesUrl,
-                        headers: { } // if limit reached, u
+                        headers: {} // if limit reached, use git token
                     };
 
                     config2.id = item.id;
