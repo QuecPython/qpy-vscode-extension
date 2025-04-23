@@ -117,14 +117,14 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                             let id = result.value.config.id;
                             projectsInfo[id].releases = releases;
                         }
-                    });                    
+                    });
                 });
     
                 // get projects releases
                 let projectsReleases = [];
                 for (let i of projectsList) {
                     let id = i[1];
-                    if (projectsInfo[id].releases.length > 0){
+                    if ('releases' in projectsInfo[id] && projectsInfo[id].releases.length > 0){
                         let releases = ''; // for one project
                         for (let y in projectsInfo[id].releases) {
                             releases += `<option>${projectsInfo[id].releases[y]}</option>`;
