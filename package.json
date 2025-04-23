@@ -121,10 +121,6 @@
 			{
 				"command": "qpy-ide.createDir",
 				"title": "Create Directory"
-			},
-			{
-				"command": "qpy-ide.homePage",
-				"title": "Quectel Home"
 			}
 		],
 		"viewsContainers": {
@@ -132,11 +128,6 @@
 				{
 					"id": "qpy",
 					"title": "QuecPython",
-					"icon": "media/dep.svg"
-				},
-				{
-					"id": "package-explorer",
-					"title": "Package Explorer",
 					"icon": "media/dep.svg"
 				}
 			]

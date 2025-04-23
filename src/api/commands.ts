@@ -393,13 +393,6 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 			await HtmlPanel.createOrShow(context.extensionUri, 'projectsPage');
 		}
 	);
-
-	const packagesPage = vscode.commands.registerCommand(
-		'qpy-ide.packagesPage',
-		async (extensionUri: vscode.Uri) => { 
-			HtmlPanel.createOrShow(context.extensionUri, 'packagesPage');
-		}
-	);
 	
 	context.subscriptions.push(
 		openConnection,
@@ -416,7 +409,6 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		removeDir,
 		createDir,
 		projectsPage,
-		packagesPage,
 		vscode.window.registerWebviewViewProvider(
 			FirmwareViewProvider.viewType,
 			fwProvider

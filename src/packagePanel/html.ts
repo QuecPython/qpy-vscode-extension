@@ -352,7 +352,7 @@ async function setProjects(
     componentsDescriptionListString: string,
     componentsReleasesString: string,
     workspaceOpen: string = 'disabled'
-){
+) {
     let homeButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
     let backButton = homeButton;
     let showButton = 'enabled';
@@ -603,35 +603,4 @@ async function setProjects(
     </body>
     </html>
     `;
-}
-
-function getRequests(items){
-    let requests = [];
-
-    items.map(async (item: any) => {
-        projectsInfo[item.id] = item;
-        // build string from a list, and use it in js string
-        projectsList = items.map((item: any) => {
-            return [item.name, item.id, item.description]
-        });
-        projectsListString = '\[' + projectsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-        projectsIdsListString = '\[' + projectsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-        projectsDescriptionListString = '\[' + projectsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
-        
-        let releasesUrl = `https://api.github.com/repos/QuecPython/${item.name}/releases`;
-        let config = {
-            id: '',
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: releasesUrl,
-            headers: {
-                Authorization: `Bearer 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`
-            }
-        };
-        
-        config.id = item.id;
-        requests.push(axios.request(config));
-    });
-
-    return requests;
 }

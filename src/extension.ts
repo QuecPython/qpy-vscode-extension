@@ -4,7 +4,7 @@ import SerialTerminal from './serial/serialTerminal';
 import { moduleFsTreeProvider, initStatusButtons, log, openLog, closeLog } from './api/userInterface';
 import { registerCommands } from './api/commands';
 import FirmwareViewProvider from './sidebar/firmwareSidebar';
-import TreeDataProvider from './sidebar/quicAccess';
+import QuickAccessProvider from './sidebar/quicAccess';
 
 // lookup table for linking vscode terminals to SerialTerminal instances
 export const terminalRegistry: { [key: string]: SerialTerminal } = {};
@@ -13,7 +13,7 @@ export let fwProvider: FirmwareViewProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerTreeDataProvider('qpyModuleFS', moduleFsTreeProvider);
-	vscode.window.registerTreeDataProvider('quickAccess', new TreeDataProvider());
+	vscode.window.registerTreeDataProvider('quickAccess', new QuickAccessProvider());
 	fwProvider = new FirmwareViewProvider(context.extensionUri);
 	// openLog();
 	initStatusButtons();

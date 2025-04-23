@@ -1,3 +1,5 @@
+/* save user history and steps.
+return last step or return the depth of hisotry and count of saved steps */
 import { log } from '../api/userInterface';
 interface UserStep {
     page: string;
@@ -8,7 +10,7 @@ interface UserStep {
 
 export const userSteps: UserStep[] = [];
 
-// Function to add a step to the history
+// add a step to the history
 export function addStep(page: string,  submodulesUrl?: string, projectId?: string) {
     const step: UserStep = {
         timestamp: new Date(),
@@ -19,7 +21,7 @@ export function addStep(page: string,  submodulesUrl?: string, projectId?: strin
     userSteps.push(step);
 }
 
-// Function to get and remove the last step
+// get and remove the last step
 export function getLastStep(): UserStep | undefined {
     if (userSteps.length === 0) {
         return undefined;
@@ -27,7 +29,7 @@ export function getLastStep(): UserStep | undefined {
     return userSteps.pop();
 }
 
-// Function to get the length of the steps array
+// get the length of the history and steps 
 export function getStepsLength(): number {
     return userSteps.length;
 }
@@ -37,4 +39,3 @@ export function getStepsLength(): number {
 export function clearSteps() {
     userSteps.length = 0;
 }
-    
