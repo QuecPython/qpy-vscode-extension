@@ -17,6 +17,8 @@ import { portStatus } from '../serial/serialTerminal';
 import { sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
 import { serialEmitter } from '../serial/serialBridge';
+import { HtmlPanel } from '../packagePanel/htmlPanel';
+
 
 export let chosenModule: string | undefined;
 export let newDirPath: string | undefined;
@@ -53,7 +55,6 @@ export const openConnection = vscode.commands.registerCommand(
 			vscode.window.showErrorMessage('Device is already connected!');
 		} else {
 			const portPaths = await executeBatScript();
-			log(portPaths);
 			// resolve port path
 			let chosenPort: string | undefined = portPath;
 			let chosenPortPath: string | undefined;
@@ -383,8 +384,16 @@ async function _refreshTree() {
     moduleFsTreeProvider.refresh();
 };
 
+
 // register commands to the extension
 export const registerCommands = (context: vscode.ExtensionContext): void => {
+	const projectsPage = vscode.commands.registerCommand(
+		'qpy-ide.projectsPage',
+		async (extensionUri: vscode.Uri) => { 
+			await HtmlPanel.createOrShow(context.extensionUri, 'projectsPage');
+		}
+	);
+	
 	context.subscriptions.push(
 		openConnection,
 		closeConnection,
@@ -399,6 +408,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		removeFile,
 		removeDir,
 		createDir,
+		projectsPage,
 		vscode.window.registerWebviewViewProvider(
 			FirmwareViewProvider.viewType,
 			fwProvider

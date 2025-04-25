@@ -4,6 +4,7 @@ import SerialTerminal from './serial/serialTerminal';
 import { moduleFsTreeProvider, initStatusButtons, log, openLog, closeLog } from './api/userInterface';
 import { registerCommands } from './api/commands';
 import FirmwareViewProvider from './sidebar/firmwareSidebar';
+import QuickAccessProvider from './sidebar/quicAccess';
 
 // lookup table for linking vscode terminals to SerialTerminal instances
 export const terminalRegistry: { [key: string]: SerialTerminal } = {};
@@ -11,14 +12,13 @@ export const terminalRegistry: { [key: string]: SerialTerminal } = {};
 export let fwProvider: FirmwareViewProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
-	log(`${new Date().toLocaleString()} - registerTreeDataProvider activated`);
 	vscode.window.registerTreeDataProvider('qpyModuleFS', moduleFsTreeProvider);
+	vscode.window.registerTreeDataProvider('quickAccess', new QuickAccessProvider());
 	fwProvider = new FirmwareViewProvider(context.extensionUri);
-	openLog();
+	// openLog();
 	initStatusButtons();
 	registerCommands(context);
 	console.log("QuecPyhton activate success");
-
 }
 
 export function deactivate() {

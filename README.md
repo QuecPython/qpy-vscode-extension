@@ -2,6 +2,7 @@
 
 Extension for handling interaction with QuecPython based modules. Communicate with Python based Quectel modules using the built-in REPL or AT CLI. Besides serial communication, extension provides out-of-the box module file system preview in a tree view. Users are free to opt using commands from the extension UI or execute raw commands via REPL.
 
+Import Quectel projects, add compoenets to your project and view information about different solutions.
 - Works with Windows only at the moment.
 
 ## Requirements
@@ -47,6 +48,12 @@ To compile:
     vsce package
 
 ## Release Notes
+## 1.1.3
+- compatible with vs code 1.99.3 or higher
+- add quick access menu with projects + components
+- import quectel project
+- add quectel component to current project
+- view project or component readme
 ## 1.1.2
 - compatible with vs code 1.98.2 or higher
 - update packages and dependecies
