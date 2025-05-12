@@ -1,11 +1,75 @@
-# QuecPython
+# QuecPython Vs Code Extension
 
 Extension for handling interaction with QuecPython based modules. Communicate with Python based Quectel modules using the built-in REPL or AT CLI. Besides serial communication, extension provides out-of-the box module file system preview in a tree view. Users are free to opt using commands from the extension UI or execute raw commands via REPL.
 
 Import Quectel projects, add compoenets to your project and view information about different solutions.
 - Works with Windows only at the moment.
 
-## Requirements
+# How to use
+
+## Using Package manger with VS Code
+
+1. From QuecPython menu -> Quick Access -> Quectel -> Projects + Components
+
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/menu.png" alt="Select Menu">
+</p>
+
+2. List of Projects + Components will show in the panel
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/main-panel.png" alt="Main Panel">
+</p>
+
+3. From the panel, you can view usig view button for a project of component, which will show readme + submodules for project or component.
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/view-button.png" alt="Ciew Button">
+</p>
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/readme-info.png" alt="View Info">
+</p>
+
+<b>Note:</b> View button will always show the info of project, component or submodule.
+
+4. From Main Panel, Import button will clone the project to your machine.
+
+  - click import
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/import-button.png" alt="Import Button">
+</p>
+
+  - choose where to save the project
+  - please wait while the extension clone the project
+  - when done, the extension will open the new project
+
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/clone-done.png" alt="Clone Done">
+</p>
+
+5. From Main Panel, Add to project button will clone the submodule to your current open project.
+
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/add-to-project.png" alt="Add to Project">
+</p>
+
+<b>Note 1:</b> Add to project will work only when there's an open project already.
+If there's no project open, the button will be disabled.
+
+<b>Note 2:</b> Add to project and these submodules can be used and cloned with any of client QuecPython projects or with our projects from our github.
+
+6. Banner buttons, and search fields are give a better experience while using the extension
+
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/banner-buttons.png" alt="Banners Buttons">
+</p>
+
+  - Show all / Hide All: Show or Hide all the items from projects + components list.
+  - New Project: Create a new project.
+  - Home: Redirect to main page (Not active when user is alraedy at main page).
+  - Back: go back to previouse page (active only when previouse page is avilable).
+  - Search Projects / Components: search the list of Projects or Components.
+  - Show More:show the list of Projects or Components.
+
+## Extension Requirements
 - NodeJS installed on your system (12 or higher) - [NodeJS](https://nodejs.org)
 
 ## Supported Modules
@@ -48,6 +112,9 @@ To compile:
     vsce package
 
 ## Release Notes
+## 1.1.4
+- compatible with vs code 1.99.3 or higher
+- Update How-To-Use
 ## 1.1.3
 - compatible with vs code 1.99.3 or higher
 - add quick access menu with projects + components

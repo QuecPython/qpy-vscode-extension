@@ -1,3 +1,6 @@
+## 1.1.4
+- compatible with vs code 1.99.3 or higher
+- Update How-To-Use
 ## 1.1.3
 - compatible with vs code 1.99.3 or higher
 - add quick access menu with projects + components
