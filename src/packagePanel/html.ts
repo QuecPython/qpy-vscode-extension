@@ -239,6 +239,18 @@ async function setProjects(
     let backButton = homeButton;
     let showButton = 'enabled';
 
+    let backgroundColor = '#f0f0f0';
+    let stickyButtonsBackgroundColor = '#f8f9fa';
+    let containerBackgroundColor= '#fff';
+
+    // toggle colors by theme
+    // 1 is light, 2 is black theme
+    if (vscode.window.activeColorTheme.kind == 2){
+        backgroundColor = '#141414';
+        stickyButtonsBackgroundColor = '#0a0a0b';
+        containerBackgroundColor = '#000';
+    }
+
     projects = `
     <!DOCTYPE html>
     <html lang="en">
@@ -253,12 +265,12 @@ async function setProjects(
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                background-color: #f0f0f0;
+                background-color: ${backgroundColor};
             }
             .sticky-buttons {
                 position: sticky;
                 top: 0;
-                background-color: #f8f9fa;
+                background-color: ${stickyButtonsBackgroundColor};
                 padding: 10px;
                 display: flex;
                 justify-content: center;
@@ -275,7 +287,7 @@ async function setProjects(
 
             .container {
                 padding: 20px;
-                background-color: #fff;
+                background-color: ${containerBackgroundColor};
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
                 width: 80%;
                 max-width: 800px;
@@ -507,6 +519,13 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
     let backButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
     let showButton = 'disabled'; // hide all, show all buttons are disabled with md page
 
+    let stickyButtonsBackgroundColor = '#f8f9fa';
+    // toggle colors by theme
+    // 1 is light, 2 is black theme
+    if (vscode.window.activeColorTheme.kind == 2){
+        stickyButtonsBackgroundColor = '#0a0a0b';
+    }
+    
     mdText = text;
     mdFile = `
     <!DOCTYPE html>
@@ -524,7 +543,7 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
         .sticky-buttons {
             position: sticky;
             top: 0;
-            background-color: #f8f9fa;
+            background-color: ${stickyButtonsBackgroundColor};
             padding: 10px;
             display: flex;
             justify-content: center;
