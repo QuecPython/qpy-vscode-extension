@@ -240,6 +240,7 @@ async function setProjects(
     let showButton = 'enabled';
 
     let backgroundColor = '#f0f0f0';
+    let textColor = '#0a0a0b';
     let stickyButtonsBackgroundColor = '#f8f9fa';
     let containerBackgroundColor= '#fff';
 
@@ -247,6 +248,7 @@ async function setProjects(
     // 1 is light, 2 is black theme
     if (vscode.window.activeColorTheme.kind == 2){
         backgroundColor = '#141414';
+        textColor = '#f0f0f0';
         stickyButtonsBackgroundColor = '#0a0a0b';
         containerBackgroundColor = '#000';
     }
@@ -283,6 +285,13 @@ async function setProjects(
                 margin: 0 10px;
                 padding: 10px 20px;
                 cursor: pointer;
+                background-color: #007ACC;
+                color: white;
+            }
+            
+            .sticky-buttons button:disabled {
+                background-color:rgb(136, 146, 158);
+                color: #A6A6A6;
             }
 
             .container {
@@ -292,6 +301,11 @@ async function setProjects(
                 width: 80%;
                 max-width: 800px;
                 margin: 20px 0;
+            }
+
+            .container button {
+                background-color: #007ACC;
+                color: white;
             }
 
             .item-list {
@@ -308,7 +322,12 @@ async function setProjects(
                 padding: 10px;
                 margin-bottom: 20px;
                 box-sizing: border-box;
+                placeholder.color: white;
+                color: ${textColor};
+                background-color: ${backgroundColor};
+
             }
+            
             .item {
                 border: 1px solid #ccc;
                 padding: 20px;
@@ -327,7 +346,19 @@ async function setProjects(
             .item-buttons button {
                 padding: 10px 20px;
                 cursor: pointer;
+                background-color: #007ACC;
+                color: white;
             }
+
+            .item-buttons select {
+                color: ${textColor};
+                background-color: ${backgroundColor};
+            }
+            .item-buttons button:disabled {
+                background-color:rgb(136, 146, 158);
+                color: #A6A6A6;
+            }
+
             .hidden {
                 display: none;
             }
@@ -556,17 +587,32 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
             margin: 0 10px;
             padding: 10px 20px;
             cursor: pointer;
+            background-color: #007ACC;
+            color: white;
         }
+        
+        .sticky-buttons button:disabled {
+            background-color:rgb(136, 146, 158);
+            color: #A6A6A6;
+        }
+
         #container {
             display: flex;
             width: 100%;
             justify-content: space-between;
             margin-top: 20px;
         }
+
+        #container button {
+            background-color: #007ACC;
+            color: white;
+        }
+
         #left, #right {
             width: 50%;
             padding: 10px;
         }
+
         #left {
             border-right: 1px solid #ccc;
         }
