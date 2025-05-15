@@ -366,7 +366,7 @@ async function setProjects(
     <body>
         <!-- top banner -->
         <div class="sticky-buttons">
-                <!-- home button is disbled on home screen -->
+            <!-- home button is disbled on home screen -->
             <button disabled onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
             <button ${backButton} onclick="vscode.postMessage({ command: 'backButton'});">Back</button>
             <button id="newProject" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
