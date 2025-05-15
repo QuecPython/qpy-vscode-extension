@@ -1,3 +1,6 @@
+## 1.1.5
+- compatible with vs code 1.100.1 or higher
+- add theme for package manager for dark/light themes
 ## 1.1.4
 - compatible with vs code 1.99.3 or higher
 - Update How-To-Use
