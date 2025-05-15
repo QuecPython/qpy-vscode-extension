@@ -235,8 +235,7 @@ async function setProjects(
     workspaceOpen: string = 'disabled'
 ) {
     // banner buttons acitve or not
-    let homeButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
-    let backButton = homeButton;
+    let backButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
     let showButton = 'enabled';
 
     let backgroundColor = '#f0f0f0';
@@ -367,14 +366,15 @@ async function setProjects(
     <body>
         <!-- top banner -->
         <div class="sticky-buttons">
-            <button ${homeButton} onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
+                <!-- home button is disbled on home screen -->
+            <button disabled onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
             <button ${backButton} onclick="vscode.postMessage({ command: 'backButton'});">Back</button>
             <button id="newProject" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
             <button ${showButton} id="showAll">Show All</button>
             <button ${showButton} id="hideAll">Hide All</button>
         </div>
 
-        <!-- Projects and sections -->
+        <!-- Projects and Components sections -->
         <div class="container">
             <h2>Projects</h2>
             <input type="text" class="search-bar" id="projectSearchBar" placeholder="Search Projects..." onkeyup="filterProjects()">
