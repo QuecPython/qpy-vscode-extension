@@ -235,9 +235,22 @@ async function setProjects(
     workspaceOpen: string = 'disabled'
 ) {
     // banner buttons acitve or not
-    let homeButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
-    let backButton = homeButton;
+    let backButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
     let showButton = 'enabled';
+
+    let backgroundColor = '#f0f0f0';
+    let textColor = '#0a0a0b';
+    let stickyButtonsBackgroundColor = '#f8f9fa';
+    let containerBackgroundColor= '#fff';
+
+    // toggle colors by theme
+    // 1 is light, 2 is black theme
+    if (vscode.window.activeColorTheme.kind == 2){
+        backgroundColor = '#141414';
+        textColor = '#f0f0f0';
+        stickyButtonsBackgroundColor = '#0a0a0b';
+        containerBackgroundColor = '#000';
+    }
 
     projects = `
     <!DOCTYPE html>
@@ -253,12 +266,12 @@ async function setProjects(
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                background-color: #f0f0f0;
+                background-color: ${backgroundColor};
             }
             .sticky-buttons {
                 position: sticky;
                 top: 0;
-                background-color: #f8f9fa;
+                background-color: ${stickyButtonsBackgroundColor};
                 padding: 10px;
                 display: flex;
                 justify-content: center;
@@ -271,15 +284,27 @@ async function setProjects(
                 margin: 0 10px;
                 padding: 10px 20px;
                 cursor: pointer;
+                background-color: #007ACC;
+                color: white;
+            }
+            
+            .sticky-buttons button:disabled {
+                background-color:rgb(136, 146, 158);
+                color: #A6A6A6;
             }
 
             .container {
                 padding: 20px;
-                background-color: #fff;
+                background-color: ${containerBackgroundColor};
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
                 width: 80%;
                 max-width: 800px;
                 margin: 20px 0;
+            }
+
+            .container button {
+                background-color: #007ACC;
+                color: white;
             }
 
             .item-list {
@@ -296,7 +321,12 @@ async function setProjects(
                 padding: 10px;
                 margin-bottom: 20px;
                 box-sizing: border-box;
+                placeholder.color: white;
+                color: ${textColor};
+                background-color: ${backgroundColor};
+
             }
+            
             .item {
                 border: 1px solid #ccc;
                 padding: 20px;
@@ -315,7 +345,19 @@ async function setProjects(
             .item-buttons button {
                 padding: 10px 20px;
                 cursor: pointer;
+                background-color: #007ACC;
+                color: white;
             }
+
+            .item-buttons select {
+                color: ${textColor};
+                background-color: ${backgroundColor};
+            }
+            .item-buttons button:disabled {
+                background-color:rgb(136, 146, 158);
+                color: #A6A6A6;
+            }
+
             .hidden {
                 display: none;
             }
@@ -324,14 +366,15 @@ async function setProjects(
     <body>
         <!-- top banner -->
         <div class="sticky-buttons">
-            <button ${homeButton} onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
+            <!-- home button is disbled on home screen -->
+            <button disabled onclick="vscode.postMessage({ command: 'homeButton'});">Home</button>
             <button ${backButton} onclick="vscode.postMessage({ command: 'backButton'});">Back</button>
             <button id="newProject" onclick="vscode.postMessage({ command: 'newProjectClick'});">New Project</button>
             <button ${showButton} id="showAll">Show All</button>
             <button ${showButton} id="hideAll">Hide All</button>
         </div>
 
-        <!-- Projects and sections -->
+        <!-- Projects and Components sections -->
         <div class="container">
             <h2>Projects</h2>
             <input type="text" class="search-bar" id="projectSearchBar" placeholder="Search Projects..." onkeyup="filterProjects()">
@@ -507,6 +550,13 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
     let backButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
     let showButton = 'disabled'; // hide all, show all buttons are disabled with md page
 
+    let stickyButtonsBackgroundColor = '#f8f9fa';
+    // toggle colors by theme
+    // 1 is light, 2 is black theme
+    if (vscode.window.activeColorTheme.kind == 2){
+        stickyButtonsBackgroundColor = '#0a0a0b';
+    }
+    
     mdText = text;
     mdFile = `
     <!DOCTYPE html>
@@ -524,7 +574,7 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
         .sticky-buttons {
             position: sticky;
             top: 0;
-            background-color: #f8f9fa;
+            background-color: ${stickyButtonsBackgroundColor};
             padding: 10px;
             display: flex;
             justify-content: center;
@@ -537,17 +587,32 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
             margin: 0 10px;
             padding: 10px 20px;
             cursor: pointer;
+            background-color: #007ACC;
+            color: white;
         }
+        
+        .sticky-buttons button:disabled {
+            background-color:rgb(136, 146, 158);
+            color: #A6A6A6;
+        }
+
         #container {
             display: flex;
             width: 100%;
             justify-content: space-between;
             margin-top: 20px;
         }
+
+        #container button {
+            background-color: #007ACC;
+            color: white;
+        }
+
         #left, #right {
             width: 50%;
             padding: 10px;
         }
+
         #left {
             border-right: 1px solid #ccc;
         }

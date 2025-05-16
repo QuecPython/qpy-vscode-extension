@@ -127,13 +127,19 @@ export class HtmlPanel {
                         });
                         return
                     case 'importClick':
+                        // clone a project to a selected path
+
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
                             project = html.projectsInfo[message.value];
                             let repoPath = fileUri[0].fsPath + '\\' + project.name;
                             let options = [];
+                            
+                            // if user choose a certain release
                             if (message.release != 'Releases') {
                                 options = ['--branch', message.release];
                             }
+
+                            // clone the project and open a new folder with the new repo
                             git.clone(project.clone_url, repoPath, options).then(() => {
                                 vscode.window.showInformationMessage('Cloning project...');
                                 try {
@@ -154,6 +160,12 @@ export class HtmlPanel {
                         return;
                     case 'viewChineseClick':
                         project = html.projectsInfo[message.value];
+    
+                        // if we have a component, not a project
+                        if (project == undefined) {
+                            project = html.componentsInfo[message.value];
+                        }
+
                         readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.zh.md';
                         submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
 
@@ -162,6 +174,12 @@ export class HtmlPanel {
                         return;
                     case 'viewClick':
                         project = html.projectsInfo[message.value];
+
+                        // if we have a component, not a project
+                        if (project == undefined) {
+                            project = html.componentsInfo[message.value];
+                        }
+
                         readmeUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/' + project.default_branch + '/README.md';
                         submodulesUrl = 'https://raw.githubusercontent.com/QuecPython/' + project.name + '/refs/heads/' + project.default_branch + '/.gitmodules';
 
