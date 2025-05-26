@@ -195,3 +195,20 @@ export function closeLog() {
         outputChannel.dispose(); // 当插件被禁用时，清理资源
     }
 }
+
+export function enableAutoComplete() {
+	// using pylance add QuecPython pyi files extra paths
+
+	const stubsPath = path.join(__filename, '..', '..', '..', 'snippets', 'quecpython_stubs');
+	const pylanceConfig = vscode.workspace.getConfiguration('python.analysis');
+	let extraPaths = pylanceConfig.get<string[]>('extraPaths') || [];
+	if (!extraPaths.includes(stubsPath)) {
+		extraPaths.push(stubsPath);
+		pylanceConfig.update('extraPaths', extraPaths, vscode.ConfigurationTarget.Global)
+			.then(() => {
+				vscode.window.showInformationMessage('Pylance extraPaths updated successfully');
+			}, (error) => {
+				vscode.window.showErrorMessage(`Failed to update Pylance setting: ${error}`);
+		});
+	}
+}
