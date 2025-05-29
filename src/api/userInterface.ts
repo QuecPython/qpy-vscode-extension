@@ -6,13 +6,13 @@ import * as https from 'https';
 import { scriptName, fwConfig } from '../utils/constants';
 import { spawn } from 'child_process';
 import { TextDecoder } from 'util';
-// 日志文件路径
+
+// Execute script path
 const logFilePath = path.join(__dirname, '..', '..', 'log');
 const logFile = logFilePath + scriptName.logFile;
 
 // 执行脚本路径
 const batScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
-const batScript: string = batScriptPath + scriptName.activateBat;
 const portBatScript: string = batScriptPath + scriptName.portListBat;
 
 
@@ -104,25 +104,6 @@ export const downloadScript = vscode.window.createStatusBarItem(
 );
 
 export const moduleFsTreeProvider = new ModuleFileSystemProvider();
-
-export const initPythonPath = (): void => {
-	const { execFile } = require('node:child_process');
-	const childProcess = execFile(
-		batScript, 
-		[path.join(__filename, '..', '..', '..', 'snippets', 'QuecPyhton.json')],
-		{ shell: true }, // run in shell, to avoid spawn EINVAL error
-		(error, stdout, stderr) => {
-			if (error) {
-				log('error: ' + error);
-			}
-
-			if (stderr) {
-				log('error: ' + stderr);
-			}
-
-		}
-	);
-};
 
 export async function executeBatScript(): Promise<any> {
 	const childProcess = spawn(portBatScript, [], {
