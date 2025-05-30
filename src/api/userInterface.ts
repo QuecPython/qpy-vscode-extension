@@ -6,13 +6,13 @@ import * as https from 'https';
 import { scriptName, fwConfig } from '../utils/constants';
 import { spawn } from 'child_process';
 import { TextDecoder } from 'util';
-// 日志文件路径
+
+// Execute script path
 const logFilePath = path.join(__dirname, '..', '..', 'log');
 const logFile = logFilePath + scriptName.logFile;
 
 // 执行脚本路径
 const batScriptPath: string = path.join(__dirname, '..', '..', 'scripts');
-const batScript: string = batScriptPath + scriptName.activateBat;
 const portBatScript: string = batScriptPath + scriptName.portListBat;
 
 
@@ -105,25 +105,6 @@ export const downloadScript = vscode.window.createStatusBarItem(
 
 export const moduleFsTreeProvider = new ModuleFileSystemProvider();
 
-export const initPythonPath = (): void => {
-	const { execFile } = require('node:child_process');
-	const childProcess = execFile(
-		batScript, 
-		[path.join(__filename, '..', '..', '..', 'snippets', 'QuecPyhton.json')],
-		{ shell: true }, // run in shell, to avoid spawn EINVAL error
-		(error, stdout, stderr) => {
-			if (error) {
-				log('error: ' + error);
-			}
-
-			if (stderr) {
-				log('error: ' + stderr);
-			}
-
-		}
-	);
-};
-
 export async function executeBatScript(): Promise<any> {
 	const childProcess = spawn(portBatScript, [], {
 	  stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
@@ -194,4 +175,21 @@ export function closeLog() {
     if (outputChannel) {
         outputChannel.dispose(); // 当插件被禁用时，清理资源
     }
+}
+
+export function enableAutoComplete() {
+	// using pylance add QuecPython pyi files extra paths
+
+	const stubsPath = path.join(__filename, '..', '..', '..', 'snippets', 'quecpython_stubs');
+	const pylanceConfig = vscode.workspace.getConfiguration('python.analysis');
+	let extraPaths = pylanceConfig.get<string[]>('extraPaths') || [];
+	if (!extraPaths.includes(stubsPath)) {
+		extraPaths.push(stubsPath);
+		pylanceConfig.update('extraPaths', extraPaths, vscode.ConfigurationTarget.Global)
+			.then(() => {
+				vscode.window.showInformationMessage('Pylance extraPaths updated successfully');
+			}, (error) => {
+				vscode.window.showErrorMessage(`Failed to update Pylance setting: ${error}`);
+		});
+	}
 }
