@@ -116,6 +116,7 @@ To compile:
 - compatible with vs code 1.100.2 or higher
 - udpate packages
 - update online firmware url
+- enable auto-complete
 ## 1.1.5
 - compatible with vs code 1.100.1 or higher
 - add theme for package manager for dark/light themes
