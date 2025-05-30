@@ -29,8 +29,8 @@
 - update npm version in `package.json`
 ```
 	"engines": {
-		"vscode": "^1.98.0",
-		"npm": ">=11.1.0"
+		"vscode": "^1.100.2",
+		"npm": ">=11.4.0"
 	},
 ```
 - in case of issues with new libs, delete `node_modules` and reinstall libs using `npm install`. In case issue not fixed, update the code where error accord.

@@ -110,6 +110,7 @@ export default class FirmwareViewProvider
 								data : getFirmwareConfig
 							};
 	
+							// post request to quectel to get list of FWs
 							axios.request(config)
 							.then(response => {
 								if (response.status !== 200) {
@@ -117,18 +118,21 @@ export default class FirmwareViewProvider
 									return;
 								} else {
 									const firmwareConfig = response.data;
+
 									let dwList = firmwareConfig['data'].data;
 									if (dwList.length === 0) {
 										vscode.window.showErrorMessage('No online firmware available!');
 										return;
 									}else {
+
+										// from the response get url for certain module
 										dwList.forEach((item) => {
 											const platformStr = item['title'].toString().replaceAll("_", "");
 											if (platformStr.includes(module)){
 												const versionList = item['download_content'];
 												versionList.forEach((version) => {
 													selectVersionList.push(version['version']);
-													onlineUrlall[version['version']] = version['download_file'];
+													onlineUrlall[version['version']] = version['download_file'].url;
 												});
 											};
 										});
@@ -141,6 +145,7 @@ export default class FirmwareViewProvider
 								return;
 							});
 
+							// wait for the request to finish
 							for (var i = 0; i < 50; i++) {
 								if (selectVersionList.length > 0) {
 									break;
@@ -166,6 +171,8 @@ export default class FirmwareViewProvider
 							parsedFwConfig["module"] = module;
 							parsedFwConfig["url"] =  onlineUrlall[onlineUrl];
 							parsedFwConfig["downloadflag"] = false;
+
+							// update interface + .config file
 							fs.writeFile(fwConfigFile, JSON.stringify(parsedFwConfig), err => {
 								if (err) {
 									vscode.window.showErrorMessage(
@@ -175,6 +182,7 @@ export default class FirmwareViewProvider
 								}
 								vscode.window.showInformationMessage('New online firmware selected!');
 							});
+							
 							this.selectFirmware(onlineUrlall[onlineUrl]);
 						};
 					};
