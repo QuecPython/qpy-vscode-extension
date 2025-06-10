@@ -132,11 +132,11 @@ export class HtmlPanel {
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
                             project = html.projectsInfo[message.value];
                             let repoPath = fileUri[0].fsPath + '\\' + project.name;
-                            let options = [];
+                            let options = ['--recurse-submodules'];
                             
                             // if user choose a certain release
                             if (message.release != 'Releases') {
-                                options = ['--branch', message.release];
+                                options.push('--branch', message.release);
                             }
 
                             // clone the project and open a new folder with the new repo
