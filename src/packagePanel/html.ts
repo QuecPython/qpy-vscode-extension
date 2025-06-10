@@ -607,6 +607,10 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
             background-color: #007ACC;
             color: white;
         }
+        #container button:disabled {
+            background-color:rgb(136, 146, 158);
+            color: #A6A6A6;
+        }
 
         #left, #right {
             width: 50%;
