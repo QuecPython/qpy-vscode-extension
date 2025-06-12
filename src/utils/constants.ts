@@ -119,7 +119,7 @@ export const moduleList = {
 		bg600l: ['M3'],
 		bc25: []
 		},
-	url: ["https://python.quectel.com/wp-admin/admin-ajax.php", "https://python.quectel.com/en/wp-admin/admin-ajax.php"]
+	url: ["https://developer.quectel.com/wp-admin/admin-ajax.php", "https://developer.quectel.com/en/wp-admin/admin-ajax.php"]
 };
 
 export const chiregex =

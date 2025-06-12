@@ -77,7 +77,7 @@ If there's no project open, the button will be disabled.
 
 ## Usage
 
-- Check [User Guide](https://python.quectel.com/doc/Application_guide/en/dev-tools/VSCode-Plugin-quecpython/index.html) on our site.
+- Check [User Guide](https://developer.quectel.com/doc/quecpython/Application_guide/en/dev-tools/VSCode-Plugin-quecpython/index.html) on our site.
 
 Open the serial connection by opening the commands palette the `CTRL+SHIFT+P` and running the command `QuecPython: Connect to COM Port`.
 or click statusbar button `Connect`.

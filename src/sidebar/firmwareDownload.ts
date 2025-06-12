@@ -24,6 +24,7 @@ async function downloadFile(url: string, savePath: string) {
 				const data = response.pipe(fs.createWriteStream(filePath));
 				let downloadLength = 0;
 				response.on('data', (chunk) => {
+
 					downloadLength += chunk.length;
 					const percent = Math.round((downloadLength / contentLength) * 100);
 					serialEmitter.emit(status.updateProg, percent.toString() + "%");
@@ -47,7 +48,7 @@ async function downloadFile(url: string, savePath: string) {
 	  } catch (error) {
 		if (error.code === 'ENOTFOUND') {
 		  console.error('No internet connection.');
-		} else {
+		}else {
 		  console.error('Error downloading file:', error);
 		}
 	  }
@@ -61,14 +62,14 @@ export async function firmwareFlash(
 		const parsedFwConfig = JSON.parse(rawFwConfig.toString());
 		
 		// Files is already downloaded
-		if (parsedFwConfig['downloadflag'] === true) {
+		if (parsedFwConfig['downloadflag'] == true) {
 			await getFileFromZip(filePath, 'The online firmware has already been downloaded.');
-		}
-		// download and unzip the file
-		else{
+		}else { // download and unzip the file
 			vscode.window.showInformationMessage('Start download online firmware...');
 			let filename = filePath.split('/').pop();
 			let dirPath =  path.join(fwDirPath, filename.slice(0, filename.length - 4));
+			
+			// create folder
 			await fs.mkdir(dirPath, { recursive: true }, (err) => {
 				if (err) {
 					console.error(err);
@@ -76,6 +77,7 @@ export async function firmwareFlash(
 					log('Temp firmware directory created successfully, please wait...');
 				}
 			});
+
 			await sleep(100);
 			let downloadresult = await downloadFile(filePath, dirPath);
 

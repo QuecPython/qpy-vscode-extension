@@ -18,8 +18,7 @@ const portBatScript: string = batScriptPath + scriptName.portListBat;
 
 export async function activateEnv() {
 	// 下载固件烧录工具
-	let result = await downloadExeFile("https://python.quectel.com/qpytools/QuecPythonDownload.exe");
-
+	let result = await downloadExeFile("https://developer.quectel.com/qpytools/QuecPythonDownload.exe");
 }
 async function downloadExeFile(url: string) {
 	const filePath = `${batScriptPath}/${fwConfig.download}`;
