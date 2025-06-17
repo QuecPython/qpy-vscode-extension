@@ -1,9 +1,23 @@
 # QuecPython Vs Code Extension
 
+[![Version](https://img.shields.io/visual-studio-marketplace/v/Quectel.qpy-ide)](https://marketplace.visualstudio.com/items?itemName=Quectel.qpy-ide)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/Quectel.qpy-ide)](https://marketplace.visualstudio.com/items?itemName=Quectel.qpy-ide)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/Quectel.qpy-ide)](https://marketplace.visualstudio.com/items?itemName=Quectel.qpy-ide)
+
 Extension for handling interaction with QuecPython based modules. Communicate with Python based Quectel modules using the built-in REPL or AT CLI. Besides serial communication, extension provides out-of-the box module file system preview in a tree view. Users are free to opt using commands from the extension UI or execute raw commands via REPL.
 
-Import Quectel projects, add compoenets to your project and view information about different solutions.
 - Works with Windows only at the moment.
+
+## ✨ Features
+
+- 🎯 **Connect to Quectel Modules**: Connect and disconnect to different ports and modules
+- 📁 **Open REPL Port**: Open 🔍 repl port and run different QuecPython commands
+- 🔘 **Flash Firmware**: Select Firmware online from our stie and locally and flash it to your module
+- ⌨️ **Transfer Files**: Transfer one more multiple files to your module
+- 🌐 **Quectel Package Manager**: Import Quectel projects, add components to your project and view information about different solutions.
+- ⚙️ **Run Script**: Run files and scripts directly from your module
+- 📊 **File Treeview**: View list of files and directories on your module
+- ✅ **Auto Complete**: Increase your productivity with our auto complete for QuecPython modules
 
 # How to use
 
@@ -112,6 +126,11 @@ To compile:
     vsce package
 
 ## Release Notes
+## 1.1.7
+- compatible with vs code 1.100.2 or higher
+- fix issue with repl port display
+- fix issue with theme white / dark
+- fix issue with flashing with new domain
 ## 1.1.6
 - compatible with vs code 1.100.2 or higher
 - udpate packages

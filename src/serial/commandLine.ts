@@ -33,7 +33,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	// flag to distinct internal commands from user commands
 	public cmdFlag = false;
 	public cmdFlagLabel = '';
-	public byteArray: number[] = [];
+	public byteArray: number[] = []; // used to save serial bytes
 
 	constructor(
 		private backendStream: Stream.Duplex,
@@ -90,7 +90,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 		if (this.translateHex) {
 			stringRepr = new TextDecoder('utf-8', { ignoreBOM: true }).decode(data);
 
- 			this.byteArray.push(...Array.from(data));
+ 			this.byteArray.push(...Array.from(data)); // save the bytes to the array
 		} else {
 			// HEX format
 			for (const byte of data) {
@@ -104,6 +104,8 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			}
 		}		
 		log('Serial port content: ' + stringRepr);
+
+		// decode and print the array of bytes if the string is correct
 		if (stringRepr.includes('>>>') || stringRepr.includes('\n') || !stringRepr.includes('�')) {
 			const decoder = new TextDecoder('utf-8', { ignoreBOM: true }); // Default to UTF-8, but can specify others like 'gbk', 'big5'
 
