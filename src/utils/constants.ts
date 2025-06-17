@@ -82,7 +82,7 @@ export const progLabel = {
 };
 
 export const scriptName = {
-	fileDownloadScript: '\\QuecPyComTools.exe',
+	fileDownloadScript: '\\QPYcom.exe',
 	initTreeScript: '\\q_init_fs.py',
 	portListBat: "\\get_com.exe",
 	logFile: "\\extension.log"
