@@ -384,17 +384,26 @@ async function _refreshTree() {
     moduleFsTreeProvider.refresh();
 };
 
+async function updateColorTheme(color: vscode.ColorTheme){
+	// when theme changed, update extension page, if open
+	if (HtmlPanel.currentPanel){
+		HtmlPanel.currentPanel.dispose();
+		vscode.commands.executeCommand('qpy-ide.projectsPage');
+	}
+}
 
-// register commands to the extension
 export const registerCommands = (context: vscode.ExtensionContext): void => {
+	// register commands to the extension
 	const projectsPage = vscode.commands.registerCommand(
 		'qpy-ide.projectsPage',
 		async (extensionUri: vscode.Uri) => { 
 			await HtmlPanel.createOrShow(context.extensionUri, 'projectsPage');
 		}
 	);
-	
+	const colorChangeTheme = vscode.window.onDidChangeActiveColorTheme(updateColorTheme);
+
 	context.subscriptions.push(
+		colorChangeTheme,
 		openConnection,
 		closeConnection,
 		setLineEndCommand,

@@ -33,6 +33,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	// flag to distinct internal commands from user commands
 	public cmdFlag = false;
 	public cmdFlagLabel = '';
+	public byteArray: number[] = []; // used to save serial bytes
 
 	constructor(
 		private backendStream: Stream.Duplex,
@@ -78,11 +79,8 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			return;
 		}
 
-		this.setColor();
-		// this.loadCursor();
-		// this.clearScreen();
-
 		let stringRepr = '';
+		this.setColor();
 
 		// check for command close signal
 		if (data.toString() === cmd.disconnect) {
@@ -91,6 +89,8 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
 		if (this.translateHex) {
 			stringRepr = new TextDecoder('utf-8', { ignoreBOM: true }).decode(data);
+
+ 			this.byteArray.push(...Array.from(data)); // save the bytes to the array
 		} else {
 			// HEX format
 			for (const byte of data) {
@@ -102,10 +102,19 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 				}
 				this.writeEmitter.fire(byte.toString(16).padStart(2, '0') + ' ');
 			}
-		}
-		
+		}		
 		log('Serial port content: ' + stringRepr);
-		this.writeEmitter.fire(stringRepr);
+
+		// decode and print the array of bytes if the string is correct
+		if (stringRepr.includes('>>>') || stringRepr.includes('\n') || !stringRepr.includes('�')) {
+			const decoder = new TextDecoder('utf-8', { ignoreBOM: true }); // Default to UTF-8, but can specify others like 'gbk', 'big5'
+
+			const utf8Bytes_chinese = new Uint8Array(this.byteArray);
+			const decodedString = decoder.decode(utf8Bytes_chinese);
+
+			this.writeEmitter.fire(decodedString);
+			this.byteArray = [];
+		}
 	};
 
 	public handleDataAsText(data: string): void {

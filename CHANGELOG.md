@@ -1,3 +1,8 @@
+## 1.1.7
+- compatible with vs code 1.100.2 or higher
+- fix issue with repl port display
+- fix issue with theme white / dark
+- fix issue with flashing with new domain
 ## 1.1.6
 - compatible with vs code 1.100.2 or higher
 - udpate packages

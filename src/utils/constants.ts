@@ -82,7 +82,7 @@ export const progLabel = {
 };
 
 export const scriptName = {
-	fileDownloadScript: '\\QuecPyComTools.exe',
+	fileDownloadScript: '\\QPYcom.exe',
 	initTreeScript: '\\q_init_fs.py',
 	portListBat: "\\get_com.exe",
 	logFile: "\\extension.log"
@@ -119,7 +119,7 @@ export const moduleList = {
 		bg600l: ['M3'],
 		bc25: []
 		},
-	url: ["https://python.quectel.com/wp-admin/admin-ajax.php", "https://python.quectel.com/en/wp-admin/admin-ajax.php"]
+	url: ["https://developer.quectel.com/wp-admin/admin-ajax.php", "https://developer.quectel.com/en/wp-admin/admin-ajax.php"]
 };
 
 export const chiregex =

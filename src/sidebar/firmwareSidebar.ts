@@ -152,7 +152,7 @@ export default class FirmwareViewProvider
 								} else{
 									await sleep(50);
 								}
-							};
+							}
 
 							if (selectVersionList.length === 0) {
 								vscode.window.showErrorMessage('No online firmware available!');
@@ -165,7 +165,7 @@ export default class FirmwareViewProvider
 
 							if (onlineUrl === undefined) {
 								return;
-							};
+							}
 
 							parsedFwConfig["path"] = "";
 							parsedFwConfig["module"] = module;
@@ -241,11 +241,12 @@ export default class FirmwareViewProvider
 							downloadPort = await vscode.window.showQuickPick(portPaths, {
 								placeHolder: 'Select AT (firmware download) port',
 							});
-						};
+						}
+
 						if (downloadPort === undefined) {
 							vscode.window.showErrorMessage('Serial port abnormality. Please reset the Module.');
 							return;
-						};
+						}
 
 						log(JSON.stringify(parsedFwConfig));
 						// Using AT confirm version is consistent with firmware
@@ -282,7 +283,6 @@ export default class FirmwareViewProvider
 						} catch (error) {
 							log(error);
 							return;
-							
 						}
 
 						atGetVersion.open(() => {
@@ -332,7 +332,7 @@ export default class FirmwareViewProvider
 										} else {
 											matchVer = false;
 										}
-									};
+									}
 
 									if (matchVer) {
 										firmwareFlash(data.value, downloadPort);
@@ -347,12 +347,12 @@ export default class FirmwareViewProvider
 												return;
 											}
 										});
-									};
+									}
 								} else {
 									// online firmware
 									if (atRet.replace(/_/g, "").includes(parsedFwConfig["module"])) {
 										matchVer = true;
-									};
+									}
 									
 									if (matchVer){
 										log('Firmware version match success');
@@ -361,9 +361,9 @@ export default class FirmwareViewProvider
 										vscode.window.showErrorMessage('Please select the firmware that matches the module model!');
 									}
 								}
-							};
+							}
 						});
-					};
+					}
 					break;
 				}
 				case 'fwLoad': {
