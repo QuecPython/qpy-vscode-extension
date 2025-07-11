@@ -1,10 +1,14 @@
 import * as vscode from 'vscode';
+import path from 'path';
 import { log } from '../api/userInterface';
 
 import * as html from '../packagePanel/html';
+import * as currentProject from '../packagePanel/currentProject';
 import * as history from '../packagePanel/panelHistory';
 import axios from 'axios';
 import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
+import { makerFile } from '../utils/constants';
+import { createMarkdownText }  from '../utils/utils';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
     return {
@@ -119,7 +123,7 @@ export class HtmlPanel {
                         } else {
                             this._getReadme(lastStep.page, lastStep.submodulesUrl, lastStep.projectId);
                         }
-                        return
+                        return;
                     case 'newProjectClick':
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {							
                             const uri = vscode.Uri.file(fileUri[0].fsPath);
@@ -144,6 +148,14 @@ export class HtmlPanel {
                                 vscode.window.showInformationMessage('Cloning project...');
                                 try {
                                     const uri = vscode.Uri.file(repoPath);
+                                    
+                                    // mark the folder as QuecPython project
+                                    const markerFileUri = vscode.Uri.file(path.join(uri.fsPath, makerFile));
+                                    vscode.workspace.fs.writeFile(markerFileUri, Buffer.from(JSON.stringify({
+                                        managedBy: 'QuecPython.qpy-ide',
+                                        createdAt: new Date().toISOString()
+                                    }, null, 2)));
+
                                     vscode.commands.executeCommand('vscode.openFolder', uri, true);
                                 } catch (error) {
                                     vscode.window.showErrorMessage('Error cloning repository');
@@ -197,6 +209,19 @@ export class HtmlPanel {
                         // build readme file for a project
                         this._getReadme(readmeUrl, submodulesUrl, message.value);
                         return;
+                    case 'viewCurrentReadme':
+                        // open readme file from the current project
+                        let workspaceFolders = vscode.workspace.workspaceFolders;
+                        const firstWorkspaceFolder = workspaceFolders[0];
+                        const rootPath = firstWorkspaceFolder.uri; // This is a vscode.Uri
+                        const readmeUri = vscode.Uri.joinPath(rootPath, message.value);
+                        vscode.commands.executeCommand('vscode.open', readmeUri, { preview: false });
+                        return;
+                    case 'viewCurrentTabReadme':
+                        // inside current proejct, view readme with another language
+                        this._update('currentProjectPage', message.value);
+                        return;
+
                     case 'alert':
                         vscode.window.showErrorMessage(message.text);
                         return;
@@ -268,7 +293,7 @@ export class HtmlPanel {
     }
 
     private async _update(page, source?: string) {
-        // update html panel home page
+        // update html panel home page, on page is loaded add content
 
         const webview = this._panel.webview;
 
@@ -282,6 +307,11 @@ export class HtmlPanel {
 
                 vscode.window.showInformationMessage('Loading projects...');
                 await html.getProjects(this, webview, page);
+                return;
+            case 'currentProjectPage':
+                vscode.window.showInformationMessage('Checking Current Project...');
+                await currentProject.getCurrentProject(this, webview, page, source);
+
                 return;
         }
     }
@@ -324,73 +354,9 @@ export class HtmlPanel {
                     // first item is readme
                     if (index == 0) {
                         readmeData = result.value.data;
+                        // prepare the text for MD
+                        readmeData = createMarkdownText(readmeData, false, project);
 
-                        // files tree
-                        let regex = /```plaintext\s([\s\S]*?)```/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                            match = match.replace('```plaintext', '');
-                            return match.split('\n').join('<br>');
-                        });
-
-                        // bash text
-                        regex = /```bash\s([\s\S]*?)```/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                            match = match.replace('```bash', '')
-                            return match.split('\n').join('<br>')
-                        });
-                        
-                        // python text
-                        regex = /```python\s([\s\S]*?)```/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                            match = match.replace('```python', '')
-                            return match.split('\n').join('<br>')
-                        });
-
-                        // img urls
-                        regex = /!\[\]\((.*?)\)/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                          p1 = p1.replace('./','');
-                          p1 = p1.replace('../','');
-                          let imgUrl = `https://raw.githubusercontent.com/QuecPython/${project.name}/${project.default_branch}/${p1}`;
-                          return `<img src="${imgUrl}" style="zoom:67%;" /><br>`;
-                        });
-
-                        // other urls
-                        regex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-                        let match;
-                        while ((match = regex.exec(readmeData)) !== null) {
-                            const phrase = readmeData.substring(match.index, regex.lastIndex);
-                            const wordInBrackets = match[1];
-                            const url = match[2];
-                            readmeData.replace(phrase,`<a href="" onclick="vscode.postMessage({ command: 'openUrl' , value: '${url}' });">${wordInBrackets}</a>`);
-                        }
-
-                        // remove ` from text
-                        readmeData = readmeData.split('`').join('');
-
-                        // url for zh readme
-                        readmeData = readmeData.replace(
-                            '[中文](README.zh.md) | English',
-                            `<a href="" onclick="vscode.postMessage({ command: 'viewChineseClick' , value: '${projectId}' });">中文</a> | English`
-                        );
-
-                        // url for en readme
-                        readmeData = readmeData.replace(
-                            '中文 | [English](README.md)',
-                            `中文 | <a href="" onclick="vscode.postMessage({ command: 'viewClick' , value: '${projectId}' });">English</a>`
-                        );
-
-                        // Replace links with HTML anchor tags
-                        regex = /- \[(.*?)\]\(#(.*?)\)/g;
-                        readmeData = readmeData.replace(regex, (match, title, anchor) => {
-                            return `- <a href='#${anchor.toLowerCase()}'>${title}</a>`;
-                        });
-
-                        // Replace headers HTML paragraph tags
-                        regex = /(# )(.*)/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                            return `${p1}<p id="${p2.toLowerCase()}">${p2}</p>`;
-                        });
                     }
                     // second item is components
                     else {
@@ -423,8 +389,8 @@ export class HtmlPanel {
         return components_string;
     }
         
-    private async _updatePanel(webview: vscode.Webview, page: string, text: string) {
-        /* update html panel with project page or readme page */
+    public async _updatePanel(webview: vscode.Webview, page: string, text: string) {
+        /* update html panel with project page, current project page or readme page */
 
         switch (page) {
             case 'projectsPage':
@@ -433,6 +399,10 @@ export class HtmlPanel {
                 break
             case 'mdFile':
                 this._panel.title = 'README.md';
+                this._panel.webview.html = text;
+                break
+            case 'currentProjectPage':
+                this._panel.title = 'Current Project';
                 this._panel.webview.html = text;
                 break
         }
