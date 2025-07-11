@@ -29,7 +29,7 @@
 - update npm version in `package.json`
 ```
 	"engines": {
-		"vscode": "^1.100.2",
+		"vscode": "^1.102.0",
 		"npm": ">=11.4.0"
 	},
 ```

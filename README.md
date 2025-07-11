@@ -120,12 +120,10 @@ Steps for flashing are:
 ## Known Issues
 * There are cases when file system does not appear on boot-up, if that happens, please manually refresh the file system tree view.
 
-To compile:
-
-    npm install -g vsce
-    vsce package
-
 ## Release Notes
+## 1.1.8
+- compatible with vs code 1.102.0 or higher
+- udpate packages and libraries
 ## 1.1.7
 - compatible with vs code 1.100.2 or higher
 - fix issue with repl port display
