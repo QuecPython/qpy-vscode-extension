@@ -1,3 +1,6 @@
+## 1.1.8
+- compatible with vs code 1.102.0 or higher
+- udpate packages and libraries
 ## 1.1.7
 - compatible with vs code 1.100.2 or higher
 - fix issue with repl port display
