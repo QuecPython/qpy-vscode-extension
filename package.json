@@ -49,6 +49,11 @@
 		},
 		"commands": [
 			{
+				"command": "catCoding.start",
+				"title": "Start cat coding session",
+				"category": "Cat Coding"
+			},
+			{
 				"command": "qpy-ide.refreshModuleFS",
 				"title": "Refresh",
 				"icon": {

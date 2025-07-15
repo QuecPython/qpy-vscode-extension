@@ -13,6 +13,46 @@ export const terminalRegistry: { [key: string]: SerialTerminal } = {};
 export let fwProvider: FirmwareViewProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
+
+    
+      context.subscriptions.push(
+    vscode.commands.registerCommand('catCoding.start', () => {
+      const resourcesDir = vscode.Uri.joinPath(context.extensionUri)
+
+      const panel = vscode.window.createWebviewPanel(
+        'catCoding',
+        'Cat Coding',
+        vscode.ViewColumn.One,
+        {
+        }
+      );
+
+        // console.log('mp4 ' + panel.webview.asWebviewUri(vscode.Uri.file(`D:\\Programming\\Python\\Lectures\\Compilers\\doobedoo\\Episode2.mp4`)));
+        // Get path to resource on disk
+        const onDiskPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'cat.gif');
+        console.log('onDiskPath ' + onDiskPath);
+
+
+        // And get the special URI to use with the webview
+        const catGifSrc = panel.webview.asWebviewUri(onDiskPath);
+        let filePath = panel.webview.asWebviewUri(onDiskPath);
+
+		const workspaceFolderUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+
+		if (workspaceFolderUri) {
+			// Construct the full path to 'media/one.jpg' within the workspace folder
+			const imageOnDiskPath = vscode.Uri.joinPath(workspaceFolderUri, 'media', '20250425131903.jpg');
+
+			// Convert this local URI to a special URI that the webview can use
+			filePath = panel.webview.asWebviewUri(imageOnDiskPath);
+		}
+
+	  console.log('catGifSrc ' + catGifSrc);
+
+      panel.webview.html = getWebviewContent(catGifSrc, filePath);
+    })
+  );
+
     enableAutoComplete();
 
 	vscode.window.registerTreeDataProvider('qpyModuleFS', moduleFsTreeProvider);
@@ -22,6 +62,23 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerCommands(context);
 	console.log("QuecPyhton activate success");
 }
+
+function getWebviewContent(catGifSrc: vscode.Uri, filePath: vscode.Uri) {
+    log(`<img src="${filePath}" width="300" />`);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Coding</title>
+</head>
+<body>
+    <img src="${catGifSrc}" width="300" />
+    <img src="${filePath}" width="300" />
+</body>
+</html>`;
+}
+
 
 export async function deactivate(context: vscode.ExtensionContext): Promise<void> {
     // disable auto complete when extension is disabled

@@ -28,19 +28,18 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
                 
                 // get file path
                 const readmeUri = vscode.Uri.joinPath(workspaceFolders[0].uri, file);
-
                 const fileContentUint8Array = await vscode.workspace.fs.readFile(readmeUri);
                 fileContent = new TextDecoder('utf-8').decode(fileContentUint8Array);
                 
                 // remove ` from text
                 fileContent = createMarkdownText(fileContent, true);
+                
                 innerHTML = `
 <div id="container">
     <div id="left">
         <h1>README</h1>
-        <div id="readme-content"></div>
         <button onclick="vscode.postMessage({ command: 'viewCurrentReadme', value: '${readmeUri}' });">Open Readme File</button>
-
+        <div id="readme-content"></div>
         <br>
     </div>
     <div id="right">
@@ -150,16 +149,13 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
     <script src="https://cdn.jsdelivr.net/npm/marked-code-format/dist/index.umd.min.js"></script>
     <script>
         const vscode = acquireVsCodeApi();
-        vscode.postMessage({ command: 'logData' , value: '1' });
 
         // load readme content
         document.addEventListener('DOMContentLoaded', (event) => {
             if (typeof marked !== 'undefined') {
-                vscode.postMessage({ command: 'logData' , value: '2' });
 
                 const readmeContent = \`${fileContent}\`;
                 const readmeLines = readmeContent.split('\\n');
-                vscode.postMessage({ command: 'logData' , value: '3' });
 
                 // show 30 lines before show more button
                 const initialContent = readmeLines.slice(0, 31).join('\\n');
@@ -167,8 +163,6 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
 
                 document.getElementById('readme-content').innerHTML = marked.parse(initialContent);
                 if (remainingContent) {
-                    vscode.postMessage({ command: 'logData' , value: '4' });
-
                     const showMoreButton = document.getElementById('show-more');
                     showMoreButton.classList.remove('hidden');
                     showMoreButton.addEventListener('click', () => {
@@ -207,7 +201,7 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
 </body>
 </html>
         `;
-        log(html);
+        // log(html);
         await htmlPanel._updatePanel(webview, page, html);
 
         resolve();

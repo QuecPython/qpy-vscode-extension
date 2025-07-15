@@ -118,13 +118,35 @@ export function createMarkdownText(text: string, local: boolean = false, project
     regex = /!\[\]\((.*?)\)/g;
     if (!local){
         text = text.replace(regex, (match, p1, p2) => {
-            p1 = p1.replace('./','');
             p1 = p1.replace('../','');
+            p1 = p1.replace('./','');
             let imgUrl = `https://raw.githubusercontent.com/QuecPython/${project.name}/${project.default_branch}/${p1}`;
             return `<img src="${imgUrl}" style="zoom:67%;" /><br>`;
         });
     } else{
+        log('this is local');
+
+        let workspaceFolders = vscode.workspace.workspaceFolders[0].uri;
+
         text = text.replace(regex, (match, p1, p2) => {
+
+        // const onDiskPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'cagt.gif');
+
+        // And get the special URI to use with the webview
+        // const catGifSrc = panel.webview.asWebviewUri(onDiskPath);
+
+            p1 = p1.replace('../','');
+            p1 = p1.replace('./','');
+            log(p1);
+            log(`<img src="${p1}" style="zoom:67%;" /><br>`);
+            
+
+
+            // p1 = workspaceFolders.fsPath + p1.replaceAll('/', '\\');
+            // // log(p1);
+            // // log(workspaceFolders.path);
+            // log(`<img src="${p1}" style="zoom:67%;" /><br>`);
+
             return `<img src="${p1}" style="zoom:67%;" /><br>`;
         });
     }

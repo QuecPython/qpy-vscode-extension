@@ -125,7 +125,7 @@ export class HtmlPanel {
                         }
                         return;
                     case 'newProjectClick':
-                        vscode.window.showOpenDialog(dialogOptions).then(fileUri => {							
+                        vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
                             const uri = vscode.Uri.file(fileUri[0].fsPath);
                             vscode.commands.executeCommand('vscode.openFolder', uri, true);
                         });
