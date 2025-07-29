@@ -126,46 +126,18 @@ export class HtmlPanel {
                         return;
                     case 'newProjectClick':
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
+                            // Check if user cancelled the dialog
+                            if (!fileUri || fileUri.length === 0) {
+                                return; // User cancelled, do nothing
+                            }
+                            
                             const uri = vscode.Uri.file(fileUri[0].fsPath);
                             vscode.commands.executeCommand('vscode.openFolder', uri, true);
                         });
                         return
                     case 'importClick':
                         // clone a project to a selected path
-
-                        vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
-                            project = html.projectsInfo[message.value];
-                            let repoPath = fileUri[0].fsPath + '\\' + project.name;
-                            let options = ['--recurse-submodules'];
-                            
-                            // if user choose a certain release
-                            if (message.release != 'Releases') {
-                                options.push('--branch', message.release);
-                            }
-
-                            // clone the project and open a new folder with the new repo
-                            git.clone(project.clone_url, repoPath, options).then(() => {
-                                vscode.window.showInformationMessage('Cloning project...');
-                                try {
-                                    const uri = vscode.Uri.file(repoPath);
-                                    
-                                    // mark the folder as QuecPython project
-                                    const markerFileUri = vscode.Uri.file(path.join(uri.fsPath, makerFile));
-                                    vscode.workspace.fs.writeFile(markerFileUri, Buffer.from(JSON.stringify({
-                                        managedBy: 'QuecPython.qpy-ide',
-                                        createdAt: new Date().toISOString()
-                                    }, null, 2)));
-
-                                    vscode.commands.executeCommand('vscode.openFolder', uri, true);
-                                } catch (error) {
-                                    vscode.window.showErrorMessage('Error cloning repository');
-                                    console.error('Error cloning repository:', error);
-                                }
-                            }).catch((error) => {
-                                vscode.window.showErrorMessage('Error cloning repository');
-                                console.error('Error cloning repository:', error);
-                            });
-                        });
+                        this._importClick(git, dialogOptions, message);
                         return;
                     case 'viewComponentClick':
                         this._viewSubmodule(message.value);
@@ -255,7 +227,7 @@ export class HtmlPanel {
         const end = repoUrl.indexOf('.git'); // Find the position of '.git'
         const repoName = repoUrl.substring(start, end);
 
-        let url = `https://api.github.com/repos/${repoName}` ;
+        let url = `https://api.github.com/repos/${repoName}`;
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -264,7 +236,7 @@ export class HtmlPanel {
         };
 
         axios.request(config).then((response) =>{
-            let project = response.data
+            let project = response.data;
 
             let readmeUrl = 'https://raw.githubusercontent.com/' + repoName + '/' + project.default_branch + '/README.md';
             let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + project.default_branch + '/.gitmodules';
@@ -316,6 +288,61 @@ export class HtmlPanel {
         }
     }
 
+    private _importClick(git, dialogOptions, message) {
+
+        vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
+            // Check if user cancelled the dialog
+            if (!fileUri || fileUri.length === 0) {
+                vscode.window.showInformationMessage('Operation cancelled by user.');
+                return;
+            }
+            
+            // Use progress bar instead of simple message
+            vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: "Cloning project...",
+                cancellable: false
+            }, async (progress, token) => {
+                let project = html.projectsInfo[message.value];
+                let repoPath = fileUri[0].fsPath + '\\' + project.name;
+                let options = ['--recurse-submodules'];
+                
+                // if user choose a certain release
+                if (message.release != 'Releases') {
+                    options.push('--branch', message.release);
+                }
+
+                progress.report({ increment: 10, message: "Initializing..." });
+
+                try {
+                    progress.report({ increment: 30, message: "Downloading files..." });
+                    
+                    // clone the project and open a new folder with the new repo
+                    await git.clone(project.clone_url, repoPath, options);
+                    
+                    progress.report({ increment: 50, message: "Setting up project..." });
+                    
+                    const uri = vscode.Uri.file(repoPath);
+                    
+                    // mark the folder as QuecPython project
+                    const markerFileUri = vscode.Uri.file(path.join(uri.fsPath, makerFile));
+                    await vscode.workspace.fs.writeFile(markerFileUri, Buffer.from(JSON.stringify({
+                        managedBy: 'QuecPython.qpy-ide',
+                        createdAt: new Date().toISOString()
+                    }, null, 2)));
+
+                    progress.report({ increment: 10, message: "Finalizing..." });
+                    
+                    vscode.window.showInformationMessage('Project cloned successfully!');
+                    vscode.commands.executeCommand('vscode.openFolder', uri, true);
+                } catch (error) {
+                    vscode.window.showErrorMessage('Error cloning repository');
+                    console.error('Error cloning repository:', error);
+                }
+            });
+        });
+
+    }
     private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = '') {
         // get readme page from git using url, with submodules list
 

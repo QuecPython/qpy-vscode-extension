@@ -1,12 +1,19 @@
 import * as vscode from 'vscode';
 
 import { HtmlPanel } from '../packagePanel/htmlPanel';
-import { checkIfMarkerFileExists, createMarkdownText } from '../utils/utils';
+import { projectsInfo, readProjects } from '../packagePanel/html';
+import { checkFileExists, createMarkdownText, readGitSubmodules } from '../utils/utils';
+import { makerFile } from '../utils/constants';
 import { log } from '../api/userInterface';
 
 export let currentProject = ''; // projects html page
 
-export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, file='README.md'): Promise<void> {
+export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, readmeFile='README.md'): Promise<void> {
+
+    // read projects info from github api, used with readme view
+    if (Object.keys(projectsInfo).length == 0) {
+        await readProjects();
+    }
     
     let stickyButtonsBackgroundColor = '#f8f9fa';
 
@@ -17,6 +24,8 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
     }
 
     let innerHTML = '';
+    let components_string = '[]';
+    let subModules = '[]';
     return new Promise(async (resolve) => {
         let workspaceFolders = vscode.workspace.workspaceFolders;
         let fileContent = '';
@@ -24,16 +33,20 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
             // no project open
             innerHTML = '<center>No project is open<br>Or Curren proejct is not QuecPython Project</center>';
         } else {
-            if (checkIfMarkerFileExists()) {
-                
+            if (await checkFileExists(makerFile)) {
+
                 // get file path
-                const readmeUri = vscode.Uri.joinPath(workspaceFolders[0].uri, file);
+                const readmeUri = vscode.Uri.joinPath(workspaceFolders[0].uri, readmeFile);
                 const fileContentUint8Array = await vscode.workspace.fs.readFile(readmeUri);
                 fileContent = new TextDecoder('utf-8').decode(fileContentUint8Array);
                 
-                // remove ` from text
+                // format md file
                 fileContent = createMarkdownText(fileContent, true);
-                
+                const workspaceFolderUri = vscode.workspace.workspaceFolders[0].uri;
+                let modules = await readGitSubmodules(workspaceFolderUri.fsPath, '.gitmodules');
+                components_string = '\[' + modules.map(item => `\"${item.name}\"`).join(', ') + '\]';
+                subModules = '\[' + modules.map(item => `\"${item.url}\"`).join(', ') + '\]';
+
                 innerHTML = `
 <div id="container">
     <div id="left">
@@ -88,26 +101,24 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
         }
         
         .sticky-buttons button:disabled {
-            background-color:rgb(136, 146, 158);
-            color: #A6A6A6;
-        }
-        
+            background-color: rgb(100, 110, 120);
+            color: #FFFFFF;
+        }        
+
         #container {
             display: flex;
             width: 100%;
             justify-content: space-between;
             margin-top: 20px;
         }
-
         #container button {
             background-color: #007ACC;
             color: white;
         }
         #container button:disabled {
-            background-color:rgb(136, 146, 158);
-            color: #A6A6A6;
+            background-color: rgb(100, 110, 120);
+            color: #FFFFFF;
         }
-
         #left, #right {
             width: 50%;
             padding: 10px;
@@ -170,13 +181,13 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
                         showMoreButton.classList.add('hidden');
                     });
                 }
-                const components = [];
-                const subModulesUrlsList = [];
+                const components = ${components_string};
+                const subModulesUrlsList = ${subModules};
 
                 // create components items
                 let componentsHTML = '';
                 if (components.length == 0) {
-                    componentsHTML += '<p>No components found</p>';
+                    componentsHTML += '<p>No components found today</p>';
                 } else {
                     components.forEach((component, index) => {
                         componentsHTML += \`
@@ -201,7 +212,7 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, fil
 </body>
 </html>
         `;
-        // log(html);
+        log(html);
         await htmlPanel._updatePanel(webview, page, html);
 
         resolve();

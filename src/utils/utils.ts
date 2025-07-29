@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import path from 'path';
-import { makerFile } from '../utils/constants';
 import { log } from '../api/userInterface';
 
 const escapeRe = /\\(.)/;
@@ -56,7 +55,7 @@ export function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function checkIfMarkerFileExists(): Promise<boolean> {
+export async function checkFileExists(file): Promise<boolean> {
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
         // No workspace folder is open
         return false;
@@ -66,7 +65,7 @@ export async function checkIfMarkerFileExists(): Promise<boolean> {
     const workspaceFolderUri = vscode.workspace.workspaceFolders[0].uri;
 
     // Construct the URI for the marker file
-    const markerFileUri = vscode.Uri.file(path.join(workspaceFolderUri.fsPath, makerFile));
+    const markerFileUri = vscode.Uri.file(path.join(workspaceFolderUri.fsPath, file));
 
     try {
         // Attempt to get file stats. If it doesn't exist, this will throw an error.
@@ -124,30 +123,8 @@ export function createMarkdownText(text: string, local: boolean = false, project
             return `<img src="${imgUrl}" style="zoom:67%;" /><br>`;
         });
     } else{
-        log('this is local');
-
-        let workspaceFolders = vscode.workspace.workspaceFolders[0].uri;
-
         text = text.replace(regex, (match, p1, p2) => {
-
-        // const onDiskPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'cagt.gif');
-
-        // And get the special URI to use with the webview
-        // const catGifSrc = panel.webview.asWebviewUri(onDiskPath);
-
-            p1 = p1.replace('../','');
-            p1 = p1.replace('./','');
-            log(p1);
-            log(`<img src="${p1}" style="zoom:67%;" /><br>`);
-            
-
-
-            // p1 = workspaceFolders.fsPath + p1.replaceAll('/', '\\');
-            // // log(p1);
-            // // log(workspaceFolders.path);
-            // log(`<img src="${p1}" style="zoom:67%;" /><br>`);
-
-            return `<img src="${p1}" style="zoom:67%;" /><br>`;
+            return `<img src="${p1}" width="300" />`;
         });
     }
 
@@ -199,10 +176,68 @@ export function createMarkdownText(text: string, local: boolean = false, project
             '中文 | [English](README.md)',
             `中文 | <a href="" onclick="vscode.postMessage({ command: 'viewCurrentTabReadme' , value: 'README.md' });">English</a>`
         );
-    } 
+    }
+
     return text;
 }
 
 export function removeBackquote(text: string): string{
     return text.split('`').join('');
+}
+
+interface Submodule {
+    name: string;
+    path: string;
+    url: string;
+}
+
+/**
+ * Reads the .gitmodules file and extracts submodule information.
+ * @param workspaceFolder The root path of the workspace.
+ * @returns A promise that resolves to an array of Submodule objects.
+ */
+export async function readGitSubmodules(workspaceFolder: string, file: string): Promise<Submodule[]> {
+    const gitModulesPath = path.join(workspaceFolder, '.gitmodules');
+    const submodules: Submodule[] = [];
+
+    if (!fs.existsSync(gitModulesPath)) {
+        vscode.window.showWarningMessage('.gitmodules file not found in the workspace root.');
+        return [];
+    }
+
+    try {
+        const fileContent = await fs.promises.readFile(gitModulesPath, 'utf8');
+        const lines = fileContent.split(/\r?\n/);
+
+        let currentSubmodule: Partial<Submodule> = {};
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+
+            if (trimmedLine.startsWith('[submodule "') && trimmedLine.endsWith('"]')) {
+                // New submodule section
+                if (currentSubmodule.name && currentSubmodule.path && currentSubmodule.url) {
+                    submodules.push(currentSubmodule as Submodule);
+                }
+                const nameMatch = trimmedLine.match(/\[submodule "([^"]+)"\]/);
+                if (nameMatch) {
+                    currentSubmodule = { name: nameMatch[1] };
+                }
+            } else if (trimmedLine.startsWith('path = ')) {
+                currentSubmodule.path = trimmedLine.substring('path = '.length).trim();
+            } else if (trimmedLine.startsWith('url = ')) {
+                currentSubmodule.url = trimmedLine.substring('url = '.length).trim();
+            }
+        }
+
+        // Add the last parsed submodule if valid
+        if (currentSubmodule.name && currentSubmodule.path && currentSubmodule.url) {
+            submodules.push(currentSubmodule as Submodule);
+        }
+
+    } catch (error) {
+        vscode.window.showErrorMessage(`Error reading .gitmodules file: ${error}`);
+    }
+
+    return submodules;
 }
