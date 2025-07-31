@@ -1,3 +1,6 @@
+## 1.1.9
+- compatible with vs code 1.102.0 or higher
+- Current Project tab add to quick access
 ## 1.1.8
 - compatible with vs code 1.102.0 or higher
 - udpate packages and libraries
