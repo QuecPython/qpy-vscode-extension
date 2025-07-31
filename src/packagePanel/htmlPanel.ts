@@ -27,7 +27,7 @@ export class HtmlPanel {
      */
     public static currentPanel: HtmlPanel | undefined;
 
-    public static readonly viewType = 'Projects';
+    public static readonly viewType = 'html';
     private subModules: string; // used for project subModules
 
     private readonly _panel: vscode.WebviewPanel;
@@ -48,7 +48,7 @@ export class HtmlPanel {
         // Otherwise, create a new panel.
         const panel = vscode.window.createWebviewPanel(
             HtmlPanel.viewType,
-            'Projects',
+            'Loading...',
             column || vscode.ViewColumn.One,
             getWebviewOptions(extensionUri),
         );
@@ -322,7 +322,7 @@ export class HtmlPanel {
                 history.addStep('currentProjectPage');
 
                 vscode.window.showInformationMessage('Checking Current Project...');
-                await currentProject.getCurrentProject(this, webview, page, source);
+                await currentProject.getCurrentProject(this, page, source);
 
                 return;
         }
@@ -434,7 +434,7 @@ export class HtmlPanel {
 
             html.setMd(readmeData, submodulesData, this.subModules, source);
             let webview = this._panel.webview;
-            this._updatePanel(webview, 'mdFile', html.mdFile);
+            this._updatePanel('mdFile', html.mdFile);
         });
     }
 
@@ -456,7 +456,7 @@ export class HtmlPanel {
         return components_string;
     }
         
-    public async _updatePanel(webview: vscode.Webview, page: string, text: string) {
+    public async _updatePanel(page: string, text: string) {
         /* update html panel with project page, current project page or readme page */
 
         switch (page) {

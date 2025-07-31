@@ -11,9 +11,7 @@ import { checkFileExists, createMarkdownText, readGitSubmodules } from '../utils
 import { makerFile } from '../utils/constants';
 import { log } from '../api/userInterface';
 
-export let currentProject = ''; // projects html page
-
-export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, readmeFile='README.md'): Promise<void> {
+export async function getCurrentProject(htmlPanel: HtmlPanel, page, readmeFile='README.md'): Promise<void> {
     let stickyButtonsBackgroundColor = '#f8f9fa';
 
     // toggle colors by theme
@@ -224,7 +222,7 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
 </body>
 </html>
         `;
-        await htmlPanel._updatePanel(webview, page, html);
+        await htmlPanel._updatePanel(page, html);
 
         resolve();
     });

@@ -50,7 +50,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                 componentsReleasesString,
                 workspaceOpen
             );
-            htmlPanel._updatePanel(webview, page, projects);
+            htmlPanel._updatePanel(page, projects);
         } else {
             await readProjects();
 
@@ -62,7 +62,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
                 componentsReleasesString,
                 workspaceOpen
             );
-            await htmlPanel._updatePanel(webview, page, projects);
+            await htmlPanel._updatePanel(page, projects);
         }
         resolve();
     });
