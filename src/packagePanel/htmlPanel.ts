@@ -120,6 +120,8 @@ export class HtmlPanel {
 
                         if (lastStep.page == 'projectsPage') {
                             this._update(lastStep.page, 'homeButton');
+                        } else if (lastStep.page == 'currentProjectPage') {
+                            this._update(lastStep.page);
                         } else {
                             this._getReadme(lastStep.page, lastStep.submodulesUrl, lastStep.projectId);
                         }
@@ -139,8 +141,11 @@ export class HtmlPanel {
                         // clone a project to a selected path
                         this._importClick(git, dialogOptions, message);
                         return;
+                    case 'removeComponentClick':
+                        this._remvoeSubmodule(message.value);
+                        return;
                     case 'viewComponentClick':
-                        this._viewSubmodule(message.value);
+                        this._viewSubmodule(message.value, message.source);
                         return;
                     case 'viewChineseClick':
                         project = html.projectsInfo[message.value];
@@ -186,7 +191,7 @@ export class HtmlPanel {
                         let workspaceFolders = vscode.workspace.workspaceFolders;
                         const firstWorkspaceFolder = workspaceFolders[0];
                         const rootPath = firstWorkspaceFolder.uri; // This is a vscode.Uri
-                        const readmeUri = vscode.Uri.joinPath(rootPath, message.value);
+                        const readmeUri = vscode.Uri.joinPath(rootPath, 'README.md');
                         vscode.commands.executeCommand('vscode.open', readmeUri, { preview: false });
                         return;
                     case 'viewCurrentTabReadme':
@@ -221,7 +226,40 @@ export class HtmlPanel {
         });
     }
 
-    private _viewSubmodule(repoUrl: string) {
+    private async _remvoeSubmodule(componentName: string) {
+        // Show confirmation dialog
+        const result = await vscode.window.showWarningMessage(
+            'Are you sure you want to remove this component from the project?',
+            { modal: true },
+            'Yes, Remove'
+        );
+
+        if (result !== 'Yes, Remove') {
+            vscode.window.showInformationMessage('Operation cancelled by user.');
+            return; // User cancelled
+        }
+
+        // Proceed with removal
+        try {
+            const git = simpleGit({ baseDir: vscode.workspace.workspaceFolders[0].uri.fsPath });
+                     
+            // git submodule deinit -f <modules>
+            await git.subModule(['deinit', '-f', componentName]);
+            
+            // git rm -f <modules>
+            await git.raw(['rm', '-f', componentName]);
+            
+            vscode.window.showInformationMessage('Component removed successfully!');
+            
+            // Refresh the current project view to show updated component list
+            await this._update('currentProjectPage');
+        } catch (error) {
+            vscode.window.showErrorMessage('Error removing component');
+            console.error('Error removing submodule:', error);
+        }
+    }
+
+    private _viewSubmodule(repoUrl: string, source?: string) {
         // get default_branch for repo
         const start = repoUrl.indexOf('.com/') + 5; // Find the position after '.com/'
         const end = repoUrl.indexOf('.git'); // Find the position of '.git'
@@ -236,13 +274,13 @@ export class HtmlPanel {
         };
 
         axios.request(config).then((response) =>{
-            let project = response.data;
+            let repo = response.data;
 
-            let readmeUrl = 'https://raw.githubusercontent.com/' + repoName + '/' + project.default_branch + '/README.md';
-            let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + project.default_branch + '/.gitmodules';
+            let readmeUrl = 'https://raw.githubusercontent.com/' + repoName + '/' + repo.default_branch + '/README.md';
+            let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + repo.default_branch + '/.gitmodules';
 
             // build readme file for a project
-            this._getReadme(readmeUrl, submodulesUrl, project.id);
+            this._getReadme(readmeUrl, submodulesUrl, repo.id, source);
         }).catch((error) =>{
             log(`Error fetching subModule info: ${error}`);
             vscode.window.showErrorMessage('Error fetching subModule, please try again later.');
@@ -264,7 +302,7 @@ export class HtmlPanel {
         }
     }
 
-    private async _update(page, source?: string) {
+    private async _update(page: string, source?: string) {
         // update html panel home page, on page is loaded add content
 
         const webview = this._panel.webview;
@@ -281,6 +319,8 @@ export class HtmlPanel {
                 await html.getProjects(this, webview, page);
                 return;
             case 'currentProjectPage':
+                history.addStep('currentProjectPage');
+
                 vscode.window.showInformationMessage('Checking Current Project...');
                 await currentProject.getCurrentProject(this, webview, page, source);
 
@@ -343,7 +383,7 @@ export class HtmlPanel {
         });
 
     }
-    private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = '') {
+    private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = '', source?: string) {
         // get readme page from git using url, with submodules list
 
         history.addStep(readmeUrl, submodulesUrl, projectId);
@@ -392,7 +432,7 @@ export class HtmlPanel {
                 }
             })
 
-            html.setMd(readmeData, submodulesData, this.subModules);
+            html.setMd(readmeData, submodulesData, this.subModules, source);
             let webview = this._panel.webview;
             this._updatePanel(webview, 'mdFile', html.mdFile);
         });

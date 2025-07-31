@@ -114,6 +114,7 @@ export function createMarkdownText(text: string, local: boolean = false, project
     });
 
     // img urls
+    // local files we show the files, or we show url
     regex = /!\[\]\((.*?)\)/g;
     if (!local){
         text = text.replace(regex, (match, p1, p2) => {
@@ -124,7 +125,8 @@ export function createMarkdownText(text: string, local: boolean = false, project
         });
     } else{
         text = text.replace(regex, (match, p1, p2) => {
-            return `<img src="${p1}" width="300" />`;
+            return '';
+            // return `<img src="${p1}" width="300" />`; // there's an error loading images now
         });
     }
 

@@ -34,7 +34,6 @@ export function getStepsLength(): number {
     return userSteps.length;
 }
 
-
 // clear all steps
 export function clearSteps() {
     userSteps.length = 0;

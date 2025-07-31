@@ -10,9 +10,9 @@ export let projects = ''; // projects html page
 let projectsList: string[][] = [];
 export let projectsInfo = {}; // save projects info to list of dicts
 let projectsListString : string = '';
-let projectsIdsListString : string = '';
+export let projectsIdsListString : string = '';
 let projectsDescriptionListString : string = '';
-let projectsReleasesString: string = '';
+export let projectsReleasesString: string = '';
 
 // for components in home page
 export let componentsInfo = {}; // save components info to list of dicts
@@ -43,10 +43,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
         // if we have data already from github api
         if (Object.keys(projectsInfo).length > 0) {
             setProjects(
-                projectsListString,
-                projectsIdsListString,
                 projectsDescriptionListString,
-                projectsReleasesString,
                 componentsListString,
                 componentsIdsListString,
                 componentsDescriptionListString,
@@ -58,10 +55,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
             await readProjects();
 
             await setProjects(
-                projectsListString,
-                projectsIdsListString,
                 projectsDescriptionListString,
-                projectsReleasesString,
                 componentsListString,
                 componentsIdsListString,
                 componentsDescriptionListString,
@@ -234,10 +228,7 @@ export async function readProjects(): Promise<void> {
 - view button will open readme page
 */
 async function setProjects(
-    projectsListString: string,
-    projectsIdsListString: string,
     projectsDescriptionListString: string,
-    projectsReleasesString: string, 
     componentsListString: string,
     componentsIdsListString: string,
     componentsDescriptionListString: string,
@@ -554,9 +545,12 @@ async function setProjects(
 }
 
 /* using marked lib, create readme page to show it in vs code */
-export async function setMd(text: string, submodulesData: string, subModulesUrls: string){
+export async function setMd(text: string, submodulesData: string, subModulesUrls: string, source?: string) {
     // banner buttons
     let homeButton = 'enabled';
+    if (source == 'currentProjectPage') {
+        homeButton = 'disabled'; // home button is disabled on current Project Page
+    }
     let backButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
     let showButton = 'disabled'; // hide all, show all buttons are disabled with md page
 

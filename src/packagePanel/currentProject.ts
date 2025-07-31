@@ -1,7 +1,12 @@
 import * as vscode from 'vscode';
 
 import { HtmlPanel } from '../packagePanel/htmlPanel';
-import { projectsInfo, readProjects } from '../packagePanel/html';
+import { 
+    projectsInfo,
+    readProjects,
+    projectsIdsListString,
+    projectsReleasesString
+} from '../packagePanel/html';
 import { checkFileExists, createMarkdownText, readGitSubmodules } from '../utils/utils';
 import { makerFile } from '../utils/constants';
 import { log } from '../api/userInterface';
@@ -9,12 +14,6 @@ import { log } from '../api/userInterface';
 export let currentProject = ''; // projects html page
 
 export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, readmeFile='README.md'): Promise<void> {
-
-    // read projects info from github api, used with readme view
-    if (Object.keys(projectsInfo).length == 0) {
-        await readProjects();
-    }
-    
     let stickyButtonsBackgroundColor = '#f8f9fa';
 
     // toggle colors by theme
@@ -24,7 +23,8 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
     }
 
     let innerHTML = '';
-    let components_string = '[]';
+    let readmeUri: vscode.Uri;
+    let componentsString = '[]';
     let subModules = '[]';
     return new Promise(async (resolve) => {
         let workspaceFolders = vscode.workspace.workspaceFolders;
@@ -33,10 +33,16 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
             // no project open
             innerHTML = '<center>No project is open<br>Or Curren proejct is not QuecPython Project</center>';
         } else {
+            // check if proejct is QuecPython project
             if (await checkFileExists(makerFile)) {
 
+                // read projects info from github api, used with readme view
+                if (Object.keys(projectsInfo).length == 0) {
+                    await readProjects();
+                }
+                
                 // get file path
-                const readmeUri = vscode.Uri.joinPath(workspaceFolders[0].uri, readmeFile);
+                readmeUri = vscode.Uri.joinPath(workspaceFolders[0].uri, readmeFile);
                 const fileContentUint8Array = await vscode.workspace.fs.readFile(readmeUri);
                 fileContent = new TextDecoder('utf-8').decode(fileContentUint8Array);
                 
@@ -44,16 +50,16 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
                 fileContent = createMarkdownText(fileContent, true);
                 const workspaceFolderUri = vscode.workspace.workspaceFolders[0].uri;
                 let modules = await readGitSubmodules(workspaceFolderUri.fsPath, '.gitmodules');
-                components_string = '\[' + modules.map(item => `\"${item.name}\"`).join(', ') + '\]';
+                componentsString = '\[' + modules.map(item => `\"${item.name}\"`).join(', ') + '\]';
                 subModules = '\[' + modules.map(item => `\"${item.url}\"`).join(', ') + '\]';
 
                 innerHTML = `
 <div id="container">
     <div id="left">
         <h1>README</h1>
-        <button onclick="vscode.postMessage({ command: 'viewCurrentReadme', value: '${readmeUri}' });">Open Readme File</button>
+        <button onclick="vscode.postMessage({ command: 'viewCurrentReadme'});">Open Readme File</button>
         <div id="readme-content"></div>
-        <br>
+        <button id="show-more" class="hidden">Show More</button>
     </div>
     <div id="right">
         <h1>List of Components</h1>
@@ -139,18 +145,7 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
         <button disabled id="showAll">Show All</button>
         <button disabled id="hideAll">Hide All</button>
     </div>
-    <div id="container">
-        <div id="left">
-            <h1>README</h1>
-            <div id="readme-content"></div>
-            <button id="show-more" class="hidden">Show More</button>
-        </div>
-        <div id="right">
-            <h1>List of Components</h1>
-            <div id="components-content"></div>
-        </div>
-    </div>
-
+    ${innerHTML}
     <script src="https://unpkg.com/prettier@3.0.3/standalone.js"></script>
     <script src="https://unpkg.com/prettier@3.0.3/plugins/graphql.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -160,6 +155,14 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
     <script src="https://cdn.jsdelivr.net/npm/marked-code-format/dist/index.umd.min.js"></script>
     <script>
         const vscode = acquireVsCodeApi();
+
+        const projectsIds = ${projectsIdsListString};
+        const projectsReleases = ${projectsReleasesString};
+
+        function getRelease(option) {
+            // from select get selected option
+            return document.getElementById(option).value;
+        }
 
         // load readme content
         document.addEventListener('DOMContentLoaded', (event) => {
@@ -181,7 +184,7 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
                         showMoreButton.classList.add('hidden');
                     });
                 }
-                const components = ${components_string};
+                const components = ${componentsString};
                 const subModulesUrlsList = ${subModules};
 
                 // create components items
@@ -195,8 +198,17 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
                                 <h3>$\{component\}</h3>
                             </div>
                             <div class="item-buttons">
-                                <button disabled>Remove from project</button>
-                                <button id="submoduleViewButton" class="view-button" onclick="vscode.postMessage({ command: 'viewComponentClick', value: '$\{subModulesUrlsList[index]\}'});">View</button>
+                                <select id="$\{projectsIds[index]\}">
+                                    <option selected>Releases</option>
+                                    $\{projectsReleases[index]\}
+                                </select>
+                                <button disabled id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projectsIds[index]\}', release: getRelease($\{projectsIds[index]\}) });">Update</button>
+                                <button onclick="vscode.postMessage({ command: 'removeComponentClick', value: '$\{component\}'});">Remove from project</button>
+                                <button id="submoduleViewButton" class="view-button" onclick="vscode.postMessage({
+                                    command: 'viewComponentClick',
+                                    value: '$\{subModulesUrlsList[index]\}',
+                                    source: 'currentProjectPage'
+                                },);">View</button>
                             </div>
                         \`;
                     });
@@ -212,7 +224,6 @@ export async function getCurrentProject(htmlPanel: HtmlPanel, webview, page, rea
 </body>
 </html>
         `;
-        log(html);
         await htmlPanel._updatePanel(webview, page, html);
 
         resolve();
