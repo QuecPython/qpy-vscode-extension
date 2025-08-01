@@ -1,10 +1,14 @@
 import * as vscode from 'vscode';
+import path from 'path';
 import { log } from '../api/userInterface';
 
 import * as html from '../packagePanel/html';
+import * as currentProject from '../packagePanel/currentProject';
 import * as history from '../packagePanel/panelHistory';
 import axios from 'axios';
 import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
+import { makerFile } from '../utils/constants';
+import { createMarkdownText }  from '../utils/utils';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
     return {
@@ -23,7 +27,7 @@ export class HtmlPanel {
      */
     public static currentPanel: HtmlPanel | undefined;
 
-    public static readonly viewType = 'Projects';
+    public static readonly viewType = 'html';
     private subModules: string; // used for project subModules
 
     private readonly _panel: vscode.WebviewPanel;
@@ -44,7 +48,7 @@ export class HtmlPanel {
         // Otherwise, create a new panel.
         const panel = vscode.window.createWebviewPanel(
             HtmlPanel.viewType,
-            'Projects',
+            'Loading...',
             column || vscode.ViewColumn.One,
             getWebviewOptions(extensionUri),
         );
@@ -116,47 +120,32 @@ export class HtmlPanel {
 
                         if (lastStep.page == 'projectsPage') {
                             this._update(lastStep.page, 'homeButton');
+                        } else if (lastStep.page == 'currentProjectPage') {
+                            this._update(lastStep.page);
                         } else {
                             this._getReadme(lastStep.page, lastStep.submodulesUrl, lastStep.projectId);
                         }
-                        return
+                        return;
                     case 'newProjectClick':
-                        vscode.window.showOpenDialog(dialogOptions).then(fileUri => {							
+                        vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
+                            // Check if user cancelled the dialog
+                            if (!fileUri || fileUri.length === 0) {
+                                return; // User cancelled, do nothing
+                            }
+                            
                             const uri = vscode.Uri.file(fileUri[0].fsPath);
                             vscode.commands.executeCommand('vscode.openFolder', uri, true);
                         });
                         return
                     case 'importClick':
                         // clone a project to a selected path
-
-                        vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
-                            project = html.projectsInfo[message.value];
-                            let repoPath = fileUri[0].fsPath + '\\' + project.name;
-                            let options = ['--recurse-submodules'];
-                            
-                            // if user choose a certain release
-                            if (message.release != 'Releases') {
-                                options.push('--branch', message.release);
-                            }
-
-                            // clone the project and open a new folder with the new repo
-                            git.clone(project.clone_url, repoPath, options).then(() => {
-                                vscode.window.showInformationMessage('Cloning project...');
-                                try {
-                                    const uri = vscode.Uri.file(repoPath);
-                                    vscode.commands.executeCommand('vscode.openFolder', uri, true);
-                                } catch (error) {
-                                    vscode.window.showErrorMessage('Error cloning repository');
-                                    console.error('Error cloning repository:', error);
-                                }
-                            }).catch((error) => {
-                                vscode.window.showErrorMessage('Error cloning repository');
-                                console.error('Error cloning repository:', error);
-                            });
-                        });
+                        this._importClick(git, dialogOptions, message);
+                        return;
+                    case 'removeComponentClick':
+                        this._remvoeSubmodule(message.value);
                         return;
                     case 'viewComponentClick':
-                        this._viewSubmodule(message.value);
+                        this._viewSubmodule(message.value, message.source);
                         return;
                     case 'viewChineseClick':
                         project = html.projectsInfo[message.value];
@@ -197,6 +186,19 @@ export class HtmlPanel {
                         // build readme file for a project
                         this._getReadme(readmeUrl, submodulesUrl, message.value);
                         return;
+                    case 'viewCurrentReadme':
+                        // open readme file from the current project
+                        let workspaceFolders = vscode.workspace.workspaceFolders;
+                        const firstWorkspaceFolder = workspaceFolders[0];
+                        const rootPath = firstWorkspaceFolder.uri; // This is a vscode.Uri
+                        const readmeUri = vscode.Uri.joinPath(rootPath, 'README.md');
+                        vscode.commands.executeCommand('vscode.open', readmeUri, { preview: false });
+                        return;
+                    case 'viewCurrentTabReadme':
+                        // inside current proejct, view readme with another language
+                        this._update('currentProjectPage', message.value);
+                        return;
+
                     case 'alert':
                         vscode.window.showErrorMessage(message.text);
                         return;
@@ -224,13 +226,46 @@ export class HtmlPanel {
         });
     }
 
-    private _viewSubmodule(repoUrl: string) {
+    private async _remvoeSubmodule(componentName: string) {
+        // Show confirmation dialog
+        const result = await vscode.window.showWarningMessage(
+            'Are you sure you want to remove this component from the project?',
+            { modal: true },
+            'Yes, Remove'
+        );
+
+        if (result !== 'Yes, Remove') {
+            vscode.window.showInformationMessage('Operation cancelled by user.');
+            return; // User cancelled
+        }
+
+        // Proceed with removal
+        try {
+            const git = simpleGit({ baseDir: vscode.workspace.workspaceFolders[0].uri.fsPath });
+                     
+            // git submodule deinit -f <modules>
+            await git.subModule(['deinit', '-f', componentName]);
+            
+            // git rm -f <modules>
+            await git.raw(['rm', '-f', componentName]);
+            
+            vscode.window.showInformationMessage('Component removed successfully!');
+            
+            // Refresh the current project view to show updated component list
+            await this._update('currentProjectPage');
+        } catch (error) {
+            vscode.window.showErrorMessage('Error removing component');
+            console.error('Error removing submodule:', error);
+        }
+    }
+
+    private _viewSubmodule(repoUrl: string, source?: string) {
         // get default_branch for repo
         const start = repoUrl.indexOf('.com/') + 5; // Find the position after '.com/'
         const end = repoUrl.indexOf('.git'); // Find the position of '.git'
         const repoName = repoUrl.substring(start, end);
 
-        let url = `https://api.github.com/repos/${repoName}` ;
+        let url = `https://api.github.com/repos/${repoName}`;
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -239,13 +274,13 @@ export class HtmlPanel {
         };
 
         axios.request(config).then((response) =>{
-            let project = response.data
+            let repo = response.data;
 
-            let readmeUrl = 'https://raw.githubusercontent.com/' + repoName + '/' + project.default_branch + '/README.md';
-            let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + project.default_branch + '/.gitmodules';
+            let readmeUrl = 'https://raw.githubusercontent.com/' + repoName + '/' + repo.default_branch + '/README.md';
+            let submodulesUrl = 'https://raw.githubusercontent.com/' + repoName + '/refs/heads/' + repo.default_branch + '/.gitmodules';
 
             // build readme file for a project
-            this._getReadme(readmeUrl, submodulesUrl, project.id);
+            this._getReadme(readmeUrl, submodulesUrl, repo.id, source);
         }).catch((error) =>{
             log(`Error fetching subModule info: ${error}`);
             vscode.window.showErrorMessage('Error fetching subModule, please try again later.');
@@ -267,8 +302,8 @@ export class HtmlPanel {
         }
     }
 
-    private async _update(page, source?: string) {
-        // update html panel home page
+    private async _update(page: string, source?: string) {
+        // update html panel home page, on page is loaded add content
 
         const webview = this._panel.webview;
 
@@ -283,10 +318,72 @@ export class HtmlPanel {
                 vscode.window.showInformationMessage('Loading projects...');
                 await html.getProjects(this, webview, page);
                 return;
+            case 'currentProjectPage':
+                history.addStep('currentProjectPage');
+
+                vscode.window.showInformationMessage('Checking Current Project...');
+                await currentProject.getCurrentProject(this, page, source);
+
+                return;
         }
     }
 
-    private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = '') {
+    private _importClick(git, dialogOptions, message) {
+
+        vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
+            // Check if user cancelled the dialog
+            if (!fileUri || fileUri.length === 0) {
+                vscode.window.showInformationMessage('Operation cancelled by user.');
+                return;
+            }
+            
+            // Use progress bar instead of simple message
+            vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: "Cloning project...",
+                cancellable: false
+            }, async (progress, token) => {
+                let project = html.projectsInfo[message.value];
+                let repoPath = fileUri[0].fsPath + '\\' + project.name;
+                let options = ['--recurse-submodules'];
+                
+                // if user choose a certain release
+                if (message.release != 'Releases') {
+                    options.push('--branch', message.release);
+                }
+
+                progress.report({ increment: 10, message: "Initializing..." });
+
+                try {
+                    progress.report({ increment: 30, message: "Downloading files..." });
+                    
+                    // clone the project and open a new folder with the new repo
+                    await git.clone(project.clone_url, repoPath, options);
+                    
+                    progress.report({ increment: 50, message: "Setting up project..." });
+                    
+                    const uri = vscode.Uri.file(repoPath);
+                    
+                    // mark the folder as QuecPython project
+                    const markerFileUri = vscode.Uri.file(path.join(uri.fsPath, makerFile));
+                    await vscode.workspace.fs.writeFile(markerFileUri, Buffer.from(JSON.stringify({
+                        managedBy: 'QuecPython.qpy-ide',
+                        createdAt: new Date().toISOString()
+                    }, null, 2)));
+
+                    progress.report({ increment: 10, message: "Finalizing..." });
+                    
+                    vscode.window.showInformationMessage('Project cloned successfully!');
+                    vscode.commands.executeCommand('vscode.openFolder', uri, true);
+                } catch (error) {
+                    vscode.window.showErrorMessage('Error cloning repository');
+                    console.error('Error cloning repository:', error);
+                }
+            });
+        });
+
+    }
+    private _getReadme(readmeUrl: string, submodulesUrl: string, projectId = '', source?: string) {
         // get readme page from git using url, with submodules list
 
         history.addStep(readmeUrl, submodulesUrl, projectId);
@@ -324,73 +421,9 @@ export class HtmlPanel {
                     // first item is readme
                     if (index == 0) {
                         readmeData = result.value.data;
+                        // prepare the text for MD
+                        readmeData = createMarkdownText(readmeData, false, project);
 
-                        // files tree
-                        let regex = /```plaintext\s([\s\S]*?)```/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                            match = match.replace('```plaintext', '');
-                            return match.split('\n').join('<br>');
-                        });
-
-                        // bash text
-                        regex = /```bash\s([\s\S]*?)```/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                            match = match.replace('```bash', '')
-                            return match.split('\n').join('<br>')
-                        });
-                        
-                        // python text
-                        regex = /```python\s([\s\S]*?)```/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                            match = match.replace('```python', '')
-                            return match.split('\n').join('<br>')
-                        });
-
-                        // img urls
-                        regex = /!\[\]\((.*?)\)/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                          p1 = p1.replace('./','');
-                          p1 = p1.replace('../','');
-                          let imgUrl = `https://raw.githubusercontent.com/QuecPython/${project.name}/${project.default_branch}/${p1}`;
-                          return `<img src="${imgUrl}" style="zoom:67%;" /><br>`;
-                        });
-
-                        // other urls
-                        regex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-                        let match;
-                        while ((match = regex.exec(readmeData)) !== null) {
-                            const phrase = readmeData.substring(match.index, regex.lastIndex);
-                            const wordInBrackets = match[1];
-                            const url = match[2];
-                            readmeData.replace(phrase,`<a href="" onclick="vscode.postMessage({ command: 'openUrl' , value: '${url}' });">${wordInBrackets}</a>`);
-                        }
-
-                        // remove ` from text
-                        readmeData = readmeData.split('`').join('');
-
-                        // url for zh readme
-                        readmeData = readmeData.replace(
-                            '[中文](README.zh.md) | English',
-                            `<a href="" onclick="vscode.postMessage({ command: 'viewChineseClick' , value: '${projectId}' });">中文</a> | English`
-                        );
-
-                        // url for en readme
-                        readmeData = readmeData.replace(
-                            '中文 | [English](README.md)',
-                            `中文 | <a href="" onclick="vscode.postMessage({ command: 'viewClick' , value: '${projectId}' });">English</a>`
-                        );
-
-                        // Replace links with HTML anchor tags
-                        regex = /- \[(.*?)\]\(#(.*?)\)/g;
-                        readmeData = readmeData.replace(regex, (match, title, anchor) => {
-                            return `- <a href='#${anchor.toLowerCase()}'>${title}</a>`;
-                        });
-
-                        // Replace headers HTML paragraph tags
-                        regex = /(# )(.*)/g;
-                        readmeData = readmeData.replace(regex, (match, p1, p2) => {
-                            return `${p1}<p id="${p2.toLowerCase()}">${p2}</p>`;
-                        });
                     }
                     // second item is components
                     else {
@@ -399,9 +432,9 @@ export class HtmlPanel {
                 }
             })
 
-            html.setMd(readmeData, submodulesData, this.subModules);
+            html.setMd(readmeData, submodulesData, this.subModules, source);
             let webview = this._panel.webview;
-            this._updatePanel(webview, 'mdFile', html.mdFile);
+            this._updatePanel('mdFile', html.mdFile);
         });
     }
 
@@ -423,8 +456,8 @@ export class HtmlPanel {
         return components_string;
     }
         
-    private async _updatePanel(webview: vscode.Webview, page: string, text: string) {
-        /* update html panel with project page or readme page */
+    public async _updatePanel(page: string, text: string) {
+        /* update html panel with project page, current project page or readme page */
 
         switch (page) {
             case 'projectsPage':
@@ -433,6 +466,10 @@ export class HtmlPanel {
                 break
             case 'mdFile':
                 this._panel.title = 'README.md';
+                this._panel.webview.html = text;
+                break
+            case 'currentProjectPage':
+                this._panel.title = 'Current Project';
                 this._panel.webview.html = text;
                 break
         }

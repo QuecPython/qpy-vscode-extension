@@ -10,9 +10,9 @@ export let projects = ''; // projects html page
 let projectsList: string[][] = [];
 export let projectsInfo = {}; // save projects info to list of dicts
 let projectsListString : string = '';
-let projectsIdsListString : string = '';
+export let projectsIdsListString : string = '';
 let projectsDescriptionListString : string = '';
-let projectsReleasesString: string = '';
+export let projectsReleasesString: string = '';
 
 // for components in home page
 export let componentsInfo = {}; // save components info to list of dicts
@@ -43,178 +43,182 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
         // if we have data already from github api
         if (Object.keys(projectsInfo).length > 0) {
             setProjects(
-                projectsListString,
-                projectsIdsListString,
                 projectsDescriptionListString,
-                projectsReleasesString,
                 componentsListString,
                 componentsIdsListString,
                 componentsDescriptionListString,
                 componentsReleasesString,
                 workspaceOpen
             );
-            htmlPanel._updatePanel(webview, page, projects);
+            htmlPanel._updatePanel(page, projects);
         } else {
-            // solution repos config
-            let config = {
-                method: 'get',
-                maxBodyLength: Infinity,
-                url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:solution',
-                headers: {}
-            };
-        
-            // component repos config
-            let config1 = {
-                method: 'get',
-                maxBodyLength: Infinity,
-                url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:component',
-                headers: {}
-            };
-        
-            Promise.all([
-                axios.request(config),
-                axios.request(config1)
-            ])
-            .then( async ([response, response1]) => {
-                // save projects to dict, keys are projects ids
-                const items = response.data.items;
-                let requests = [];
+            await readProjects();
 
-                items.map(async (item: any) => {
-                    projectsInfo[item.id] = item;
-                    // build string from a list, and use it in js string
-                    projectsList = items.map((item: any) => {
-                        return [item.name, item.id, item.description]
-                    });
-
-                    // build list in string form, used inside js
-                    projectsListString = '\[' + projectsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-                    projectsIdsListString = '\[' + projectsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-                    projectsDescriptionListString = '\[' + projectsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
-
-                    let releasesUrl = `https://api.github.com/repos/QuecPython/${item.name}/releases`;
-                    let config2 = {
-                        id: '',
-                        method: 'get',
-                        maxBodyLength: Infinity,
-                        url: releasesUrl,
-                        headers: {} // if limit reached, use git token
-                    };
-
-                    config2.id = item.id;
-                    requests.push(axios.request(config2));
-                });
-
-                await Promise.allSettled(requests).then(async (results) => {
-                    // get releases for projects
-                    results.forEach((result, index) => {
-                        if (result.status == 'fulfilled') {
-                            let data = result.value.data;
-                            let releases = [];
-                            for (let i of data){
-                                releases.push(i.tag_name);
-                            }
-                            let id = result.value.config.id;
-                            projectsInfo[id].releases = releases;
-                        }
-                    });
-                });
-    
-                // get projects releases
-                let projectsReleases = [];
-                for (let i of projectsList) {
-                    let id = i[1];
-                    if ('releases' in projectsInfo[id] && projectsInfo[id].releases.length > 0){
-                        let releases = ''; // for one project
-                        for (let y in projectsInfo[id].releases) {
-                            releases += `<option>${projectsInfo[id].releases[y]}</option>`;
-                        }
-                        projectsReleases.push(releases);
-                    } else {
-                        projectsReleases.push('');
-                    }
-                }
-                projectsReleasesString = '\[' + projectsReleases.map(item => `\'${item}\'`).join(', ') + '\]';
-            
-                const items1 = response1.data.items;
-                requests = [];
-                items1.map(async (item: any) => {
-                    componentsInfo[item.id] = item;
-
-                    // build string from a list, and use it in js string
-                    componentsList = items1.map((item: any) => {
-                        return [item.name, item.id, item.description]
-                    });
-
-                    // build list in string form, used inside js
-                    componentsListString = '\[' + componentsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
-                    componentsIdsListString = '\[' + componentsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
-                    componentsDescriptionListString = '\[' + componentsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
-
-                    let releasesUrl = `https://api.github.com/repos/QuecPython/${item.name}/releases`;
-                    let config2 = {
-                        id: '',
-                        method: 'get',
-                        maxBodyLength: Infinity,
-                        url: releasesUrl,
-                        headers: {} // if limit reached, use git token
-                    };
-
-                    config2.id = item.id;
-                    requests.push(axios.request(config2));
-                });
-
-                await Promise.allSettled(requests).then(async (results) => {
-                    // get releases for components
-                    results.forEach((result, index) => {
-                        if (result.status == 'fulfilled') {
-                            let releases = [];
-                            let data = result.value.data;
-                            for (let i of data){
-                                releases.push(i.tag_name);
-                            }
-                            let id = result.value.config.id;
-                            componentsInfo[id].releases = releases;
-                        }
-                    });                    
-                });
-
-                // get components releases
-                let componentsReleases = [];
-                for (let i of componentsList) {
-                    let id = i[1];
-                    if ('releases' in componentsInfo[id] && componentsInfo[id].releases.length > 0) {
-                        let releases = ''; // for one components
-                        for (let y in componentsInfo[id].releases) {
-                            releases += `<option>${componentsInfo[id].releases[y]}</option>`;
-                        }
-                        componentsReleases.push(releases);
-                    }
-                }
-                componentsReleasesString = '\[' + componentsReleases.map(item => `\'${item}\'`).join(', ') + '\]';
-                                            
-                await setProjects(
-                    projectsListString,
-                    projectsIdsListString,
-                    projectsDescriptionListString,
-                    projectsReleasesString,
-                    componentsListString,
-                    componentsIdsListString,
-                    componentsDescriptionListString,
-                    componentsReleasesString,
-                    workspaceOpen
-                );
-                await htmlPanel._updatePanel(webview, page, projects);
-            })
-            .catch((error) => {
-                log(error);
-                vscode.window.showErrorMessage('Error fetching projects, please try again later.');
-            });
+            await setProjects(
+                projectsDescriptionListString,
+                componentsListString,
+                componentsIdsListString,
+                componentsDescriptionListString,
+                componentsReleasesString,
+                workspaceOpen
+            );
+            await htmlPanel._updatePanel(page, projects);
         }
         resolve();
     });
 }
 
+// read projects from github api
+export async function readProjects(): Promise<void> {
+    return new Promise(async (resolve) => {
+
+    // solution repos config
+    let config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:solution',
+        headers: {}
+    };
+
+    // component repos config
+    let config1 = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: 'https://api.github.com/search/repositories?q=org:QuecPython+topic:component',
+        headers: {}
+    };
+
+    await Promise.all([
+        axios.request(config),
+        axios.request(config1)
+    ])
+    .then( async ([response, response1]) => {
+        // save projects to dict, keys are projects ids
+        const items = response.data.items;
+        let requests = [];
+
+        items.map(async (item: any) => {
+            projectsInfo[item.id] = item;
+            // build string from a list, and use it in js string
+            projectsList = items.map((item: any) => {
+                return [item.name, item.id, item.description]
+            });
+
+            // build list in string form, used inside js
+            projectsListString = '\[' + projectsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
+            projectsIdsListString = '\[' + projectsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+            projectsDescriptionListString = '\[' + projectsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
+
+            let releasesUrl = `https://api.github.com/repos/QuecPython/${item.name}/releases`;
+            let config2 = {
+                id: '',
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: releasesUrl,
+                headers: {} // if limit reached, use git token
+            };
+
+            config2.id = item.id;
+            requests.push(axios.request(config2));
+        });
+
+        await Promise.allSettled(requests).then(async (results) => {
+            // get releases for projects
+            results.forEach((result, index) => {
+                if (result.status == 'fulfilled') {
+                    let data = result.value.data;
+                    let releases = [];
+                    for (let i of data){
+                        releases.push(i.tag_name);
+                    }
+                    let id = result.value.config.id;
+                    projectsInfo[id].releases = releases;
+                }
+            });
+        });
+
+        // get projects releases
+        let projectsReleases = [];
+        for (let i of projectsList) {
+            let id = i[1];
+            if ('releases' in projectsInfo[id] && projectsInfo[id].releases.length > 0){
+                let releases = ''; // for one project
+                for (let y in projectsInfo[id].releases) {
+                    releases += `<option>${projectsInfo[id].releases[y]}</option>`;
+                }
+                projectsReleases.push(releases);
+            } else {
+                projectsReleases.push('');
+            }
+        }
+        projectsReleasesString = '\[' + projectsReleases.map(item => `\'${item}\'`).join(', ') + '\]';
+    
+        const items1 = response1.data.items;
+        requests = [];
+        items1.map(async (item: any) => {
+            componentsInfo[item.id] = item;
+
+            // build string from a list, and use it in js string
+            componentsList = items1.map((item: any) => {
+                return [item.name, item.id, item.description]
+            });
+
+            // build list in string form, used inside js
+            componentsListString = '\[' + componentsList.map(item => `\"${item[0]}\"`).join(', ') + '\]';
+            componentsIdsListString = '\[' + componentsList.map(item => `\"${item[1]}\"`).join(', ') + '\]';
+            componentsDescriptionListString = '\[' + componentsList.map(item => `\"${item[2]}\"`).join(', ') + '\]';
+
+            let releasesUrl = `https://api.github.com/repos/QuecPython/${item.name}/releases`;
+            let config2 = {
+                id: '',
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: releasesUrl,
+                headers: {} // if limit reached, use git token
+            };
+
+            config2.id = item.id;
+            requests.push(axios.request(config2));
+        });
+
+        await Promise.allSettled(requests).then(async (results) => {
+            // get releases for components
+            results.forEach((result, index) => {
+                if (result.status == 'fulfilled') {
+                    let releases = [];
+                    let data = result.value.data;
+                    for (let i of data){
+                        releases.push(i.tag_name);
+                    }
+                    let id = result.value.config.id;
+                    componentsInfo[id].releases = releases;
+                }
+            });                    
+        });
+
+        // get components releases
+        let componentsReleases = [];
+        for (let i of componentsList) {
+            let id = i[1];
+            if ('releases' in componentsInfo[id] && componentsInfo[id].releases.length > 0) {
+                let releases = ''; // for one components
+                for (let y in componentsInfo[id].releases) {
+                    releases += `<option>${componentsInfo[id].releases[y]}</option>`;
+                }
+                componentsReleases.push(releases);
+            }
+        }
+        componentsReleasesString = '\[' + componentsReleases.map(item => `\'${item}\'`).join(', ') + '\]';
+                                    
+    })
+    .catch((error) => {
+        log(error);
+        vscode.window.showErrorMessage('Error fetching projects, please try again later.');
+    });
+
+    resolve();
+    });
+}
 /* using list of data from getProjects, create html page with list of item for projects + components
 - the page has top banner with few buttons 
 - the page 2 sections, for projects + components
@@ -224,10 +228,7 @@ export async function getProjects(htmlPanel, webview, page): Promise<void> {
 - view button will open readme page
 */
 async function setProjects(
-    projectsListString: string,
-    projectsIdsListString: string,
     projectsDescriptionListString: string,
-    projectsReleasesString: string, 
     componentsListString: string,
     componentsIdsListString: string,
     componentsDescriptionListString: string,
@@ -289,8 +290,8 @@ async function setProjects(
             }
             
             .sticky-buttons button:disabled {
-                background-color:rgb(136, 146, 158);
-                color: #A6A6A6;
+                background-color: rgb(100, 110, 120);
+                color: #FFFFFF;
             }
 
             .container {
@@ -354,8 +355,8 @@ async function setProjects(
                 background-color: ${backgroundColor};
             }
             .item-buttons button:disabled {
-                background-color:rgb(136, 146, 158);
-                color: #A6A6A6;
+                background-color: rgb(100, 110, 120);
+                color: #FFFFFF;
             }
 
             .hidden {
@@ -544,9 +545,12 @@ async function setProjects(
 }
 
 /* using marked lib, create readme page to show it in vs code */
-export async function setMd(text: string, submodulesData: string, subModulesUrls: string){
+export async function setMd(text: string, submodulesData: string, subModulesUrls: string, source?: string) {
     // banner buttons
     let homeButton = 'enabled';
+    if (source == 'currentProjectPage') {
+        homeButton = 'disabled'; // home button is disabled on current Project Page
+    }
     let backButton = history.getStepsLength() > 1 ? 'enabled' : 'disabled';
     let showButton = 'disabled'; // hide all, show all buttons are disabled with md page
 
@@ -592,8 +596,8 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
         }
         
         .sticky-buttons button:disabled {
-            background-color:rgb(136, 146, 158);
-            color: #A6A6A6;
+            background-color: rgb(100, 110, 120);
+            color: #FFFFFF;
         }
 
         #container {
@@ -608,8 +612,8 @@ export async function setMd(text: string, submodulesData: string, subModulesUrls
             color: white;
         }
         #container button:disabled {
-            background-color:rgb(136, 146, 158);
-            color: #A6A6A6;
+            background-color: rgb(100, 110, 120);
+            color: #FFFFFF;
         }
 
         #left, #right {

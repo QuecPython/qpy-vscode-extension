@@ -400,6 +400,12 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 			await HtmlPanel.createOrShow(context.extensionUri, 'projectsPage');
 		}
 	);
+	const currentProjectPage = vscode.commands.registerCommand(
+		'qpy-ide.currentProjectPage',
+		async (extensionUri: vscode.Uri) => { 
+			HtmlPanel.createOrShow(context.extensionUri, 'currentProjectPage');
+		}
+	);
 	const colorChangeTheme = vscode.window.onDidChangeActiveColorTheme(updateColorTheme);
 
 	context.subscriptions.push(
@@ -418,6 +424,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		removeDir,
 		createDir,
 		projectsPage,
+		currentProjectPage,
 		vscode.window.registerWebviewViewProvider(
 			FirmwareViewProvider.viewType,
 			fwProvider

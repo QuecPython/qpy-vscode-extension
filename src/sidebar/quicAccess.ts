@@ -35,6 +35,7 @@ export default class QuickAccessProvider {
           vscode.TreeItemCollapsibleState.Expanded,
           [
             new QuickItem('Projects + Components', 'qpy-ide.projectsPage'),
+            new QuickItem('Current Project', 'qpy-ide.currentProjectPage'),
           ],
         ),
       ];
