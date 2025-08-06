@@ -14,12 +14,16 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 - 📁 **Open REPL Port**: Open 🔍 repl port and run different QuecPython commands
 - 🔘 **Flash Firmware**: Select Firmware online from our stie and locally and flash it to your module
 - ⌨️ **Transfer Files**: Transfer one more multiple files to your module
-- 🌐 **Quectel Package Manager**: Import Quectel projects, add components to your project and view information about different solutions.
+- 🌐 **Quectel Package Manager**: Import Quectel projects, add components to your project and view information about different solutions
+- 💡 **Add / Remove QuecPython Components**: Open your QuecPython Project, and add or remove compoenents from you project
 - ⚙️ **Run Script**: Run files and scripts directly from your module
 - 📊 **File Treeview**: View list of files and directories on your module
 - ✅ **Auto Complete**: Increase your productivity with our auto complete for QuecPython modules
 
 # How to use
+
+<details>
+<summary>📖 Using Package Manager with VS Code</summary>
 
 ## Using Package manger with VS Code
 
@@ -82,6 +86,42 @@ If there's no project open, the button will be disabled.
   - Back: go back to previouse page (active only when previouse page is avilable).
   - Search Projects / Components: search the list of Projects or Components.
   - Show More:show the list of Projects or Components.
+
+</details>
+
+<details>
+<summary>💡 Current Proejct Page</summary>
+
+## 💡 Current Proejct Page
+
+<b>❗❗ Please Import + Open QuecPython proejct to use this tab. </b>
+
+1. From QuecPython menu -> Quick Access -> Quectel -> Current Project
+
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/menu-current-project.png" alt="menu-current-project">
+</p>
+
+2. Project Readme + list of submodules will show
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/currnt-project-main-panel.png" alt="currnt-project-main-panel">
+</p>
+
+3. From the panel, you can view usig view button for a project of component, which will show readme + submodules for project or component.
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-buttons.png" alt="Ciew Button">
+</p>
+
+4. To add more components to your quecpython project, please open Components -> choose component you want -> click on add-to-project button.
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-add-button.png" alt="Ciew Button">
+</p>
+
+<b>Note: </b> If the project is not quecpython, you'll have an error message.
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-closed.png" alt="Ciew Button">
+</p>
+</details>
 
 ## Extension Requirements
 - NodeJS installed on your system (12 or higher) - [NodeJS](https://nodejs.org)

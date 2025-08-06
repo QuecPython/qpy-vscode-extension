@@ -343,7 +343,7 @@ export default class FirmwareViewProvider
 												firmwareFlash(data.value, downloadPort);
 												log('User chose to continue flash local firmware.');
 											} else {
-												log('User cancelled the operation (flash local firmware).');
+												vscode.window.showInformationMessage('Operation cancelled by user.');
 												return;
 											}
 										});

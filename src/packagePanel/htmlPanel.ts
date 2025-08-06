@@ -130,6 +130,7 @@ export class HtmlPanel {
                         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
                             // Check if user cancelled the dialog
                             if (!fileUri || fileUri.length === 0) {
+                                vscode.window.showInformationMessage('Operation cancelled by user.');
                                 return; // User cancelled, do nothing
                             }
                             
