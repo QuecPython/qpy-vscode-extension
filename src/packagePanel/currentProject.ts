@@ -11,7 +11,7 @@ import { checkFileExists, createMarkdownText, readGitSubmodules } from '../utils
 import { makerFile } from '../utils/constants';
 import { log } from '../api/userInterface';
 
-export async function getCurrentProject(htmlPanel: HtmlPanel, page, readmeFile='README.md'): Promise<void> {
+export async function getCurrentProject(htmlPanel: HtmlPanel, page: string, readmeFile='README.md'): Promise<void> {
     let stickyButtonsBackgroundColor = '#f8f9fa';
 
     // toggle colors by theme

@@ -24,6 +24,34 @@
 		"configuration": {
 			"title": "QuecPython",
 			"properties": {
+				"QuecPython.userProjects": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"name": {
+								"type": "string",
+								"description": "Project name"
+							},
+							"path": {
+								"type": "string",
+								"description": "Project path"
+							},
+							"description": {
+								"type": "string",
+								"description": "Project description"
+							},
+							"url": {
+								"type": "string",
+								"description": "Project repository URL"
+							}
+						},
+						"required": ["name", "path"]
+					},
+					"default": [],
+					"description": "List of user's QuecPython projects",
+					"scope": "global"
+				},
 				"QuecPython.defaultLineTerminator": {
 					"description": "Text added to end of all sent lines. Will be appended to sent data but will not be rendered in terminal. Allows escape characters (\\r, \\n etc.), hex representation (\\x6F, \\xF8 etc.) and unicode representation (\\u006F, \\u00F8 etc.)",
 					"type": "string",

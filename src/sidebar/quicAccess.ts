@@ -23,7 +23,7 @@ class QuickItem extends vscode.TreeItem {
 
 // QuickAccess side bar items
 export default class QuickAccessProvider {
-    getChildren(element) {
+    getChildren(element: QuickItem | undefined): QuickItem[] {
       if (element && element.customChildren) {
         return element.customChildren;
       }
@@ -36,12 +36,13 @@ export default class QuickAccessProvider {
           [
             new QuickItem('Projects + Components', 'qpy-ide.projectsPage'),
             new QuickItem('Current Project', 'qpy-ide.currentProjectPage'),
+            new QuickItem('My Projects', 'qpy-ide.myProjects'),
           ],
         ),
       ];
     }
 
-    getTreeItem(element) {
+    getTreeItem(element: QuickItem): vscode.TreeItem {
       return element;
     }
   }
