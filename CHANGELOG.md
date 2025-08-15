@@ -1,3 +1,8 @@
+## 1.1.10
+- compatible with vs code 1.103.1 or higher
+- My Projects tab added to quick access
+- update auto-complete with latest api from QuecPython
+- udpate packages and libraries
 ## 1.1.9
 - compatible with vs code 1.102.0 or higher
 - Current Project tab add to quick access
