@@ -427,14 +427,14 @@ export class HtmlPanel {
             method: 'get',
             maxBodyLength: Infinity,
             url: readmeUrl,
-            headers: { }
+            headers: {}
         };
 
         let config1 = {
             method: 'get',
             maxBodyLength: Infinity,
             url: submodulesUrl,
-            headers: { }
+            headers: {}
         };
 
         Promise.allSettled([
