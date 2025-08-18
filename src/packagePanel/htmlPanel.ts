@@ -9,6 +9,7 @@ import axios from 'axios';
 import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
 import { makerFile } from '../utils/constants';
 import { createMarkdownText }  from '../utils/utils';
+import { addUserProject, removeUserProject, getMyProjects } from '../packagePanel/myProjects';
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
     return {
@@ -84,7 +85,7 @@ export class HtmlPanel {
 
         // Handle messages from the html panel
         this._panel.webview.onDidReceiveMessage(
-            message => {
+            async (message: any) => {
                 const dialogOptions: vscode.OpenDialogOptions = {
                     canSelectMany: false,
                     openLabel: 'Select',
@@ -111,7 +112,7 @@ export class HtmlPanel {
                         return;
                     case 'homeButton':
                         // return to home page
-                        this._update(page, 'homeButton');
+                        await this._update(page, 'homeButton');
                         return
                     case 'backButton':
                         // return to home page
@@ -119,7 +120,7 @@ export class HtmlPanel {
                         let lastStep = history.getLastStep();
 
                         if (lastStep.page == 'projectsPage') {
-                            this._update(lastStep.page, 'homeButton');
+                            await this._update(lastStep.page, 'homeButton');
                         } else if (lastStep.page == 'currentProjectPage') {
                             this._update(lastStep.page);
                         } else {
@@ -141,6 +142,10 @@ export class HtmlPanel {
                     case 'importClick':
                         // clone a project to a selected path
                         this._importClick(git, dialogOptions, message);
+                        return;
+                    case 'removeFromList':
+                        await removeUserProject(message.id);
+                        await this._update('myProjects');
                         return;
                     case 'removeComponentClick':
                         this._remvoeSubmodule(message.value);
@@ -200,6 +205,9 @@ export class HtmlPanel {
                         this._update('currentProjectPage', message.value);
                         return;
 
+                    case 'openProject':
+                        this._openProject(message.name);
+                        return;
                     case 'alert':
                         vscode.window.showErrorMessage(message.text);
                         return;
@@ -257,6 +265,20 @@ export class HtmlPanel {
         } catch (error) {
             vscode.window.showErrorMessage('Error removing component');
             console.error('Error removing submodule:', error);
+        }
+    }
+
+    private _openProject(name: string) {
+        // open project in a new window
+        const config = vscode.workspace.getConfiguration('QuecPython');
+        const userProjects: any[] = config.get('userProjects', []);
+        const project = userProjects.find(p => p.name === name);
+
+        if (project) {
+            const uri = vscode.Uri.file(project.path);
+            vscode.commands.executeCommand('vscode.openFolder', uri, true);
+        } else {
+            vscode.window.showErrorMessage(`Project "${name}" not found.`);
         }
     }
 
@@ -326,10 +348,15 @@ export class HtmlPanel {
                 await currentProject.getCurrentProject(this, page, source);
 
                 return;
+            case 'myProjects':
+                vscode.window.showInformationMessage('Checking My Projects...');
+                await getMyProjects(this, page);
+
+                return;
         }
     }
 
-    private _importClick(git, dialogOptions, message) {
+    private _importClick(git: SimpleGit, dialogOptions: vscode.OpenDialogOptions, message: any) {
 
         vscode.window.showOpenDialog(dialogOptions).then(fileUri => {
             // Check if user cancelled the dialog
@@ -344,8 +371,9 @@ export class HtmlPanel {
                 title: "Cloning project...",
                 cancellable: false
             }, async (progress, token) => {
-                let project = html.projectsInfo[message.value];
+                let project = html.projectsInfo[message.projectId];
                 let repoPath = fileUri[0].fsPath + '\\' + project.name;
+
                 let options = ['--recurse-submodules'];
                 
                 // if user choose a certain release
@@ -354,7 +382,6 @@ export class HtmlPanel {
                 }
 
                 progress.report({ increment: 10, message: "Initializing..." });
-
                 try {
                     progress.report({ increment: 30, message: "Downloading files..." });
                     
@@ -371,6 +398,13 @@ export class HtmlPanel {
                         managedBy: 'QuecPython.qpy-ide',
                         createdAt: new Date().toISOString()
                     }, null, 2)));
+
+                    // Save user project info after cloning
+                    await addUserProject({
+                        name: project.name,
+                        path: repoPath, 
+                        description: project.description || ''
+                    });
 
                     progress.report({ increment: 10, message: "Finalizing..." });
                     
@@ -393,14 +427,14 @@ export class HtmlPanel {
             method: 'get',
             maxBodyLength: Infinity,
             url: readmeUrl,
-            headers: { }
+            headers: {}
         };
 
         let config1 = {
             method: 'get',
             maxBodyLength: Infinity,
             url: submodulesUrl,
-            headers: { }
+            headers: {}
         };
 
         Promise.allSettled([
@@ -471,6 +505,10 @@ export class HtmlPanel {
                 break
             case 'currentProjectPage':
                 this._panel.title = 'Current Project';
+                this._panel.webview.html = text;
+                break
+            case 'myProjects':
+                this._panel.title = 'My Projects';
                 this._panel.webview.html = text;
                 break
         }

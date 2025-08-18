@@ -314,7 +314,7 @@ class TTS(object):
     """Class Text-to-speech playback.
 
     Currently supported models: EC600N series, EC800N series, EC600M-CN (LA, LE), EC800M-CN (LA, LE, GA), EG810MCN_GA, EC600U series, EC200U series, EG912U, EG915U, EG915N-EUAG.
-    Description: https://developer.quectel.com/doc/quecpython/API_reference/zh/medialib/audio.TTS.html
+    Description: https://developer.quectel.com/doc/quecpython/API_reference/en/medialib/audio.TTS.html
     """
 
     def __init__(self, device):

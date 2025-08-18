@@ -451,8 +451,8 @@ async function setProjects(
                                 <option selected>Releases</option>
                                 $\{projectsReleases[index]\}
                             </select>
-                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', value: '$\{projectsIds[index]\}', release: getRelease($\{projectsIds[index]\}) });">Import</button>
-                            <button id="viewProjectButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projectsIds[index]\}'});">View</button>
+                            <button id="importButton" class="import-button" onclick="vscode.postMessage({ command: 'importClick', projectId: '$\{projectsIds[index]\}', release: getRelease($\{projectsIds[index]\}) });">Import</button>
+                            <button id="viewButton" class="view-button" onclick="vscode.postMessage({ command: 'viewClick', value: '$\{projectsIds[index]\}'});">View</button>
                         </div>
                     \`;
                     projectList.appendChild(projectItem);
