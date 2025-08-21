@@ -102,6 +102,7 @@ export default class SerialTerminal extends CommandLineInterface {
 				this.cmdFlag = true;
 				this.cmdFlagLabel = cmd.ilistdir;
 
+				// we copy from .txt file and save to .py to run it on the module
 				this.handleCmd(`f = open('/usr/q_init_fs.py', 'wb', encoding='utf-8')\r\n`);
 				await sleep(50);
 				this.handleCmd(`w = f.write\r\n`);

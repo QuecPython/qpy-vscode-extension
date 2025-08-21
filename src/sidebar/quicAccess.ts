@@ -29,7 +29,7 @@ export default class QuickAccessProvider {
       }
       return [
         new QuickItem(
-          'Quectel',
+          ' QuecPython Projects',
           undefined,
           undefined,
           vscode.TreeItemCollapsibleState.Expanded,

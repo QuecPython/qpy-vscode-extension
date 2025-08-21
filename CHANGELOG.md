@@ -1,3 +1,5 @@
+## 1.1.11
+- fix issue with module file tree
 ## 1.1.10
 - compatible with vs code 1.103.1 or higher
 - My Projects tab added to quick access
