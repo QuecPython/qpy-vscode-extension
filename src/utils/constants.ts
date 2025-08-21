@@ -83,7 +83,7 @@ export const progLabel = {
 
 export const scriptName = {
 	fileDownloadScript: '\\QPYcom.exe',
-	initTreeScript: '\\q_init_fs.py',
+	initTreeScript: '\\q_init_fs.txt', // file name is .txt to avoid issue with esafenet
 	portListBat: "\\get_com.exe",
 	logFile: "\\extension.log"
 };
