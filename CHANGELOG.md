@@ -1,3 +1,6 @@
+## 1.1.12
+- compatible with vs code 1.103.1 or higher
+- fix issue with chinese charecters for download file
 ## 1.1.11
 - fix issue with module file tree
 ## 1.1.10

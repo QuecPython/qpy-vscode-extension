@@ -258,11 +258,6 @@ export const downloadFile = vscode.commands.registerCommand(
 				downloadPath = fileUri;
 			}
 
-			if (downloadPath.fsPath.match(chiregex)) {
-				vscode.window.showErrorMessage('Invalid file name for download.');
-				return;
-			}
-
 			if (utils.isDir(downloadPath.fsPath)) {
 				vscode.window.showErrorMessage('Specified target is not a valid file.');
 				return;
@@ -294,11 +289,6 @@ export const selectiveDownloadFile = vscode.commands.registerCommand(
 	'qpy-ide.selectiveDownloadFile',
 	async (fileUri: vscode.Uri) => {
 		try {
-			if (fileUri.fsPath.match(chiregex)) {
-				vscode.window.showErrorMessage('Invalid file name for download.');
-				return;
-			}
-
 			if (utils.isDir(fileUri.fsPath)) {
 				vscode.window.showErrorMessage('Specified target is not a valid file.');
 				return;
