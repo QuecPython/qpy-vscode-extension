@@ -27,7 +27,7 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 
 ## Using Package manger with VS Code
 
-1. From QuecPython menu -> Quick Access -> Quectel -> Projects + Components
+1. From QuecPython menu -> Quick Access -> QuecPython Projects -> Projects + Components
 
 <p>
   <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/menu.png" alt="Select Menu">
@@ -96,7 +96,7 @@ If there's no project open, the button will be disabled.
 
 <b>❗❗ Please Import + Open QuecPython proejct to use this tab. </b>
 
-1. From QuecPython menu -> Quick Access -> Quectel -> Current Project
+1. From QuecPython menu -> Quick Access -> QuecPython Projects -> Current Project
 
 <p>
   <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/menu-current-project.png" alt="menu-current-project">
@@ -121,6 +121,23 @@ If there's no project open, the button will be disabled.
 <p>
   <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-closed.png" alt="Ciew Button">
 </p>
+</details>
+
+<details>
+<summary> 😎 My Projects</summary>
+
+## 😎 My Projects Page
+
+<b>❗❗ This tab wil show QuecPython projects, after you import them. </b>
+
+1. From QuecPython menu -> Quick Access -> QuecPython Projects -> My Projects
+
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/menu-my-projects.png" alt="menu-my-projects">
+</p>
+
+2. List of proejcts will show, if you have any projects imported.
+
 </details>
 
 ## Extension Requirements
