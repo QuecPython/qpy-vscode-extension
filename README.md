@@ -27,7 +27,7 @@ Extension for handling interaction with QuecPython based modules. Communicate wi
 
 ## Using Package manger with VS Code
 
-1. From QuecPython menu -> Quick Access -> Quectel -> Projects + Components
+1. From QuecPython menu -> Quick Access -> QuecPython Projects -> Projects + Components
 
 <p>
   <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/menu.png" alt="Select Menu">
@@ -96,7 +96,7 @@ If there's no project open, the button will be disabled.
 
 <b>❗❗ Please Import + Open QuecPython proejct to use this tab. </b>
 
-1. From QuecPython menu -> Quick Access -> Quectel -> Current Project
+1. From QuecPython menu -> Quick Access -> QuecPython Projects -> Current Project
 
 <p>
   <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/menu-current-project.png" alt="menu-current-project">
@@ -109,18 +109,48 @@ If there's no project open, the button will be disabled.
 
 3. From the panel, you can view usig view button for a project of component, which will show readme + submodules for project or component.
 <p>
-  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-buttons.png" alt="Ciew Button">
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-buttons.png" alt="current-project-buttons">
 </p>
 
-4. To add more components to your quecpython project, please open Components -> choose component you want -> click on add-to-project button.
+4. To add more components to your QuecPython project, please open Components -> choose component you want -> click on add-to-project button.
 <p>
-  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-add-button.png" alt="Ciew Button">
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-add-button.png" alt="current-project-add-button">
 </p>
 
-<b>Note: </b> If the project is not quecpython, you'll have an error message.
+<b>Note: </b> If the project is not QuecPython, you'll have an error message.
 <p>
-  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-closed.png" alt="Ciew Button">
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/current-project-closed.png" alt="current-project-closed">
 </p>
+</details>
+
+<details>
+<summary> 😎 My Projects</summary>
+
+## 😎 My Projects Page
+
+<b>❗❗ This tab wil show QuecPython projects, after you import them. </b>
+
+1. From QuecPython menu -> Quick Access -> QuecPython Projects -> My Projects
+
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/menu-my-projects.png" alt="menu-my-projects">
+</p>
+
+2. List of proejcts will show, if you have any projects imported.
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/my-projects-main-panel.png" alt="my-projects-main-panel">
+</p>
+
+3. From the panel, you can use open project button, or remove a project from the list.
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/my-projects-buttons.png" alt="my-projects-buttons">
+</p>
+
+4. To add more projects to the list, please open Projects + Components -> choose project you want -> click on import button and follow the steps.
+<p>
+  <img src="https://raw.githubusercontent.com/QuecPython/vscode-extension-issues/refs/heads/main/images/my-projects-add-project.png" alt="my-projects-add-project">
+</p>
+
 </details>
 
 ## Extension Requirements

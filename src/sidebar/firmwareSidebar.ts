@@ -338,7 +338,7 @@ export default class FirmwareViewProvider
 										firmwareFlash(data.value, downloadPort);
 									} else {
 										log("matchVer:", matchVer);
-										vscode.window.showInformationMessage('Inconsistent firmware and module model, Do you want to continue?', { modal: true }, 'Yes', 'No').then((selection) => {
+										vscode.window.showInformationMessage('Inconsistent firmware and module model, Do you want to continue?', { modal: true }, 'Yes').then((selection) => {
 											if (selection === 'Yes') {
 												firmwareFlash(data.value, downloadPort);
 												log('User chose to continue flash local firmware.');
