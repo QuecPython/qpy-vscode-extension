@@ -1,3 +1,10 @@
+## 1.1.13
+- compatible with vs code 1.104.3 or higher
+- udpate packages and libs
+- fixed issue with BG95M3
+- added How-to guide for My Projects tab
+- update extensio icon
+- add repo url to readme
 ## 1.1.12
 - compatible with vs code 1.103.1 or higher
 - fix issue with chinese charecters for download file
