@@ -1,3 +1,6 @@
+## 1.1.14
+- compatible with vs code 1.106.1 or higher
+- update packages and libs
 ## 1.1.13
 - compatible with vs code 1.104.3 or higher
 - udpate packages and libs
