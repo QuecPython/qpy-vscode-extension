@@ -1,3 +1,5 @@
+## 1.1.16
+- update packages and libs
 ## 1.1.15
 - compatible with vs code 1.108.1 or higher
 - remove old outdated tests + library
