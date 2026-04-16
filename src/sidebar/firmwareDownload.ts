@@ -45,13 +45,14 @@ async function downloadFile(url: string, savePath: string) {
 			});
 		  });
 		
-	  } catch (error) {
-		if (error.code === 'ENOTFOUND') {
-		  console.error('No internet connection.');
-		}else {
-		  console.error('Error downloading file:', error);
+	} catch (error) {
+		const err: any = error;
+		if (err?.code === 'ENOTFOUND') {
+			console.error('No internet connection.');
+		} else {
+			console.error('Error downloading file:', err);
 		}
-	  }
+	}
 };
 
 export async function firmwareFlash(

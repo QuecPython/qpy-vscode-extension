@@ -73,15 +73,16 @@ export async function checkFileExists(file): Promise<boolean> {
         // If no error is thrown, the file exists.
         return true;
     } catch (error) {
+        const err: any = error;
         // Check for specific error code if you want to differentiate
         // between "file not found" and other errors (e.g., permissions).
         // For simple existence check, a catch-all is usually sufficient.
-        if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') {
+        if (err instanceof vscode.FileSystemError && err.code === 'FileNotFound') {
             return false; // File does not exist
         }
-        // Re-throw other errors if they are unexpected or critical
-        console.error(`Error checking for marker file: ${error.message}`);
-        return false; // Or handle the error as appropriate
+
+        console.error(`Error checking for marker file: ${err?.message ?? err}`);
+        return false;
     }
 }
 

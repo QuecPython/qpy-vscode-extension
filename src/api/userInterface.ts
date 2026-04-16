@@ -57,10 +57,11 @@ async function downloadExeFile(url: string) {
 				});
 			});
 		} catch (error) {
-			if (error.code === 'ENOTFOUND') {
-			console.error('No internet connection.');
+			const err: any = error;
+			if (err?.code === 'ENOTFOUND') {
+				console.error('No internet connection.');
 			} else {
-			console.error('Error downloading file:', error);
+				console.error('Error downloading file:', err);
 			}
 		};
 	};
