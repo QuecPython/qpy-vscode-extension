@@ -234,6 +234,18 @@ export const exportFile = vscode.commands.registerCommand(
 	'qpy-ide.exportFile',
 	async (node: ModuleDocument) => {
 		try {
+			// 1. get save location from user
+			const folders = await vscode.window.showOpenDialog({
+				canSelectFolders: true,
+				canSelectFiles: false,
+				openLabel: 'Select folder to save exported file',
+			});
+			if (!folders || folders.length === 0) {
+				vscode.window.showInformationMessage('Export cancelled');
+				return;
+			}
+			let exportSaveFolder = folders[0].fsPath;
+			log('Export folder selected: ' + exportSaveFolder);
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.exportFile);
 			// st.handleCmd(`print('hello world')\r\n`);

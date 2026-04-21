@@ -79,6 +79,17 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 				this.exportFileData += data.toString();
 				if (data.toString().slice(-4) == '>>> '){
 					log('file complete ' + this.exportFileData);
+
+					// find the file body beteen open(<file-name>).read() + >>>
+					const regex = /open\(.*?\)\.read\(\)([\s\S]*?)>>> $/;
+					const match = this.exportFileData.match(regex);
+
+					if (match) {
+						let file = match[1].trim();
+						log("Result:" + file);
+					} else {
+						log("No match found.");
+					}
 					this.exportFileData = '';
 				}
 			} else{
