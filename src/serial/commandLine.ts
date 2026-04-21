@@ -19,6 +19,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	// properties used for tracking and rendering terminal input
 	private currentInputLine = '';
 	private inputIndex = 0;
+	private exportFileData = '';
 
 	// properties used for tracking data
 	protected endsWithNewLine = false;
@@ -74,7 +75,15 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	protected handleData: (data: Buffer) => void = (data: Buffer) => {
 		// check for UI driven command
 		if (this.cmdFlag) {
-			log(`${this.cmdFlagLabel}`, `${data.toString()}`);
+			if (this.cmdFlagLabel == cmd.exportFile){
+				this.exportFileData += data.toString();
+				if (data.toString().slice(-4) == '>>> '){
+					log('file complete ' + this.exportFileData);
+					this.exportFileData = '';
+				}
+			} else{
+				log(`${this.cmdFlagLabel}`, `${data.toString()}`);
+			}
 			serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
 			return;
 		}

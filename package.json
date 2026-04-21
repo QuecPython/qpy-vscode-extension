@@ -150,6 +150,10 @@
 				"title": "Delete File"
 			},
 			{
+				"command": "qpy-ide.exportFile",
+				"title": "Export File"
+			},
+			{
 				"command": "qpy-ide.removeDir",
 				"title": "Delete Directory"
 			},
@@ -241,6 +245,10 @@
 				},
 				{
 					"command": "qpy-ide.removeFile",
+					"when": "view == qpyModuleFS && viewItem == moduleDocument"
+				},
+				{
+					"command": "qpy-ide.exportFile",
 					"when": "view == qpyModuleFS && viewItem == moduleDocument"
 				},
 				{

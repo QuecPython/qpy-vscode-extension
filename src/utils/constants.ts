@@ -18,6 +18,7 @@ export const cmd = {
 	listdir: '[LST]',
 	ilistdir: '[IST]',
 	runScript: '[RUN]',
+	exportFile: '[EXF]',
 	removeFile: '[RMF]',
 	removeDir: '[RMD]',
 	createDir: '[MKD]',
@@ -77,6 +78,7 @@ export const status = {
 
 export const progLabel = {
 	downloadFile: 'Downloading File',
+	exportFile: 'Exporting File',
 	flashFw: 'Flashing Firmware',
 	downloadOnlineFw: 'download Online Firmware',
 };

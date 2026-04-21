@@ -230,6 +230,32 @@ export const removeFile = vscode.commands.registerCommand(
 	}
 );
 
+export const exportFile = vscode.commands.registerCommand(
+	'qpy-ide.exportFile',
+	async (node: ModuleDocument) => {
+		try {
+			const st = getActiveSerial();
+			setTerminalFlag(true, cmd.exportFile);
+			// st.handleCmd(`print('hello world')\r\n`);
+			st.handleCmd(`open('${node.filePath}', 'r').read()\r\n`);
+
+			await utils.sleep(100);
+
+			// st.handleCmd(`uos.mkdir('/usr/record1')\r\n`);
+
+			await utils.sleep(100);
+
+			serialEmitter.emit(cmd.exportFile, cmd.exportFile);
+
+			// simple notification for now
+			vscode.window.showInformationMessage('Export file: not implemented yet.');
+		} catch {
+			vscode.window.showErrorMessage('Something went wrong.');
+			setTerminalFlag();
+		}
+	}
+);
+
 export const removeDir = vscode.commands.registerCommand(
 	'qpy-ide.removeDir',
 	async (node: ModuleDocument) => {
@@ -413,6 +439,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		clearCommand,
 		downloadFile,
 		selectiveDownloadFile,
+		exportFile,
 		clearFirmware,
 		refreshModuleFs,
 		runScript,
