@@ -4,7 +4,7 @@ import * as Stream from 'stream';
 import { serialEmitter } from './serialBridge';
 import { chiregex, cmd } from '../utils/constants';
 import { log } from '../api/userInterface';
-
+import { newFilePath } from '../api/commands';
 
 export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	// fire to write to terminal
@@ -86,16 +86,45 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 
 					if (match) {
 						let file = match[1].trim();
-						log("Result:" + file);
+						// if user selected a folder, save the exported content to that folder
+						if (typeof newFilePath !== 'undefined' && newFilePath) {
+							// try to extract filename from the open(...) call
+							const nameMatch = this.exportFileData.match(/open\(['"]([^'\"]+)['"],\s*'r'\)\.read\(\)/);
+							let filename = 'exported_file';
+							if (nameMatch && nameMatch[1]) {
+								const parts = nameMatch[1].split('/');
+								filename = parts[parts.length - 1] || nameMatch[1];
+							}
+							const sep = process.platform === 'win32' ? '\\' : '/';
+							const savePath = newFilePath.endsWith(sep) ? newFilePath + filename : newFilePath + sep + filename;
+							const uri = vscode.Uri.file(savePath);
+							let content = file.replace(/^['\"]|['\"]$/g, '').trim();
+							// interpret common escape sequences (\n, \r, \t, \xHH, \uHHHH)
+							const unescapeSeq = (s: string) =>
+								s.replace(/\\x([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+								 .replace(/\\u([0-9A-Fa-f]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+								 .replace(/\\n/g, '\n')
+								 .replace(/\\r/g, '\r')
+								 .replace(/\\t/g, '\t')
+								 .replace(/\\b/g, '\b')
+								 .replace(/\\f/g, '\f')
+								 .replace(/\\\\/g, '\\')
+								 .replace(/\\'/g, "'")
+								 .replace(/\\\"/g, '"');
+							content = unescapeSeq(content);
+							vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'))
+								.then(() => {vscode.window.showInformationMessage('Saved exported file to ' + savePath);},
+								(err) => {vscode.window.showErrorMessage('Failed to save export: ' + err);});
+						}
 					} else {
-						log("No match found.");
+						vscode.window.showErrorMessage("Issue copying file: couldn't parse file content.");
 					}
 					this.exportFileData = '';
 				}
 			} else{
 				log(`${this.cmdFlagLabel}`, `${data.toString()}`);
+				serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
 			}
-			serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
 			return;
 		}
 

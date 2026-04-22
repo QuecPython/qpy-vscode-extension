@@ -183,10 +183,7 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
 serialEmitter.on(`${cmd.exportFile}`, (data: string) => {
 	exFileBuffer += data;
 	try {
-		console.log('export file buffer: ' + exFileBuffer);
 		if (data === cmd.exportFile) {
-			vscode.window.showInformationMessage('Export file: This is serialEmitter.');
-
 			if (exFileBuffer.includes('Traceback')) {
 				vscode.window.showErrorMessage('Unable to export file.');
 				exFileBuffer = '';

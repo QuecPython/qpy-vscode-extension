@@ -5,8 +5,7 @@ import { getActiveSerial, setTerminalFlag } from './terminal';
 import { moduleFsTreeProvider, executeBatScript, log } from './userInterface';
 import {
 	cmd,
-	supportedBaudRates,
-	chiregex,
+	supportedBaudRates
 } from '../utils/constants';
 import { fwProvider } from '../extension';
 import SerialTerminal from '../serial/serialTerminal';
@@ -22,6 +21,7 @@ import { HtmlPanel } from '../packagePanel/htmlPanel';
 
 export let chosenModule: string | undefined;
 export let newDirPath: string | undefined;
+export let newFilePath: string | undefined;
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
@@ -244,23 +244,13 @@ export const exportFile = vscode.commands.registerCommand(
 				vscode.window.showInformationMessage('Export cancelled');
 				return;
 			}
-			let exportSaveFolder = folders[0].fsPath;
-			log('Export folder selected: ' + exportSaveFolder);
+			newFilePath = folders[0].fsPath;
 			const st = getActiveSerial();
 			setTerminalFlag(true, cmd.exportFile);
-			// st.handleCmd(`print('hello world')\r\n`);
 			st.handleCmd(`open('${node.filePath}', 'r').read()\r\n`);
 
 			await utils.sleep(100);
-
-			// st.handleCmd(`uos.mkdir('/usr/record1')\r\n`);
-
-			await utils.sleep(100);
-
 			serialEmitter.emit(cmd.exportFile, cmd.exportFile);
-
-			// simple notification for now
-			vscode.window.showInformationMessage('Export file: not implemented yet.');
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();
