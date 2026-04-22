@@ -5,6 +5,7 @@ import { serialEmitter } from './serialBridge';
 import { chiregex, cmd } from '../utils/constants';
 import { log } from '../api/userInterface';
 import { newFilePath } from '../api/commands';
+import path from 'path';
 
 export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	// fire to write to terminal
@@ -78,8 +79,6 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			if (this.cmdFlagLabel == cmd.exportFile){
 				this.exportFileData += data.toString();
 				if (data.toString().slice(-4) == '>>> '){
-					log('file complete ' + this.exportFileData);
-
 					// find the file body beteen open(<file-name>).read() + >>>
 					const regex = /open\(.*?\)\.read\(\)([\s\S]*?)>>> $/;
 					const match = this.exportFileData.match(regex);
@@ -88,16 +87,16 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 						let file = match[1].trim();
 						// if user selected a folder, save the exported content to that folder
 						if (typeof newFilePath !== 'undefined' && newFilePath) {
-							// try to extract filename from the open(...) call
+							// try to extract full path from the open(...) call and preserve directory structure
 							const nameMatch = this.exportFileData.match(/open\(['"]([^'\"]+)['"],\s*'r'\)\.read\(\)/);
-							let filename = 'exported_file';
+							let relativePath = 'exported_file';
 							if (nameMatch && nameMatch[1]) {
-								const parts = nameMatch[1].split('/');
-								filename = parts[parts.length - 1] || nameMatch[1];
+								// remove leading slashes to make it relative under chosen folder
+								relativePath = nameMatch[1].replace(/^\/+/, '');
 							}
-							const sep = process.platform === 'win32' ? '\\' : '/';
-							const savePath = newFilePath.endsWith(sep) ? newFilePath + filename : newFilePath + sep + filename;
-							const uri = vscode.Uri.file(savePath);
+							const savePath = path.join(newFilePath, relativePath);
+							const dir = path.dirname(savePath);
+							const fileUri = vscode.Uri.file(savePath);
 							let content = file.replace(/^['\"]|['\"]$/g, '').trim();
 							// interpret common escape sequences (\n, \r, \t, \xHH, \uHHHH)
 							const unescapeSeq = (s: string) =>
@@ -112,9 +111,15 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 								 .replace(/\\'/g, "'")
 								 .replace(/\\\"/g, '"');
 							content = unescapeSeq(content);
-							vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'))
-								.then(() => {vscode.window.showInformationMessage('Saved exported file to ' + savePath);},
-								(err) => {vscode.window.showErrorMessage('Failed to save export: ' + err);});
+							const dirUri = vscode.Uri.file(dir);
+							// create directories recursively then write file
+							vscode.workspace.fs.createDirectory(dirUri).then(() => {
+								return vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf8'));
+							}).then(() => {
+								vscode.window.showInformationMessage('Saved exported file to ' + savePath);
+							}, (err) => {
+								vscode.window.showErrorMessage('Failed to save export: ' + err);
+							});
 						}
 					} else {
 						vscode.window.showErrorMessage("Issue copying file: couldn't parse file content.");
