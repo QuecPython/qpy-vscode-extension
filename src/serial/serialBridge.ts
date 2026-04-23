@@ -25,6 +25,7 @@ import { log } from '../api/userInterface';
 let listBuffer: string;
 let remDirBuffer: string;
 let remFileBuffer: string;
+let exFileBuffer: string;
 
 class SerialEmitter extends EventEmitter {}
 
@@ -171,6 +172,29 @@ serialEmitter.on(`${cmd.removeFile}`, (data: string) => {
 				remFileBuffer = '';
 				setTerminalFlag();
 			}
+		}
+	} catch {
+		const st = getActiveSerial();
+		st.initFsFiles();
+		moduleFsTreeProvider.refresh();
+	}
+});
+
+serialEmitter.on(`${cmd.exportFile}`, (data: string) => {
+	exFileBuffer += data;
+	try {
+		if (data === cmd.exportFile) {
+			if (exFileBuffer.includes('Traceback')) {
+				vscode.window.showErrorMessage('Unable to export file.');
+				exFileBuffer = '';
+				setTerminalFlag();
+				return;
+			}
+			if (exFileBuffer.includes('/usr')) {
+				exFileBuffer = '';
+				setTerminalFlag();
+			}
+			setTerminalFlag();
 		}
 	} catch {
 		const st = getActiveSerial();

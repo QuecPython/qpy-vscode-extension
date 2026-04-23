@@ -5,8 +5,7 @@ import { getActiveSerial, setTerminalFlag } from './terminal';
 import { moduleFsTreeProvider, executeBatScript, log } from './userInterface';
 import {
 	cmd,
-	supportedBaudRates,
-	chiregex,
+	supportedBaudRates
 } from '../utils/constants';
 import { fwProvider } from '../extension';
 import SerialTerminal from '../serial/serialTerminal';
@@ -22,6 +21,7 @@ import { HtmlPanel } from '../packagePanel/htmlPanel';
 
 export let chosenModule: string | undefined;
 export let newDirPath: string | undefined;
+export let newFilePath: string | undefined;
 
 export const refreshModuleFs = vscode.commands.registerCommand(
 	'qpy-ide.refreshModuleFS',
@@ -230,6 +230,34 @@ export const removeFile = vscode.commands.registerCommand(
 	}
 );
 
+export const exportFile = vscode.commands.registerCommand(
+	'qpy-ide.exportFile',
+	async (node: ModuleDocument) => {
+		try {
+			// 1. get save location from user
+			const folders = await vscode.window.showOpenDialog({
+				canSelectFolders: true,
+				canSelectFiles: false,
+				openLabel: 'Select folder to save exported file',
+			});
+			if (!folders || folders.length === 0) {
+				vscode.window.showInformationMessage('Export cancelled');
+				return;
+			}
+			newFilePath = folders[0].fsPath;
+			const st = getActiveSerial();
+			setTerminalFlag(true, cmd.exportFile);
+			st.handleCmd(`open('${node.filePath}', 'r').read()\r\n`);
+
+			await utils.sleep(100);
+			serialEmitter.emit(cmd.exportFile, cmd.exportFile);
+		} catch {
+			vscode.window.showErrorMessage('Something went wrong.');
+			setTerminalFlag();
+		}
+	}
+);
+
 export const removeDir = vscode.commands.registerCommand(
 	'qpy-ide.removeDir',
 	async (node: ModuleDocument) => {
@@ -413,6 +441,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		clearCommand,
 		downloadFile,
 		selectiveDownloadFile,
+		exportFile,
 		clearFirmware,
 		refreshModuleFs,
 		runScript,
