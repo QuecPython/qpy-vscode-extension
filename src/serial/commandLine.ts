@@ -76,57 +76,9 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	protected handleData: (data: Buffer) => void = (data: Buffer) => {
 		// check for UI driven command
 		if (this.cmdFlag) {
-			if (this.cmdFlagLabel == cmd.exportFile){
-				this.exportFileData += data.toString();
-				if (data.toString().slice(-4) == '>>> '){
-					// find the file body beteen open(<file-name>).read() + >>>
-					const regex = /open\(.*?\)\.read\(\)([\s\S]*?)>>> $/;
-					const match = this.exportFileData.match(regex);
-
-					if (match) {
-						let file = match[1].trim();
-						// if user selected a folder, save the exported content to that folder
-						if (typeof newFilePath !== 'undefined' && newFilePath) {
-							// try to extract full path from the open(...) call and preserve directory structure
-							const nameMatch = this.exportFileData.match(/open\(['"]([^'\"]+)['"],\s*'r'\)\.read\(\)/);
-							let relativePath = 'exported_file';
-							if (nameMatch && nameMatch[1]) {
-								// remove leading slashes to make it relative under chosen folder
-								relativePath = nameMatch[1].replace(/^\/+/, '');
-							}
-							const savePath = path.join(newFilePath, relativePath);
-							const dir = path.dirname(savePath);
-							const fileUri = vscode.Uri.file(savePath);
-							let content = file.replace(/^['\"]|['\"]$/g, '').trim();
-							// interpret common escape sequences (\n, \r, \t, \xHH, \uHHHH)
-							const unescapeSeq = (s: string) =>
-								s.replace(/\\x([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
-								 .replace(/\\u([0-9A-Fa-f]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
-								 .replace(/\\n/g, '\n')
-								 .replace(/\\r/g, '\r')
-								 .replace(/\\t/g, '\t')
-								 .replace(/\\b/g, '\b')
-								 .replace(/\\f/g, '\f')
-								 .replace(/\\\\/g, '\\')
-								 .replace(/\\'/g, "'")
-								 .replace(/\\\"/g, '"');
-							content = unescapeSeq(content);
-							const dirUri = vscode.Uri.file(dir);
-							// create directories recursively then write file
-							vscode.workspace.fs.createDirectory(dirUri).then(() => {
-								return vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf8'));
-							}).then(() => {
-								vscode.window.showInformationMessage('Saved exported file to ' + savePath);
-							}, (err) => {
-								vscode.window.showErrorMessage('Failed to save export: ' + err);
-							});
-						}
-					} else {
-						vscode.window.showErrorMessage("Issue copying file: couldn't parse file content.");
-					}
-					this.exportFileData = '';
-				}
-			} else{
+			if (this.cmdFlagLabel == cmd.exportFile) {
+				this.handleExportFileDataChunk(data);
+			} else {
 				log(`${this.cmdFlagLabel}`, `${data.toString()}`);
 				serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
 			}
@@ -262,6 +214,64 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	private clearScreen(level = 0): void {
 		// n = 0从光标清除到屏幕结束， n = 1从光标到屏幕的开头清除， n = 2清除整个屏幕
 		this.writeEmitter.fire(`\u001b[${level}J`);
+	}
+
+	/**
+	 * Handle chunks of data received when exporting a file from the device.
+	 */
+	private handleExportFileDataChunk(data: Buffer): void {
+		this.exportFileData += data.toString();
+		if (data.toString().slice(-4) !== '>>> ') {
+			return;
+		}
+		// find the file body between open(<file-name>).read() + >>>
+		const regex = /open\(.*?\)\.read\(\)([\s\S]*?)>>> $/;
+		const match = this.exportFileData.match(regex);
+
+		if (!match) {
+			vscode.window.showErrorMessage("Issue copying file: couldn't parse file content.");
+			this.exportFileData = '';
+			return;
+		}
+
+		let file = match[1].trim();
+		// if user selected a folder, save the exported content to that folder
+		if (typeof newFilePath !== 'undefined' && newFilePath) {
+			// try to extract full path from the open(...) call and preserve directory structure
+			const nameMatch = this.exportFileData.match(/open\(['"]([^'\"]+)['"],\s*'r'\)\.read\(\)/);
+			let relativePath = 'exported_file';
+			if (nameMatch && nameMatch[1]) {
+				// remove leading slashes to make it relative under chosen folder
+				relativePath = nameMatch[1].replace(/^\/+/, '');
+			}
+			const savePath = path.join(newFilePath, relativePath);
+			const dir = path.dirname(savePath);
+			const fileUri = vscode.Uri.file(savePath);
+			let content = file.replace(/^['\"]|['\"]$/g, '').trim();
+			// interpret common escape sequences (\n, \r, \t, \xHH, \uHHHH)
+			const unescapeSeq = (s: string) =>
+				s.replace(/\\x([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+				 .replace(/\\u([0-9A-Fa-f]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+				 .replace(/\\n/g, '\n')
+				 .replace(/\\r/g, '\r')
+				 .replace(/\\t/g, '\t')
+				 .replace(/\\b/g, '\b')
+				 .replace(/\\f/g, '\f')
+				 .replace(/\\\\/g, '\\')
+				 .replace(/\\'/g, "'")
+				 .replace(/\\\"/g, '"');
+			content = unescapeSeq(content);
+			const dirUri = vscode.Uri.file(dir);
+			// create directories recursively then write file
+			vscode.workspace.fs.createDirectory(dirUri).then(() => {
+				return vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf8'));
+			}).then(() => {
+				vscode.window.showInformationMessage('Saved exported file to ' + savePath);
+			}, (err) => {
+				vscode.window.showErrorMessage('Failed to save export: ' + err);
+			});
+		}
+		this.exportFileData = '';
 	}
 
 	public clear(): void {
