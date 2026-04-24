@@ -1,6 +1,6 @@
 ## 1.1.17
+- export file from module
 - update packages and libs
-- export file
 ## 1.1.16
 - update packages and libs
 ## 1.1.15
