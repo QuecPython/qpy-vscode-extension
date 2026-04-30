@@ -1,3 +1,6 @@
+## 1.1.18
+- add partitions size status + icon
+- update partitions status when module is connected.
 ## 1.1.17
 - export file from module
 - update packages and libs
