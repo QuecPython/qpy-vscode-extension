@@ -30,3 +30,7 @@ def list_dir(path):
 
 temp = list_dir('/usr')
 print(temp)
+
+# get module partitions
+x = [i + ' : ' + str(uos.statvfs('/'+i)) for i in uos.listdir('/')]
+print(">>>statvfs<<<" + " | ".join(["%s: %d/%d KB" % (i.split(' : ')[0], (v:=eval(i.split(' : ')[1]))[0]*v[3]//1024, v[0]*v[2]//1024) for i in x]))

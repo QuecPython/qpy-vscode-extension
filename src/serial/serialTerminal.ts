@@ -47,7 +47,7 @@ export default class SerialTerminal extends CommandLineInterface {
 
 		this.serial.on('close', err => {
 			serialEmitter.emit(status.disc);
-			serialEmitter.emit(`${cmd.ilistdir}`, '');
+			serialEmitter.emit(cmd.ilistdir, '');
 			portStatus = this.serial.isOpen;
 			if (!this.endsWithNewLine) {
 				this.handleDataAsText('\r\n');
