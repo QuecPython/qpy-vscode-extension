@@ -68,6 +68,7 @@ export const fwConfig = {
 
 export const status = {
 	conn: 'statusConn',
+	usrPartion: 'usrPartion',
 	disc: 'statusDisc',
 	startProg: 'startProgress',
 	updateProg: 'updatePercentage',

@@ -85,6 +85,17 @@ export const setButtonStatus = (connStatus: vscode.StatusBarItem, status: boolea
 	}
 };
 
+export const setButtonUsr = (usrStatus: vscode.StatusBarItem, status: boolean, data: string): void => {
+	// udpate partitions size when module is connected
+	if (status) {
+		usrStatus.text = `$(project) ${data}`;
+		usrStatus.tooltip = 'Module storage';
+	} else {
+		usrStatus.text = `$(project) usr: 0/0 KB`;
+		usrStatus.tooltip = 'Please connect to COM Port to show Module storage';
+	}
+};
+
 export const initStatusButtons = (): void => {
 	setButtonDownload(downloadScript);
 	downloadScript.show();
@@ -93,9 +104,16 @@ export const initStatusButtons = (): void => {
 	setButtonStatus(connStatus, false, " ");
 	connStatus.show();
 	connStatus.command = 'qpy-ide.openConnection';
+
+	setButtonUsr(usrStatus, false, '');
+	usrStatus.show();
 };
 
 export const connStatus = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left
+);
+
+export const usrStatus = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left
 );
 

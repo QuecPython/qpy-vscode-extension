@@ -129,7 +129,8 @@ export const openConnection = vscode.commands.registerCommand(
 				chosenPortPath,
 				chosenBaud,
 				translateHex,
-				lineEnd
+				lineEnd,
+				chosenPort
 			);
 
 			const terminal = vscode.window.createTerminal({
@@ -223,6 +224,8 @@ export const removeFile = vscode.commands.registerCommand(
 			st.handleCmd(`uos.remove('${node.filePath}')\r\n`);
 			await utils.sleep(100);
 			serialEmitter.emit(cmd.removeFile, cmd.removeFile);
+			// refresh file list + partitions status
+			await _refreshTree();
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
 			setTerminalFlag();

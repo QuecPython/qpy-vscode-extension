@@ -14,7 +14,9 @@ import {
 import {
 	moduleFsTreeProvider,
 	setButtonStatus,
+	setButtonUsr,
 	connStatus,
+	usrStatus
 } from '../api/userInterface';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
 import { DownloadResponse } from '../types/types';
@@ -36,14 +38,20 @@ serialEmitter.on(status.conn, (data: string) => {
 	setButtonStatus(connStatus, true, data);
 });
 
+serialEmitter.on(status.usrPartion, (data: string) => {
+	setButtonUsr(usrStatus, true, data);
+});
+
 serialEmitter.on(status.disc, () => {
 	setButtonStatus(connStatus, false, " ");
+	setButtonUsr(usrStatus, false, ''); // set partitions to empty on start
 	moduleFsTreeProvider.data = [];
 	moduleFsTreeProvider.refresh();
 });
 
-serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
+serialEmitter.on(cmd.ilistdir, (data: string) => {
 	listBuffer += data;
+
 	try {
 		let stringToParse: string;
 		if (data === cmd.ilistdir) {
@@ -51,6 +59,14 @@ serialEmitter.on(`${cmd.ilistdir}`, (data: string) => {
 			splitData.forEach((dataLine: string) => {
 				if (dataLine.includes('[{')) {
 					stringToParse = dataLine;
+				}
+				// capture filesystem stats after >>>statvfs<<< until end of line
+				if (dataLine.includes('>>>statvfs<<<')) {
+					let statvfs: string;
+					statvfs = dataLine.substring(
+						dataLine.indexOf('>>>statvfs<<<') + '>>>statvfs<<<'.length
+					).trim();
+					setButtonUsr(usrStatus, true, statvfs);
 				}
 			});
 
