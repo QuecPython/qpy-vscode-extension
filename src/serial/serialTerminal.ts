@@ -22,7 +22,8 @@ export default class SerialTerminal extends CommandLineInterface {
 		comPort: string,
 		baudRate: number,
 		translateHex = true,
-		lineEnd?: string
+		lineEnd?: string,
+		portType?: string
 	) {
 		const serial: SerialPort = new SerialPort({
 			path:comPort,
@@ -30,7 +31,7 @@ export default class SerialTerminal extends CommandLineInterface {
 			baudRate: baudRate,
 		});
 
-		super(serial, translateHex, lineEnd);
+		super(serial, translateHex, lineEnd, portType);
 		this.serial = serial;
 	}
 

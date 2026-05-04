@@ -129,7 +129,8 @@ export const openConnection = vscode.commands.registerCommand(
 				chosenPortPath,
 				chosenBaud,
 				translateHex,
-				lineEnd
+				lineEnd,
+				chosenPort
 			);
 
 			const terminal = vscode.window.createTerminal({

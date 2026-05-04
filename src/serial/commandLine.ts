@@ -40,7 +40,9 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 	constructor(
 		private backendStream: Stream.Duplex,
 		private translateHex: boolean = true,
-		private lineEnd: string = '\r\n'
+		private lineEnd: string = '\r\n',
+		// optional human-friendly port type or label (e.g. 'Quectel USB AT Port')
+		public portType?: string
 	) {}
 
 	open(initialDimensions: vscode.TerminalDimensions | undefined): void {
@@ -138,7 +140,13 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 		if (data.match(chiregex)) {
 			return;
 		}
+
 		log('按键内容 : ', data);
+		
+		// for at port, fire the EventEmitter to show user input in terminal
+		if (this.portType && this.portType.includes('AT Port')){
+			this.writeEmitter.fire(data);
+		}		
 		this.backendStream.write(data);
 	}
 
