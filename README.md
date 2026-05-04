@@ -1,8 +1,11 @@
 # QuecPython Vs Code Extension
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/Quectel.qpy-ide)](https://marketplace.visualstudio.com/items?itemName=Quectel.qpy-ide)
-[![Downloads](https://img.shields.io/visual-studio-marketplace/d/Quectel.qpy-ide)](https://marketplace.visualstudio.com/items?itemName=Quectel.qpy-ide)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/Quectel.qpy-ide)](https://marketplace.visualstudio.com/items?itemName=Quectel.qpy-ide)
+<p align="center">
+  <img alt="VS Code Extension" src="https://img.shields.io/badge/VS%20Code-Extension-007ACC?logo=visualstudiocode&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.x-yellow?logo=typescript&logoColor=white" />
+  <img alt="Status" src="https://img.shields.io/badge/Status-stable-brightgreen" />
+  <img alt="Static Badge" src="https://img.shields.io/badge/Downloads-6.8K-orange">
+</p>
 
 Extension for handling interaction with QuecPython based modules. Communicate with Python based Quectel modules using the built-in REPL or AT CLI. Besides serial communication, extension provides out-of-the box module file system preview in a tree view. Users are free to opt using commands from the extension UI or execute raw commands via REPL.
 
