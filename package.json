@@ -9,6 +9,9 @@
 		"vscode": "^1.116.0",
 		"npm": ">=11.6.2"
 	},
+	"extensionDependencies": [
+		"ms-python.autopep8"
+	],
 	"categories": [
 		"Other"
 	],
@@ -118,6 +121,11 @@
 				"category": "QuecPython"
 			},
 			{
+				"command": "qpy-ide.formatDocument",
+				"title": "QPY: Format Document",
+				"category": "QuecPython"
+			},
+			{
 				"command": "qpy-ide.selectiveDownloadFile",
 				"title": "QPY: Selective Download File",
 				"category": "QuecPython"
@@ -216,6 +224,12 @@
 					"when": "false"
 				},
 				{
+					"command": "qpy-ide.formatDocument",
+					"title": "QPY: Format Document",
+					"category": "QuecPython",
+					"when": "false"
+				},
+				{
 					"command": "qpy-ide.selectiveDownloadFile",
 					"title": "QPY: Selective Download File",
 					"category": "QuecPython",
@@ -274,6 +288,12 @@
 				},
 				{
 					"command": "qpy-ide.selectiveDownloadFile",
+					"when": "!inOutput && config.QuecPython.showRunCommandInEditorContextMenu",
+					"group": "QuecPython@1"
+				}
+				,
+				{
+					"command": "qpy-ide.formatDocument",
 					"when": "!inOutput && config.QuecPython.showRunCommandInEditorContextMenu",
 					"group": "QuecPython@1"
 				}
