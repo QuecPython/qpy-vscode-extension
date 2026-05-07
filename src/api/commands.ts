@@ -393,6 +393,17 @@ export const createDir = vscode.commands.registerCommand(
 	}
 );
 
+export const formatDocumentCommand = vscode.commands.registerCommand(
+	'qpy-ide.formatDocument',
+	async () => {
+		try {
+			await vscode.commands.executeCommand('editor.action.formatDocument');
+		} catch {
+			vscode.window.showErrorMessage('Failed to format document.');
+		}
+	}
+);
+
 async function _refreshTree() {
 	// private func to refresh folder tree view
 
@@ -454,6 +465,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		projectsPage,
 		currentProjectPage,
 		myProjects,
+		formatDocumentCommand,
 		vscode.window.registerWebviewViewProvider(
 			FirmwareViewProvider.viewType,
 			fwProvider
