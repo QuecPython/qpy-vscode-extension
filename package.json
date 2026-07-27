@@ -121,6 +121,11 @@
 				"category": "QuecPython"
 			},
 			{
+				"command": "qpy-ide.downloadFolder",
+				"title": "QPY: Download Folder",
+				"category": "QuecPython"
+			},
+			{
 				"command": "qpy-ide.formatDocument",
 				"title": "QPY: Format Document",
 				"category": "QuecPython"
@@ -224,6 +229,12 @@
 					"when": "false"
 				},
 				{
+					"command": "qpy-ide.downloadFolder",
+					"title": "QPY: Download Folder",
+					"category": "QuecPython",
+					"when": "false"
+				},
+				{
 					"command": "qpy-ide.formatDocument",
 					"title": "QPY: Format Document",
 					"category": "QuecPython",
@@ -276,6 +287,10 @@
 					"group": "QuecPython@1"
 				},
 				{
+					"command": "qpy-ide.downloadFolder",
+					"group": "QuecPython@1"
+				},
+				{
 					"command": "qpy-ide.selectiveDownloadFile",
 					"group": "QuecPython@1"
 				}
@@ -283,6 +298,11 @@
 			"editor/context": [
 				{
 					"command": "qpy-ide.downloadFile",
+					"when": "!inOutput && config.QuecPython.showRunCommandInEditorContextMenu",
+					"group": "QuecPython@1"
+				},
+				{
+					"command": "qpy-ide.downloadFolder",
 					"when": "!inOutput && config.QuecPython.showRunCommandInEditorContextMenu",
 					"group": "QuecPython@1"
 				},

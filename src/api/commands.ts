@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as utils from '../utils/utils';
 import { getActiveSerial, setTerminalFlag } from './terminal';
 import { moduleFsTreeProvider, executeBatScript, log } from './userInterface';
@@ -311,6 +312,98 @@ export const downloadFile = vscode.commands.registerCommand(
 			}
 		} catch {
 			vscode.window.showErrorMessage('Something went wrong.');
+			setTerminalFlag();
+		}
+	}
+);
+
+export const downloadFolder = vscode.commands.registerCommand(
+	'qpy-ide.downloadFolder',
+	async (folderUri: vscode.Uri) => {
+		try {
+			let downloadPath: vscode.Uri;
+
+			if (typeof folderUri === 'undefined') {
+				const folders = await vscode.window.showOpenDialog({
+					canSelectFolders: true,
+					canSelectFiles: false,
+					openLabel: 'Select folder to download',
+				});
+				if (!folders || folders.length === 0) {
+					vscode.window.showInformationMessage('Download cancelled');
+					return;
+				}
+				downloadPath = folders[0];
+			} else {
+				downloadPath = folderUri;
+			}
+
+			if (!utils.isDir(downloadPath.fsPath)) {
+				vscode.window.showErrorMessage('Specified target is not a valid folder.');
+				return;
+			} else {
+				// ask user for remote directory path (must start with /usr/)
+				const fullRemotePath = await vscode.window.showInputBox({
+					placeHolder: "Enter full directory path... (e.g. /usr/test)",
+				});
+				if (!fullRemotePath) {
+					vscode.window.showInformationMessage('Download cancelled');
+					return;
+				}
+
+				if (!fullRemotePath.startsWith('/usr/')) {
+					vscode.window.showErrorMessage('Invalid directory path.');
+					return;
+				}
+
+				const st = getActiveSerial();
+
+				// append local folder name to remote base path so remote target
+				// becomes e.g. /usr/<selected-folder-name>
+				const localFolderName = path.basename(downloadPath.fsPath);
+				const remoteTarget = fullRemotePath.endsWith('/')
+					? `${fullRemotePath}${localFolderName}`
+					: `${fullRemotePath}/${localFolderName}`;
+
+				// create remote directory similar to createDir
+				setTerminalFlag(true, cmd.createDir);
+				newDirPath = remoteTarget;
+				st.handleCmd(`import ql_fs\r\n`);
+				st.handleCmd(`ql_fs.mkdirs('${remoteTarget}')\r\n`);
+				await utils.sleep(400);
+				await _refreshTree();
+
+				// read local files and copy them one by one
+				const entries = fs.readdirSync(downloadPath.fsPath);
+				// close serial before spawning external copy processes
+				try {
+					st.serial.close();
+				} catch {}
+
+				for (const name of entries) {
+					vscode.window.showInformationMessage('Uploading ' + name + '...');
+					const localPath = path.join(downloadPath.fsPath, name);
+					const stat = fs.statSync(localPath);
+					if (stat.isFile()) {
+						const fileData = {
+							filename: name,
+							fileSizeInBytes: stat.size,
+						};
+
+						await filedownload(
+							localPath,
+							st.serial.path,
+							st.serial.baudRate,
+							fileData,
+							remoteTarget
+						);
+						// small pause between files
+						await utils.sleep(200);
+					}
+				}
+			}
+		} catch (error){
+			vscode.window.showErrorMessage('Something went wrong. ' + error.toString());
 			setTerminalFlag();
 		}
 	}
