@@ -114,14 +114,14 @@ export default class FirmwareViewProvider
 							axios.request(config)
 							.then(response => {
 								if (response.status !== 200) {
-									vscode.window.showErrorMessage('Unable to get online firmware!');
+									vscode.window.showErrorMessage('Unable to get online firmware, please try again later!');
 									return;
 								} else {
 									const firmwareConfig = response.data;
 
 									let dwList = firmwareConfig['data'].data;
 									if (dwList.length === 0) {
-										vscode.window.showErrorMessage('No online firmware available!');
+										vscode.window.showErrorMessage('No online firmware available, please try again later!');
 										return;
 									}else {
 
@@ -141,7 +141,7 @@ export default class FirmwareViewProvider
 							})
 							.catch((error) => {
 								console.error(error);
-								vscode.window.showErrorMessage('Unable to get online firmware!');
+								vscode.window.showErrorMessage('Unable to get online firmware, please try again later!');
 								return;
 							});
 
@@ -155,7 +155,7 @@ export default class FirmwareViewProvider
 							}
 
 							if (selectVersionList.length === 0) {
-								vscode.window.showErrorMessage('No online firmware available!');
+								vscode.window.showErrorMessage('No online firmware available, please try again later!');
 								return;
 							}
 							
@@ -175,9 +175,7 @@ export default class FirmwareViewProvider
 							// update interface + .config file
 							fs.writeFile(fwConfigFile, JSON.stringify(parsedFwConfig), err => {
 								if (err) {
-									vscode.window.showErrorMessage(
-										'Unable to set selected online firmware!'
-									);
+									vscode.window.showErrorMessage('Unable to set selected online firmware, please try again later!');
 									console.error(err);
 								}
 								vscode.window.showInformationMessage('New online firmware selected!');
@@ -196,9 +194,7 @@ export default class FirmwareViewProvider
 								newFwPath["module"] = "";
 								fs.writeFile(fwConfigFile, JSON.stringify(newFwPath), err => {
 									if (err) {
-										vscode.window.showErrorMessage(
-											'Unable to set selected firmware!'
-										);
+										vscode.window.showErrorMessage('Unable to set selected firmware, please try again later!');
 										console.error(err);
 									}
 									vscode.window.showInformationMessage('New firmware selected!');
@@ -358,7 +354,7 @@ export default class FirmwareViewProvider
 										log('Firmware version match success');
 										firmwareFlash(data.value, downloadPort);
 									} else {
-										vscode.window.showErrorMessage('Please select the firmware that matches the module model!');
+										vscode.window.showErrorMessage('Please select the firmware that matches the module serial number!');
 									}
 								}
 							}
