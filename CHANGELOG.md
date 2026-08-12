@@ -1,3 +1,7 @@
+## 1.1.19
+- update packages and libs
+- update npm to 12.0.2
+
 ## 1.1.18
 - add partitions size status + icon
 - update partitions status when module is connected.
