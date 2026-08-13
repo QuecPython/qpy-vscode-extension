@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as utils from '../utils/utils';
 import { getActiveSerial, setTerminalFlag } from './terminal';
-import { moduleFsTreeProvider, executeBatScript, log } from './userInterface';
+import { moduleFsTreeProvider, executeBatScript } from './userInterface';
 import {
 	cmd,
 	supportedBaudRates
@@ -12,7 +11,7 @@ import { fwProvider } from '../extension';
 import SerialTerminal from '../serial/serialTerminal';
 import { terminalRegistry } from '../extension';
 import { ModuleDocument } from '../deviceTree/moduleFileSystem';
-import filedownload from './fileDownload';
+import fileDownload from './fileDownload';
 import { portStatus } from '../serial/serialTerminal';
 import { sortTreeNodes } from './treeView';
 import FirmwareViewProvider from '../sidebar/firmwareSidebar';
@@ -278,142 +277,15 @@ export const removeDir = vscode.commands.registerCommand(
 	}
 );
 
-export const downloadFile = vscode.commands.registerCommand(
-	'qpy-ide.downloadFile',
-	async (fileUri: vscode.Uri) => {
-		try {
-			let downloadPath: vscode.Uri;
-
-			if (typeof fileUri === 'undefined') {
-				downloadPath = vscode.window.activeTextEditor.document.uri;
-			} else {
-				downloadPath = fileUri;
-			}
-
-			if (utils.isDir(downloadPath.fsPath)) {
-				vscode.window.showErrorMessage('Specified target is not a valid file.');
-				return;
-			} else {
-				const st = getActiveSerial();
-
-				const fileData = {
-					filename: downloadPath.fsPath.split('\\').pop(),
-					fileSizeInBytes: fs.statSync(downloadPath.fsPath).size,
-				};
-
-				st.serial.close();
-
-				await filedownload(
-					downloadPath.fsPath,
-					st.serial.path,
-					st.serial.baudRate,
-					fileData
-				);
-			}
-		} catch {
-			vscode.window.showErrorMessage('Something went wrong.');
-			setTerminalFlag();
-		}
-	}
-);
-
-export const downloadFolder = vscode.commands.registerCommand(
-	'qpy-ide.downloadFolder',
-	async (folderUri: vscode.Uri) => {
-		try {
-			let downloadPath: vscode.Uri;
-
-			if (typeof folderUri === 'undefined') {
-				const folders = await vscode.window.showOpenDialog({
-					canSelectFolders: true,
-					canSelectFiles: false,
-					openLabel: 'Select folder to download',
-				});
-				if (!folders || folders.length === 0) {
-					vscode.window.showInformationMessage('Download cancelled');
-					return;
-				}
-				downloadPath = folders[0];
-			} else {
-				downloadPath = folderUri;
-			}
-
-			if (!utils.isDir(downloadPath.fsPath)) {
-				vscode.window.showErrorMessage('Specified target is not a valid folder.');
-				return;
-			} else {
-				// ask user for remote directory path (must start with /usr/)
-				const fullRemotePath = await vscode.window.showInputBox({
-					placeHolder: "Enter full directory path... (e.g. /usr/test)",
-				});
-				if (!fullRemotePath) {
-					vscode.window.showInformationMessage('Download cancelled');
-					return;
-				}
-
-				if (!fullRemotePath.startsWith('/usr/')) {
-					vscode.window.showErrorMessage('Invalid directory path.');
-					return;
-				}
-
-				const st = getActiveSerial();
-
-				// append local folder name to remote base path so remote target
-				// becomes e.g. /usr/<selected-folder-name>
-				const localFolderName = path.basename(downloadPath.fsPath);
-				const remoteTarget = fullRemotePath.endsWith('/')
-					? `${fullRemotePath}${localFolderName}`
-					: `${fullRemotePath}/${localFolderName}`;
-
-				// create remote directory similar to createDir
-				setTerminalFlag(true, cmd.createDir);
-				newDirPath = remoteTarget;
-				st.handleCmd(`import ql_fs\r\n`);
-				st.handleCmd(`ql_fs.mkdirs('${remoteTarget}')\r\n`);
-				await utils.sleep(400);
-				await _refreshTree();
-
-				// read local files and copy them one by one
-				const entries = fs.readdirSync(downloadPath.fsPath);
-				st.serial.close();
-				const last = entries[entries.length - 1];
-				for (const name of entries) {
-					const isLast = name === last;
-
-					vscode.window.showInformationMessage('Uploading ' + name + '...');
-					const localPath = path.join(downloadPath.fsPath, name);
-					const stat = fs.statSync(localPath);
-					if (stat.isFile()) {
-						const fileData = {
-							filename: name,
-							fileSizeInBytes: stat.size,
-						};
-
-						await filedownload(
-							localPath,
-							st.serial.path,
-							st.serial.baudRate,
-							fileData,
-							remoteTarget,
-							isLast
-						);
-						// small pause between files
-						await utils.sleep(1000);
-
-					}
-				}
-			}
-		} catch (error){
-			vscode.window.showErrorMessage('Something went wrong. ' + error.toString());
-			setTerminalFlag();
-		}
-	}
-);
-
 export const selectiveDownloadFile = vscode.commands.registerCommand(
 	'qpy-ide.selectiveDownloadFile',
 	async (fileUri: vscode.Uri) => {
 		try {
+			if (!portStatus) {
+				vscode.window.showErrorMessage('Device is not connected!');
+				return;
+			}
+
 			if (utils.isDir(fileUri.fsPath)) {
 				vscode.window.showErrorMessage('Specified target is not a valid file.');
 				return;
@@ -436,7 +308,7 @@ export const selectiveDownloadFile = vscode.commands.registerCommand(
 
 					st.serial.close();
 
-					await filedownload(
+					await fileDownload(
 						fileUri.fsPath,
 						st.serial.path,
 						st.serial.baudRate,
@@ -487,7 +359,7 @@ export const createDir = vscode.commands.registerCommand(
 	}
 );
 
-export const formatDocumentCommand = vscode.commands.registerCommand(
+vscode.commands.registerCommand(
 	'qpy-ide.formatDocument',
 	async () => {
 		try {
@@ -540,6 +412,7 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 	);
 	const colorChangeTheme = vscode.window.onDidChangeActiveColorTheme(updateColorTheme);
 
+	// used to dispose all commands when the extension is deactivated
 	context.subscriptions.push(
 		colorChangeTheme,
 		openConnection,
@@ -547,7 +420,6 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		setLineEndCommand,
 		toggleHexTranslationCommand,
 		clearCommand,
-		downloadFile,
 		selectiveDownloadFile,
 		exportFile,
 		clearFirmware,
@@ -558,11 +430,6 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		createDir,
 		projectsPage,
 		currentProjectPage,
-		myProjects,
-		formatDocumentCommand,
-		vscode.window.registerWebviewViewProvider(
-			FirmwareViewProvider.viewType,
-			fwProvider
-		)
+		myProjects
 	);
 };
