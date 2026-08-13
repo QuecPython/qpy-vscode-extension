@@ -375,12 +375,11 @@ export const downloadFolder = vscode.commands.registerCommand(
 
 				// read local files and copy them one by one
 				const entries = fs.readdirSync(downloadPath.fsPath);
-				// close serial before spawning external copy processes
-				try {
-					st.serial.close();
-				} catch {}
-
+				st.serial.close();
+				const last = entries[entries.length - 1];
 				for (const name of entries) {
+					const isLast = name === last;
+
 					vscode.window.showInformationMessage('Uploading ' + name + '...');
 					const localPath = path.join(downloadPath.fsPath, name);
 					const stat = fs.statSync(localPath);
@@ -395,10 +394,12 @@ export const downloadFolder = vscode.commands.registerCommand(
 							st.serial.path,
 							st.serial.baudRate,
 							fileData,
-							remoteTarget
+							remoteTarget,
+							isLast
 						);
 						// small pause between files
-						await utils.sleep(200);
+						await utils.sleep(1000);
+
 					}
 				}
 			}

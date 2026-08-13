@@ -12,7 +12,8 @@ export default async function fileDownload(
 	serialPort: string,
 	baudRate: number,
 	fileData: FileData,
-	downloadPath: string = '/usr'
+	downloadPath: string = '/usr',
+	isLast: boolean = true,
 ) {
 	const destinationPath = `:${downloadPath}/` + path.basename(sourcePath);
 
@@ -43,11 +44,13 @@ export default async function fileDownload(
 	});
 
 	fDownload.on('close', code => {
-		serialEmitter.emit(`${cmd.downloadFile}`, {
-			fileData,
-			parentPath: downloadPath,
-			code: code.toString(),
-		});
-		serialEmitter.emit(status.downFinish);
+		if (isLast) {
+			serialEmitter.emit(`${cmd.downloadFile}`, {
+					fileData,
+					parentPath: downloadPath,
+					code: code.toString(),
+			});
+			serialEmitter.emit(status.downFinish);
+		}
 	});
 }
