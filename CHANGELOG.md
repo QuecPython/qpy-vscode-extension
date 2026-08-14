@@ -1,3 +1,7 @@
+## 1.1.20
+- new feature: folder download to module from pc
+- update info and error messages
+
 ## 1.1.19
 - update packages and libs
 - update npm to 12.0.2
