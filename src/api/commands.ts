@@ -411,6 +411,11 @@ export const registerCommands = (context: vscode.ExtensionContext): void => {
 		}
 	);
 	const colorChangeTheme = vscode.window.onDidChangeActiveColorTheme(updateColorTheme);
+	// register Firmware view
+	vscode.window.registerWebviewViewProvider(
+		FirmwareViewProvider.viewType,
+		fwProvider
+	)
 
 	// used to dispose all commands when the extension is deactivated
 	context.subscriptions.push(
