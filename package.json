@@ -4,7 +4,7 @@
 	"publisher": "Quectel",
 	"description": "QuecPython interaction extension. It includes REPL console, AT CLI, preview of the module file system. Flash firmware, download files, run files and interact with the module file system from the VSCode.",
 	"icon": "images/quectel.png",
-	"version": "1.1.19",
+	"version": "1.1.20",
 	"engines": {
 		"vscode": "^1.125.0",
 		"npm": ">=12.0.2"
@@ -118,6 +118,11 @@
 			{
 				"command": "qpy-ide.downloadFile",
 				"title": "QPY: Download File",
+				"category": "QuecPython"
+			},
+			{
+				"command": "qpy-ide.downloadFolder",
+				"title": "QPY: Download Folder",
 				"category": "QuecPython"
 			},
 			{
@@ -273,6 +278,10 @@
 			"explorer/context": [
 				{
 					"command": "qpy-ide.downloadFile",
+					"group": "QuecPython@1"
+				},
+				{
+					"command": "qpy-ide.downloadFolder",
 					"group": "QuecPython@1"
 				},
 				{

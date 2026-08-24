@@ -81,7 +81,6 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 			if (this.cmdFlagLabel == cmd.exportFile) {
 				this.handleExportFileDataChunk(data);
 			} else {
-				log(`${this.cmdFlagLabel}`, `${data.toString()}`);
 				serialEmitter.emit(`${this.cmdFlagLabel}`, `${data.toString()}`);
 			}
 			return;
@@ -111,7 +110,7 @@ export abstract class CommandLineInterface implements vscode.Pseudoterminal {
 				this.writeEmitter.fire(byte.toString(16).padStart(2, '0') + ' ');
 			}
 		}		
-		log('Serial port content: ' + stringRepr);
+		// log('Serial port content: ' + stringRepr);
 
 		// decode and print the array of bytes if the string is correct
 		if (stringRepr.includes('>>>') || stringRepr.includes('\n') || !stringRepr.includes('�')) {
